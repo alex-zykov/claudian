@@ -1,4 +1,4 @@
-import type { Workspace } from 'obsidian';
+import type { TFile, Workspace } from 'obsidian';
 
 import type { ChatFileOpenMode } from '@/core/types';
 import { VIEW_TYPE_CLAUDIAN } from '@/core/types';
@@ -9,7 +9,7 @@ import { revealWorkspaceLeaf } from '@/utils/obsidianCompat';
 import { isClaudianView } from './ClaudianViews';
 
 export interface SeparateChatTabsDeps {
-  readonly workspace: Pick<Workspace, 'getLeaf' | 'revealLeaf'>;
+  readonly workspace: Pick<Workspace, 'getActiveFile' | 'getLeaf' | 'revealLeaf'>;
   getMode(): ChatFileOpenMode;
   getPlacement(): ChatViewPlacement;
   getViews(): readonly ClaudianView[];
@@ -23,10 +23,12 @@ export class SeparateChatTabs {
   async openNewChat(): Promise<boolean> {
     if (this.deps.getMode() !== 'separate-tab') return false;
     const { workspace } = this.deps;
+    // Opening a tab changes what the workspace reports as active, so read the note first.
+    const openNote = workspace.getActiveFile();
     const leaf = workspace.getLeaf('tab');
     await leaf.setViewState({ type: VIEW_TYPE_CLAUDIAN, active: true });
     await revealWorkspaceLeaf(workspace as Workspace, leaf);
-    if (isClaudianView(leaf.view)) leaf.view.focusActiveInput();
+    if (isClaudianView(leaf.view)) this.#present(leaf.view, openNote);
     return true;
   }
 
@@ -41,8 +43,15 @@ export class SeparateChatTabs {
       view.getTabManager() !== null && view.getActiveTab()?.conversationId == null
     ));
     if (!blank) return this.openNewChat();
+    const openNote = this.deps.workspace.getActiveFile();
     await revealWorkspaceLeaf(this.deps.workspace as Workspace, blank.leaf);
-    blank.focusActiveInput();
+    this.#present(blank, openNote);
     return true;
+  }
+
+  /** A chat with no messages follows the note that is open, as a new chat always has. */
+  #present(view: ClaudianView, openNote: TFile | null): void {
+    if (openNote) view.getActiveTab()?.linkedContent.handleActiveFileChanged(openNote, true);
+    view.focusActiveInput();
   }
 }

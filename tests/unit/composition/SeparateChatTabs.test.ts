@@ -8,34 +8,46 @@ import type { ChatViewPlacement } from '@/core/types/settings';
 interface FakeView {
   leaf: WorkspaceLeaf;
   getTabManager(): object;
-  getActiveTab(): { conversationId: string | null } | null;
+  getActiveTab(): { conversationId: string | null; linkedContent: { handleActiveFileChanged: jest.Mock } } | null;
   focusActiveInput: jest.Mock;
+  handleActiveFileChanged: jest.Mock;
 }
 
 function createView(conversationId: string | null): FakeView {
+  const handleActiveFileChanged = jest.fn();
   return {
     leaf: {} as WorkspaceLeaf,
     getTabManager: () => ({}),
-    getActiveTab: () => ({ conversationId }),
+    getActiveTab: () => ({ conversationId, linkedContent: { handleActiveFileChanged } }),
     focusActiveInput: jest.fn(),
+    handleActiveFileChanged,
   };
 }
 
 function setup(
   mode: ChatFileOpenMode,
-  options: { placement?: ChatViewPlacement; views?: FakeView[] } = {},
+  options: { placement?: ChatViewPlacement; views?: FakeView[]; activeFile?: unknown } = {},
 ) {
   const focusActiveInput = jest.fn();
+  const newView = createView(null);
+  newView.focusActiveInput = focusActiveInput;
   const leaf = {
-    view: { getTabManager: () => ({}), focusActiveInput },
+    view: { ...newView, getTabManager: () => ({}) },
     setViewState: jest.fn(async () => undefined),
   } as unknown as WorkspaceLeaf;
+  // Opening a leaf may change what the workspace reports as active, so the file is read first.
+  let activeFile: unknown = options.activeFile ?? null;
   const workspace = {
-    getLeaf: jest.fn(() => leaf),
+    getActiveFile: jest.fn(() => activeFile),
+    getLeaf: jest.fn(() => {
+      activeFile = null;
+      return leaf;
+    }),
     revealLeaf: jest.fn(async () => undefined),
   } as unknown as Workspace;
   return {
     focusActiveInput,
+    newView,
     leaf,
     tabs: new SeparateChatTabs({
       workspace,
@@ -106,6 +118,36 @@ describe('SeparateChatTabs', () => {
 
       expect(workspace.getLeaf).not.toHaveBeenCalled();
       expect(workspace.revealLeaf).not.toHaveBeenCalled();
+    });
+  });
+  describe('linking the note that was open', () => {
+    const note = { path: 'Projects/A/x.md', extension: 'md' };
+
+    it('gives a new chat tab the note that was active before the tab opened', async () => {
+      const { tabs, leaf } = setup('separate-tab', { activeFile: note });
+
+      await tabs.openNewChat();
+
+      const opened = leaf.view as unknown as FakeView;
+      expect(opened.getActiveTab()).not.toBeNull();
+      expect(opened.handleActiveFileChanged).toHaveBeenCalledWith(note, true);
+    });
+
+    it('does not link anything when no note was open', async () => {
+      const { tabs, leaf } = setup('separate-tab');
+
+      await tabs.openNewChat();
+
+      expect((leaf.view as unknown as FakeView).handleActiveFileChanged).not.toHaveBeenCalled();
+    });
+
+    it('relinks a reused empty chat tab to the note that is open now', async () => {
+      const blank = createView(null);
+      const { tabs } = setup('separate-tab', { views: [blank], activeFile: note });
+
+      await tabs.openHome();
+
+      expect(blank.handleActiveFileChanged).toHaveBeenCalledWith(note, true);
     });
   });
 });
