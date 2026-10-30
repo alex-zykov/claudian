@@ -522,6 +522,22 @@
         "failed": "Synchronisierung fehlgeschlagen: {message}",
         "summary": "Verschoben {moved}, umgewandelt {converted}, im Papierkorb {trashed}, {unlinked} Link(s) entfernt."
       }
+    },
+    "writeHistoryFileText": {
+      "name": "Gesprächstext in die Chat-Datei schreiben",
+      "desc": "Der Text der Chat-Datei enthält das Transkript aus Anfragen und Antworten, sodass andere Chats und Apps ohne Claudian es lesen und durchsuchen können. Ist die Option aus, wird nur das Frontmatter geschrieben; ein vorhandener Text bleibt unverändert."
+    },
+    "chatFileFields": {
+      "name": "Frontmatter-Felder der Chat-Dateien",
+      "desc": "Zusätzliche Felder im Frontmatter von Chat-Dateien. Ein Feld, das die Datei schon hat, behält seinen Wert.",
+      "keyPlaceholder": "Feld",
+      "valuePlaceholder": "Wert",
+      "keyAria": "Feldname {index}",
+      "valueAria": "Feldwert {index}",
+      "add": "Feld hinzufügen",
+      "remove": "Feld {index} entfernen",
+      "errorReserved": "„{key}“ wird von Claudian in Chat-Dateien verwendet. Wähle einen anderen Namen.",
+      "errorDuplicate": "„{key}“ wird bereits von einem anderen Feld verwendet."
     }
   }
 }

@@ -6,6 +6,7 @@ import { axe } from 'jest-axe';
 const mockRenderedSettingNames: string[] = [];
 const mockSettingDescriptionEls = new Map<string, MockContainer>();
 const mockToggleChanges = new Map<string, (value: boolean) => Promise<void>>();
+const mockToggleComponents = new Map<string, MockChainableComponent>();
 const mockTextChanges = new Map<string, (value: string) => Promise<void>>();
 const mockGitStatusElements: Array<{
   attributes: Map<string, string>;
@@ -78,6 +79,7 @@ jest.mock('obsidian', () => {
 
     addToggle(callback: (toggle: MockChainableComponent) => void): this {
       const toggle = createChainableComponent();
+      mockToggleComponents.set(this.name, toggle);
       toggle.onChange.mockImplementation((handler: (value: boolean) => Promise<void>) => {
         mockToggleChanges.set(this.name, handler);
         return toggle;
@@ -132,6 +134,7 @@ jest.mock('obsidian', () => {
       'setPlaceholder',
       'setLimits',
       'setDynamicTooltip',
+      'setDisabled',
     ]) {
       component[method] = jest.fn(() => component);
     }
@@ -291,6 +294,7 @@ describe('ClaudianSettingTab display settings', () => {
     mockSettingDescriptionEls.clear();
     mockGitStatusElements.length = 0;
     mockToggleChanges.clear();
+    mockToggleComponents.clear();
     mockTextChanges.clear();
   });
 

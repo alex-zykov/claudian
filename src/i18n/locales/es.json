@@ -522,6 +522,22 @@
         "failed": "Error de sincronización: {message}",
         "summary": "Movidos {moved}, convertidos {converted}, a la papelera {trashed}, {unlinked} enlace(s) eliminado(s)."
       }
+    },
+    "writeHistoryFileText": {
+      "name": "Escribir el texto de la conversación en el archivo de chat",
+      "desc": "El cuerpo del archivo de chat contiene la transcripción de preguntas y respuestas, para que otros chats y apps sin Claudian puedan leerla y buscarla. Si se desactiva, solo se escribe el frontmatter y el cuerpo existente no cambia."
+    },
+    "chatFileFields": {
+      "name": "Campos de frontmatter de los archivos de chat",
+      "desc": "Campos adicionales en el frontmatter de los archivos de chat. Un campo que el archivo ya tiene conserva su valor.",
+      "keyPlaceholder": "Campo",
+      "valuePlaceholder": "Valor",
+      "keyAria": "Nombre del campo {index}",
+      "valueAria": "Valor del campo {index}",
+      "add": "Añadir campo",
+      "remove": "Quitar el campo {index}",
+      "errorReserved": "Claudian ya usa «{key}» en los archivos de chat. Elige otro nombre.",
+      "errorDuplicate": "«{key}» ya lo usa otro campo."
     }
   }
 }

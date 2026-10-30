@@ -522,6 +522,22 @@
         "failed": "同期に失敗しました: {message}",
         "summary": "移動 {moved}、変換 {converted}、ゴミ箱 {trashed}、リンク削除 {unlinked}。"
       }
+    },
+    "writeHistoryFileText": {
+      "name": "会話のテキストをチャットファイルに書き込む",
+      "desc": "チャットファイルの本文に、依頼と応答の記録を書き込みます。他のチャットや Claudian のないアプリから読み取り・検索できます。オフにするとフロントマターのみを書き込み、既存の本文は変更しません。"
+    },
+    "chatFileFields": {
+      "name": "チャットファイルのフロントマター項目",
+      "desc": "チャットファイルのフロントマターに追加する項目です。ファイルに既にある項目は値が保持されます。",
+      "keyPlaceholder": "項目",
+      "valuePlaceholder": "値",
+      "keyAria": "項目名 {index}",
+      "valueAria": "項目の値 {index}",
+      "add": "項目を追加",
+      "remove": "項目 {index} を削除",
+      "errorReserved": "「{key}」はチャットファイルで Claudian が使用しています。別の名前を選んでください。",
+      "errorDuplicate": "「{key}」は別の項目で既に使われています。"
     }
   }
 }

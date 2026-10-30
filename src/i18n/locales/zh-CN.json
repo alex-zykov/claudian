@@ -522,6 +522,22 @@
         "failed": "同步失败:{message}",
         "summary": "已移动 {moved},已转换 {converted},已移到回收站 {trashed},已移除 {unlinked} 个链接。"
       }
+    },
+    "writeHistoryFileText": {
+      "name": "将对话文本写入聊天文件",
+      "desc": "聊天文件正文包含请求与回复的记录，其他聊天和没有 Claudian 的应用都可以读取和搜索。关闭后只写入 frontmatter，已有正文保持不变。"
+    },
+    "chatFileFields": {
+      "name": "聊天文件 frontmatter 字段",
+      "desc": "添加到聊天文件 frontmatter 的额外字段。文件中已有的字段保留其原值。",
+      "keyPlaceholder": "字段",
+      "valuePlaceholder": "值",
+      "keyAria": "字段名 {index}",
+      "valueAria": "字段值 {index}",
+      "add": "添加字段",
+      "remove": "删除字段 {index}",
+      "errorReserved": "“{key}”已被 Claudian 用于聊天文件，请换一个名称。",
+      "errorDuplicate": "“{key}”已被另一个字段使用。"
     }
   }
 }

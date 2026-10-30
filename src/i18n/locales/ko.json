@@ -522,6 +522,22 @@
         "failed": "동기화 실패: {message}",
         "summary": "이동 {moved}, 변환 {converted}, 휴지통 {trashed}, 링크 제거 {unlinked}."
       }
+    },
+    "writeHistoryFileText": {
+      "name": "대화 텍스트를 채팅 파일에 쓰기",
+      "desc": "채팅 파일 본문에 요청과 응답의 기록을 씁니다. 다른 채팅이나 Claudian이 없는 앱에서도 읽고 검색할 수 있습니다. 끄면 프런트매터만 쓰고 기존 본문은 바꾸지 않습니다."
+    },
+    "chatFileFields": {
+      "name": "채팅 파일 프런트매터 필드",
+      "desc": "채팅 파일의 프런트매터에 추가할 필드입니다. 파일에 이미 있는 필드는 값이 유지됩니다.",
+      "keyPlaceholder": "필드",
+      "valuePlaceholder": "값",
+      "keyAria": "필드 이름 {index}",
+      "valueAria": "필드 값 {index}",
+      "add": "필드 추가",
+      "remove": "필드 {index} 삭제",
+      "errorReserved": "\"{key}\"은(는) Claudian이 채팅 파일에서 사용합니다. 다른 이름을 선택하세요.",
+      "errorDuplicate": "\"{key}\"은(는) 다른 필드에서 이미 사용 중입니다."
     }
   }
 }

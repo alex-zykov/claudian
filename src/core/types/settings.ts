@@ -1,3 +1,4 @@
+import type { ChatFileCustomField } from '../chat-file/chatFileCustomFields';
 
 export interface ApprovalSelectionDecision {
   type: 'select-option';
@@ -170,6 +171,13 @@ export interface ClaudianSettings {
   showMessageTimestamps?: boolean;
   deferMathRenderingDuringStreaming: boolean;
   expandFileEditsByDefault: boolean;
+  /**
+   * When true (default), the generated `.chat.md` body holds the conversation transcript.
+   * When false, only the frontmatter is written and an existing body is left alone.
+   */
+  writeHistoryFileText: boolean;
+  /** Extra frontmatter fields for generated `.chat.md` files; empty by default. */
+  chatFileCustomFields: ChatFileCustomField[];
   chatViewPlacement: ChatViewPlacement;
   enableZenMode: boolean;
   /** Null keeps the zen panel docked. */

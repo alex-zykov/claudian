@@ -1,3 +1,4 @@
+@import "./settings/chat-file-fields.css";
 /* CSS module order. scripts/build-css.mjs reads these @import lines. */
 
 /* Add new modules here to include them in the build. */
