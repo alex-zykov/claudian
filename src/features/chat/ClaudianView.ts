@@ -27,6 +27,7 @@ import { ChatPresentationPlacement } from '@/features/chat/view/ChatPresentation
 import { DualPaneLayout, type DualPaneLayoutElements } from '@/features/chat/view/DualPaneLayout';
 import type { ZenModeSlots, ZenModeSource, ZenPresentationPort } from '@/features/chat/zen/types';
 import { VaultMentionDataProvider } from '@/shared/mention/VaultMentionDataProvider';
+import { revealWorkspaceLeaf } from '@/utils/obsidianCompat';
 
 type LoadableView = {
   containerEl?: HTMLElement;
@@ -665,6 +666,15 @@ export class ClaudianView extends ItemView implements ZenModeSource {
   focusActiveInput(): void {
     this.tabManager?.getActiveTab()?.composer.focus();
   }
+
+  async focusConversationTab(tabId: TabId): Promise<void> {
+    const manager = this.tabManager;
+    if (!manager) return;
+    await manager.switchToTab(tabId);
+    await revealWorkspaceLeaf(this.plugin.app.workspace, this.leaf);
+    this.focusActiveInput();
+  }
+
 
   /** Appends text to the active composer without sending it. */
   appendToActiveInput(text: string): boolean {

@@ -4,6 +4,7 @@ import '@/providers';
 import { deserialize, serialize } from 'node:v8';
 
 import { createClaudianView } from '@test/helpers/features/chat/ClaudianViewHarness';
+import { NOOP_CHAT_HISTORY_FILES } from '@test/helpers/features/chat/noopChatHistoryFiles';
 import { createHarness, releaseSideChatHarnesses } from '@test/helpers/features/chat/SideChatDOMHarness';
 import { FakeSideSession } from '@test/helpers/features/chat/SideChatSessionHarness';
 import { modelCatalogCases } from '@test/helpers/providerModelCatalogs';
@@ -148,6 +149,7 @@ async function createZenFixture(options: { enabled?: boolean; ready?: boolean } 
   const plugin = {
     ...(harness.plugin as ChatFeatureHost), app, settings,
     chatModelSelection: new ChatModelSelectionCoordinator(settingsCoordinator),
+    chatHistoryFiles: NOOP_CHAT_HISTORY_FILES,
     executionPersistence: {
       registerExecutionBinding: () => undefined,
       releaseExecutionBinding: () => undefined,

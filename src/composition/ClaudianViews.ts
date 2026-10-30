@@ -112,6 +112,43 @@ export class ClaudianViews {
     }
   }
 
+
+  /**
+   * Opens a conversation in a new leaf where the default placement says. The new view starts
+   * with one blank tab, which the conversation takes over. Throws when the view is not ready.
+   */
+  async openConversationInNewTab(conversationId: string): Promise<void> {
+    const leaf = this.#getLeafForPlacement(this.getPlacement());
+    if (!leaf) throw new Error('No leaf to open the chat in');
+    await leaf.setViewState({ type: VIEW_TYPE_CLAUDIAN, active: true });
+    await revealWorkspaceLeaf(this.workspace, leaf);
+    const manager = isClaudianView(leaf.view) ? leaf.view.getTabManager() : null;
+    if (!manager) throw new Error('Chat view is not ready');
+    await manager.openConversation(conversationId);
+  }
+
+  /**
+   * Focuses a conversation that is already open, in whichever tab of whichever chat view holds it.
+   * A deferred leaf that keeps it in its saved tabs is shown, which loads it. False when none does.
+   */
+  async focusConversation(conversationId: string): Promise<boolean> {
+    let open = this.findConversationAcrossViews(conversationId);
+    if (!open) {
+      const deferred = this.workspace.getLeavesOfType(VIEW_TYPE_CLAUDIAN).find(leaf => (
+        leaf.isDeferred
+        && (decodeTabWorkspaceViewState(leaf.getViewState().state?.[TAB_WORKSPACE_VIEW_STATE_KEY])?.openTabs ?? [])
+          .some(tab => tab.conversationId === conversationId)
+      ));
+      if (!deferred) return false;
+      await revealWorkspaceLeaf(this.workspace, deferred);
+      open = this.findConversationAcrossViews(conversationId);
+      // Restoration may still be admitting its tabs; the revealed leaf will show it.
+      if (!open) return true;
+    }
+    await open.view.focusConversationTab(open.tabId);
+    return true;
+  }
+
   #getLeafForPlacement(placement: ChatViewPlacement): WorkspaceLeaf | null {
     const { workspace } = this;
     switch (placement) {

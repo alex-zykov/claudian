@@ -10,6 +10,7 @@ import type { SharedStorageService } from '@/app/storage/SharedStorageService';
 import type { ChatFileCustomField } from '@/core/chat-file/chatFileCustomFields';
 import type { ClaudianSettings } from '@/core/types';
 import type { ChatHistoryFilePort } from '@/features/chat/ChatFeatureHost';
+import { ChatFileOpenHandler } from '@/features/chat/history-file/ChatFileOpenHandler';
 import { ChatHistoryFileImporter } from '@/features/chat/history-file/ChatHistoryFileImporter';
 import { HistoryFileWriter } from '@/features/chat/history-file/HistoryFileWriter';
 
@@ -27,26 +28,35 @@ export interface ChatHistoryFileSubsystemDeps {
 }
 
 /**
- * Main-owned wiring for chat history files: writer projection and import
- * admission. Open-on-click routing lands in a later commit on this subsystem.
+ * Main-owned wiring for chat history files: writer projection, import admission and
+ * open-on-click routing. Keeps storage-layout policy and settings/delete
+ * side effects out of feature modules and out of inline main lambdas.
  */
 export class ChatHistoryFileSubsystem {
   readonly writer: HistoryFileWriter;
   readonly importer: ChatHistoryFileImporter;
+  readonly openHandler: ChatFileOpenHandler;
   /** The surface chat features use: writer operations. */
   readonly port: ChatHistoryFilePort;
 
   private constructor(
     writer: HistoryFileWriter,
     importer: ChatHistoryFileImporter,
+    openHandler: ChatFileOpenHandler,
     private readonly deps: ChatHistoryFileSubsystemDeps,
   ) {
     this.writer = writer;
     this.importer = importer;
+    this.openHandler = openHandler;
     this.port = {
       scheduleWrite: id => writer.scheduleWrite(id),
       hasFile: id => writer.getFile(id) !== null,
-      openFileAsMarkdown: async () => false,
+      openFileAsMarkdown: async (id) => {
+        const file = writer.getFile(id);
+        if (!file) return false;
+        await openHandler.openAsMarkdown(file);
+        return true;
+      },
       trashForConversation: id => writer.trashForConversation(id),
       startBackfill: () => writer.startBackfill(),
       cancelBackfill: () => writer.cancelBackfill(),
@@ -90,11 +100,19 @@ export class ChatHistoryFileSubsystem {
       reportError: error => deps.reportError(error),
     });
 
-    return new ChatHistoryFileSubsystem(writer, importer, deps);
+    const openHandler = new ChatFileOpenHandler({
+      app: deps.app,
+      hasConversation: id => deps.conversations.hasLiveConversation(id),
+      revealOpenConversation: id => deps.views.focusConversation(id),
+      openConversationInNewTab: id => deps.views.openConversationInNewTab(id),
+    });
+
+    return new ChatHistoryFileSubsystem(writer, importer, openHandler, deps);
   }
 
   register(registerEvent: (eventRef: EventRef) => void): void {
     const { app } = this.deps;
+    this.openHandler.install();
     this.importer.scheduleScan();
     if (typeof app.vault?.on === 'function') {
       registerEvent(app.vault.on('create', file => {
@@ -141,5 +159,6 @@ export class ChatHistoryFileSubsystem {
   dispose(): void {
     this.writer.dispose();
     this.importer.dispose();
+    this.openHandler.uninstall();
   }
 }
