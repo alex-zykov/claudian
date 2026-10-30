@@ -2,9 +2,9 @@ import type { ChildProcessWithoutNullStreams } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 import { PassThrough } from 'node:stream';
 
-import initializeFixture from '@test/fixtures/providers/cursor/runtime/initialize.json';
 import askQuestionFixture from '@test/fixtures/providers/cursor/extensions/ask-question.json';
 import createPlanFixture from '@test/fixtures/providers/cursor/extensions/create-plan.json';
+import initializeFixture from '@test/fixtures/providers/cursor/runtime/initialize.json';
 import spawn from 'cross-spawn';
 
 import { ACPJSONRPCTransport } from '@/providers/acp';

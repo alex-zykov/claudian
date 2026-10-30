@@ -1,8 +1,8 @@
 import {
-  isCursorReadOnlyPermissionMode,
-  toCursorSessionModeId,
   CURSOR_PERMISSION_MODE_OPTIONS,
   CURSOR_PERMISSION_MODE_POLICY,
+  isCursorReadOnlyPermissionMode,
+  toCursorSessionModeId,
 } from '@/providers/cursor/permissionModes';
 
 describe('Cursor permission modes', () => {

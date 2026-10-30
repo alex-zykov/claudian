@@ -14,7 +14,7 @@ describe('CursorConversationHistoryService', () => {
         providerState: { cwd: '/vault' },
       },
       '/vault',
-      { vaultPath: '/vault' },
+      { environment: { HOME: '/home/user' }, vaultPath: '/vault' },
     );
 
     expect(result.messages).toHaveLength(2);

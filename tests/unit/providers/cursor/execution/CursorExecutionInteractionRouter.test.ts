@@ -1,8 +1,8 @@
 import askQuestionFixture from '@test/fixtures/providers/cursor/extensions/ask-question.json';
 import createPlanFixture from '@test/fixtures/providers/cursor/extensions/create-plan.json';
-import updateTodosFixture from '@test/fixtures/providers/cursor/extensions/update-todos.json';
-import taskFixture from '@test/fixtures/providers/cursor/extensions/task.json';
 import generateImageFixture from '@test/fixtures/providers/cursor/extensions/generate-image.json';
+import taskFixture from '@test/fixtures/providers/cursor/extensions/task.json';
+import updateTodosFixture from '@test/fixtures/providers/cursor/extensions/update-todos.json';
 
 import type { ProviderInteractionPort, ProviderQuestionInteractionRequest } from '@/core/execution';
 import { CursorExecutionInteractionRouter } from '@/providers/cursor/execution/CursorExecutionInteractionRouter';
