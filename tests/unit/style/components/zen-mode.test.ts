@@ -88,6 +88,7 @@ describe('Zen mode styles', () => {
                 <span class="claudian-zen-preview-icon" aria-hidden="true"></span>
                 <span class="claudian-zen-preview"></span>
               </button>
+              <button type="button" class="claudian-zen-leave clickable-icon" aria-label="Leave zen mode"></button>
             </div>
           </div>
           <div class="claudian-zen-composer">
@@ -352,6 +353,7 @@ describe('Zen mode styles', () => {
       '.claudian-composer-editor',
       '.claudian-side-chat-status',
       '.claudian-zen-grip',
+      '.claudian-zen-leave',
     ]) {
       expect([selector, pointerEvents(panel.querySelector(selector)!)]).toEqual([selector, 'auto']);
     }

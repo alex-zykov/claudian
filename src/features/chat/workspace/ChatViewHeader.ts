@@ -59,6 +59,8 @@ export interface ChatViewHeaderDeps {
   /** Opens the chat file as a note in a new tab; false when it could not be opened. */
   openChatFile(): Promise<boolean>;
   onEditRefused(): void;
+  /** Whether the chat floats in the zen window; its header buttons then step aside. */
+  isZenActive(): boolean;
 }
 
 /**
@@ -86,9 +88,10 @@ export class ChatViewHeader {
     }
     titleEl?.setText(this.#deps.getTitle());
     const side = this.#deps.getSide();
-    this.#actions.left.toggleClass('claudian-hidden', side === 'left');
-    this.#actions.right.toggleClass('claudian-hidden', side === 'right');
-    this.#actions.edit.toggleClass('claudian-hidden', !this.#deps.hasChatFile());
+    const floating = this.#deps.isZenActive();
+    this.#actions.left.toggleClass('claudian-hidden', floating || side === 'left');
+    this.#actions.right.toggleClass('claudian-hidden', floating || side === 'right');
+    this.#actions.edit.toggleClass('claudian-hidden', floating || !this.#deps.hasChatFile());
   }
 
   #editNote(): void {

@@ -31,9 +31,8 @@ describe('ChatHistoryFileSubsystem', () => {
       importFromHistoryFile: async () => null,
     } as unknown as ConversationService;
     const views = {
-      activateView: async () => undefined,
-      getView: () => null,
-      findConversationAcrossViews: () => null,
+      focusConversation: async () => false,
+      openConversationInNewTab: async () => undefined,
     } as unknown as ClaudianViews;
 
     const subsystem = ChatHistoryFileSubsystem.create({
@@ -44,7 +43,6 @@ describe('ChatHistoryFileSubsystem', () => {
       isWriteHistoryFileEnabled: () => true,
       getChatFileCustomFields: () => [],
       isWriteHistoryFileTextEnabled: () => true,
-      getChatFileOpenMode: () => 'claudian' as const,
       reportError,
     });
     const failure = new Error('trash failed');
@@ -79,9 +77,8 @@ describe('ChatHistoryFileSubsystem', () => {
       importFromHistoryFile: async () => null,
     } as unknown as ConversationService;
     const views = {
-      activateView: async () => undefined,
-      getView: () => null,
-      findConversationAcrossViews: () => null,
+      focusConversation: async () => false,
+      openConversationInNewTab: async () => undefined,
     } as unknown as ClaudianViews;
 
     const subsystem = ChatHistoryFileSubsystem.create({
@@ -92,7 +89,6 @@ describe('ChatHistoryFileSubsystem', () => {
       isWriteHistoryFileEnabled: () => true,
       getChatFileCustomFields: () => [],
       isWriteHistoryFileTextEnabled: () => true,
-      getChatFileOpenMode: () => 'claudian' as const,
       reportError,
     });
     const start = jest.spyOn(subsystem.writer, 'startBackfill').mockImplementation(() => undefined);

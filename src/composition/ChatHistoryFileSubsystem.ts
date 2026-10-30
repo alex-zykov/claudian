@@ -8,12 +8,11 @@ import {
 } from '@/app/storage/ChatHistoryFileAdmission';
 import type { SharedStorageService } from '@/app/storage/SharedStorageService';
 import type { ChatFileCustomField } from '@/core/chat-file/chatFileCustomFields';
-import type { ChatFileOpenMode, ClaudianSettings } from '@/core/types';
+import type { ClaudianSettings } from '@/core/types';
 import type { ChatHistoryFilePort } from '@/features/chat/ChatFeatureHost';
 import { ChatFileOpenHandler } from '@/features/chat/history-file/ChatFileOpenHandler';
 import { ChatHistoryFileImporter } from '@/features/chat/history-file/ChatHistoryFileImporter';
 import { HistoryFileWriter } from '@/features/chat/history-file/HistoryFileWriter';
-import { revealWorkspaceLeaf } from '@/utils/obsidianCompat';
 
 import type { ClaudianViews } from './ClaudianViews';
 
@@ -25,7 +24,6 @@ export interface ChatHistoryFileSubsystemDeps {
   isWriteHistoryFileEnabled(): boolean;
   isWriteHistoryFileTextEnabled(): boolean;
   getChatFileCustomFields(): readonly ChatFileCustomField[];
-  getChatFileOpenMode(): ChatFileOpenMode;
   reportError(error: unknown): void;
 }
 
@@ -102,25 +100,11 @@ export class ChatHistoryFileSubsystem {
       reportError: error => deps.reportError(error),
     });
 
-    const { workspace } = deps.app;
     const openHandler = new ChatFileOpenHandler({
       app: deps.app,
-      getMode: () => deps.getChatFileOpenMode(),
       hasConversation: id => deps.conversations.hasLiveConversation(id),
-      revealOpenConversation: async (id) => {
-        const open = deps.views.findConversationAcrossViews(id);
-        const manager = open?.view.getTabManager();
-        if (!open || !manager) return false;
-        await manager.openConversation(id);
-        await revealWorkspaceLeaf(workspace, open.view.leaf);
-        return true;
-      },
-      openConversationInClaudian: async (id) => {
-        await deps.views.activateView();
-        const manager = deps.views.getView()?.getTabManager();
-        if (!manager) throw new Error('Chat view is not ready');
-        await manager.openConversation(id);
-      },
+      revealOpenConversation: id => deps.views.focusConversation(id),
+      openConversationInNewTab: id => deps.views.openConversationInNewTab(id),
     });
 
     return new ChatHistoryFileSubsystem(writer, importer, openHandler, deps);

@@ -4,7 +4,6 @@ import type { ChatViewHost } from '@/features/chat/ChatFeatureHost';
 
 export interface ChatViewPublisherDeps {
   readonly views: { getAllViews(): readonly ChatViewHost[] };
-  readonly zenMode: { reconcile(): void };
   readonly inactiveSessions: { request(): void };
   hasLoadedAllSessionMetadata(): boolean;
 }
@@ -37,7 +36,6 @@ export class ChatViewPublisher {
         if (sessionsChanged) publish(() => view.notifyConversationListChanged());
       }
     }
-    if (settings.enableZenMode !== previous.enableZenMode) publish(() => this.deps.zenMode.reconcile());
     if (
       settings.sessionAutoArchiveAfter !== previous.sessionAutoArchiveAfter
       && this.deps.hasLoadedAllSessionMetadata()

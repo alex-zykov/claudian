@@ -1,4 +1,4 @@
-import { type Keymap, Scope } from 'obsidian';
+import { type Keymap, Scope, setIcon } from 'obsidian';
 
 import type { ProviderId } from '@/core/providers/types';
 import type { ZenModePosition } from '@/core/types';
@@ -21,6 +21,8 @@ export interface ZenModePanelOptions {
   onHistoryExpandedChange(expanded: boolean): void;
   readonly position: ZenModePosition | null;
   onPositionChange(position: ZenModePosition | null): void;
+  /** The user asked to bring the chat back to its tab. */
+  onLeave(): void;
 }
 
 const HOST_CLASS = 'claudian-zen-host';
@@ -93,6 +95,13 @@ export class ZenModePanel {
       },
     });
     this.#disclosureEl.addEventListener('click', () => this.toggleHistoryExpanded());
+    // Beside the preview, inside the drawer that takes clicks, so it needs no surface of its own.
+    const leaveEl = barEl.createEl('button', {
+      cls: 'claudian-zen-leave clickable-icon',
+      attr: { type: 'button', 'aria-label': t('chat.zen.leave') },
+    });
+    setIcon(leaveEl, 'maximize-2');
+    leaveEl.addEventListener('click', () => options.onLeave());
 
     this.#previewIconEl = this.#disclosureEl.createSpan({
       cls: 'claudian-zen-preview-icon claudian-hidden',

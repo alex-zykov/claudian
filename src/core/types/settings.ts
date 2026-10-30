@@ -121,14 +121,6 @@ export interface StoredChatModelSelection {
  * `string` here.  The active provider casts internally when it needs
  * narrower types.
  */
-/**
- * What a `.chat.md` click opens: its conversation in Claudian, placed like any other chat
- * by the view-placement setting, or the file itself as a Markdown note.
- */
-export type ChatFileOpenMode = 'claudian' | 'markdown';
-
-export const CHAT_FILE_OPEN_MODES: readonly ChatFileOpenMode[] = ['claudian', 'markdown'];
-
 export interface ClaudianSettings {
   // User preferences
   userName: string;
@@ -190,12 +182,9 @@ export interface ClaudianSettings {
    * When false, only the frontmatter is written and an existing body is left alone.
    */
   writeHistoryFileText: boolean;
-  /** Where opening a `.chat.md` file shows its conversation. */
-  chatFileOpenMode: ChatFileOpenMode;
   /** Extra frontmatter fields for generated `.chat.md` files; empty by default. */
   chatFileCustomFields: ChatFileCustomField[];
   chatViewPlacement: ChatViewPlacement;
-  enableZenMode: boolean;
   /** Null keeps the zen panel docked. */
   zenModePosition: ZenModePosition | null;
   enableDualPane: boolean;

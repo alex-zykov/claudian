@@ -1,7 +1,6 @@
 import type { App, WorkspaceLeaf } from 'obsidian';
 import { TFile, WorkspaceLeaf as ObsidianWorkspaceLeaf } from 'obsidian';
 
-import type { ChatFileOpenMode } from '@/core/types';
 import {
   ChatFileOpenHandler,
   type ChatFileOpenHandlerDeps,
@@ -25,13 +24,14 @@ function markdownState(file: TFile) {
   return { type: 'markdown', state: { file: file.path }, active: true };
 }
 
-function setup(mode: ChatFileOpenMode, overrides: Partial<ChatFileOpenHandlerDeps> = {}) {
+/** `viewType` is what the clicked leaf shows when Obsidian asks it to open the file. */
+function setup(overrides: Partial<ChatFileOpenHandlerDeps> = {}, viewType: string | null = 'empty') {
   const original = jest.fn(async (..._args: unknown[]) => undefined);
   const detach = jest.fn();
   const previous = ObsidianWorkspaceLeaf.prototype.setViewState;
   ObsidianWorkspaceLeaf.prototype.setViewState = original;
   const leaf = Object.create(ObsidianWorkspaceLeaf.prototype) as WorkspaceLeaf;
-  Object.assign(leaf, { detach });
+  Object.assign(leaf, { detach, view: viewType === null ? undefined : { getViewType: () => viewType } });
 
   const app = {
     vault: {
@@ -49,10 +49,9 @@ function setup(mode: ChatFileOpenMode, overrides: Partial<ChatFileOpenHandlerDep
   } as unknown as App;
   const deps: ChatFileOpenHandlerDeps = {
     app,
-    getMode: () => mode,
     hasConversation: () => true,
     revealOpenConversation: jest.fn(async () => false),
-    openConversationInClaudian: jest.fn(async () => undefined),
+    openConversationInNewTab: jest.fn(async () => undefined),
     ...overrides,
   };
   const handler = new ChatFileOpenHandler(deps);
@@ -71,64 +70,70 @@ function setup(mode: ChatFileOpenMode, overrides: Partial<ChatFileOpenHandlerDep
 }
 
 describe('ChatFileOpenHandler', () => {
-  describe('claudian', () => {
-    it('opens the conversation in the placed chat view and closes the file leaf', async () => {
-      const { deps, leaf, original, detach, restore } = setup('claudian');
+  it('opens the conversation in a new tab and drops the blank tab Obsidian made for the file', async () => {
+    const { deps, leaf, original, detach, restore } = setup();
 
-      await leaf.setViewState(markdownState(chatFile));
+    await leaf.setViewState(markdownState(chatFile));
 
-      expect(deps.openConversationInClaudian).toHaveBeenCalledWith('conv-open-1');
-      expect(original).not.toHaveBeenCalled();
-      expect(detach).toHaveBeenCalledTimes(1);
-      restore();
-    });
-
-    it('reveals a conversation that is already open instead of opening it again', async () => {
-      const { deps, leaf, original, detach, restore } = setup('claudian', {
-        revealOpenConversation: jest.fn(async () => true),
-      });
-
-      await leaf.setViewState(markdownState(chatFile));
-
-      expect(deps.revealOpenConversation).toHaveBeenCalledWith('conv-open-1');
-      expect(deps.openConversationInClaudian).not.toHaveBeenCalled();
-      expect(original).not.toHaveBeenCalled();
-      expect(detach).toHaveBeenCalledTimes(1);
-      restore();
-    });
-
-    it('keeps the markdown view when opening the conversation fails', async () => {
-      const { leaf, original, detach, restore } = setup('claudian', {
-        openConversationInClaudian: jest.fn(async () => { throw new Error('open failed'); }),
-      });
-
-      await leaf.setViewState(markdownState(chatFile));
-
-      expect(original).toHaveBeenCalledTimes(1);
-      expect(original).toHaveBeenCalledWith(markdownState(chatFile));
-      expect(detach).not.toHaveBeenCalled();
-      restore();
-    });
+    expect(deps.openConversationInNewTab).toHaveBeenCalledWith('conv-open-1');
+    expect(original).not.toHaveBeenCalled();
+    expect(detach).toHaveBeenCalledTimes(1);
+    restore();
   });
 
-  it.each([
-    ['markdown mode', 'markdown' as const, {}],
-    ['an unknown conversation', 'claudian' as const, { hasConversation: (): boolean => false }],
-  ])('keeps the markdown view for %s', async (_label, mode, overrides) => {
-    const { deps, leaf, original, detach, restore } = setup(mode, overrides);
+  it('leaves a note alone when the click would have replaced it', async () => {
+    const { deps, leaf, original, detach, restore } = setup({}, 'markdown');
+
+    await leaf.setViewState(markdownState(chatFile));
+
+    expect(deps.openConversationInNewTab).toHaveBeenCalledWith('conv-open-1');
+    expect(original).not.toHaveBeenCalled();
+    expect(detach).not.toHaveBeenCalled();
+    restore();
+  });
+
+  it('focuses a conversation that is already open instead of opening it again', async () => {
+    const { deps, leaf, original, detach, restore } = setup({
+      revealOpenConversation: jest.fn(async () => true),
+    });
+
+    await leaf.setViewState(markdownState(chatFile));
+
+    expect(deps.revealOpenConversation).toHaveBeenCalledWith('conv-open-1');
+    expect(deps.openConversationInNewTab).not.toHaveBeenCalled();
+    expect(original).not.toHaveBeenCalled();
+    expect(detach).toHaveBeenCalledTimes(1);
+    restore();
+  });
+
+  it('keeps the markdown view when opening the conversation fails', async () => {
+    const { leaf, original, detach, restore } = setup({
+      openConversationInNewTab: jest.fn(async () => { throw new Error('open failed'); }),
+    });
 
     await leaf.setViewState(markdownState(chatFile));
 
     expect(original).toHaveBeenCalledTimes(1);
     expect(original).toHaveBeenCalledWith(markdownState(chatFile));
-    expect(deps.openConversationInClaudian).not.toHaveBeenCalled();
+    expect(detach).not.toHaveBeenCalled();
+    restore();
+  });
+
+  it('keeps the markdown view for a chat file whose conversation is unknown', async () => {
+    const { deps, leaf, original, detach, restore } = setup({ hasConversation: () => false });
+
+    await leaf.setViewState(markdownState(chatFile));
+
+    expect(original).toHaveBeenCalledTimes(1);
+    expect(original).toHaveBeenCalledWith(markdownState(chatFile));
+    expect(deps.openConversationInNewTab).not.toHaveBeenCalled();
     expect(detach).not.toHaveBeenCalled();
     restore();
   });
 
   describe('openAsMarkdown', () => {
     function withWorkspace() {
-      const harness = setup('claudian');
+      const harness = setup();
       const fileLeaf = harness.leaf;
       const openFile = jest.fn(async (file: TFile) => {
         await fileLeaf.setViewState(markdownState(file));
@@ -146,7 +151,7 @@ describe('ChatFileOpenHandler', () => {
 
       expect(openFile).toHaveBeenCalledWith(chatFile);
       expect(original).toHaveBeenCalledWith(markdownState(chatFile));
-      expect(deps.openConversationInClaudian).not.toHaveBeenCalled();
+      expect(deps.openConversationInNewTab).not.toHaveBeenCalled();
       expect(detach).not.toHaveBeenCalled();
       restore();
     });
@@ -158,7 +163,7 @@ describe('ChatFileOpenHandler', () => {
 
       await leaf.setViewState(markdownState(chatFile));
 
-      expect(deps.openConversationInClaudian).toHaveBeenCalledWith('conv-open-1');
+      expect(deps.openConversationInNewTab).toHaveBeenCalledWith('conv-open-1');
       expect(original).not.toHaveBeenCalled();
       expect(detach).toHaveBeenCalledTimes(1);
       restore();
@@ -166,7 +171,7 @@ describe('ChatFileOpenHandler', () => {
   });
 
   it('forwards ordinary setViewState with the calling leaf as this', async () => {
-    const { leaf, original, restore } = setup('claudian');
+    const { leaf, original, restore } = setup();
 
     await leaf.setViewState(markdownState(note));
 
@@ -176,7 +181,7 @@ describe('ChatFileOpenHandler', () => {
   });
 
   it('restores the original setViewState on uninstall', () => {
-    const { handler, original, restore } = setup('claudian');
+    const { handler, original, restore } = setup();
     expect(ObsidianWorkspaceLeaf.prototype.setViewState).not.toBe(original);
     handler.uninstall();
     expect(ObsidianWorkspaceLeaf.prototype.setViewState).toBe(original);

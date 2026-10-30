@@ -12,7 +12,6 @@ import { ProviderSettingsCoordinator } from '@/core/providers/ProviderSettingsCo
 import { ProviderWorkspaceRegistry } from '@/core/providers/ProviderWorkspaceRegistry';
 import type { ProviderId, ProviderSettingsTabRenderHandle } from '@/core/providers/types';
 import {
-  CHAT_FILE_OPEN_MODES,
   type ChatViewPlacement,
   type ClaudianSettings,
   type DualPaneSide,
@@ -285,19 +284,6 @@ export class ClaudianSettingTab extends PluginSettingTab {
       });
 
     new Setting(container)
-      .setName(t('settings.enableZenMode.name'))
-      .setDesc(t('settings.enableZenMode.desc'))
-      .addToggle((toggle) =>
-        toggle
-          .setValue(this.host.settings.enableZenMode)
-          .onChange(async (value) => {
-            await this.host.mutateSettings((settings) => {
-              settings.enableZenMode = value;
-            });
-          })
-      );
-
-    new Setting(container)
       .setName(t('settings.enableDualPane.name'))
       .setDesc(t('settings.enableDualPane.desc'))
       .addToggle((toggle) =>
@@ -439,21 +425,6 @@ export class ClaudianSettingTab extends PluginSettingTab {
       );
 
     this.renderChatFileFields(container);
-
-    new Setting(container)
-      .setName(t('settings.chatFileOpenMode.name'))
-      .setDesc(t('settings.chatFileOpenMode.desc'))
-      .addDropdown((dropdown) => {
-        dropdown.addOption('claudian', t('settings.chatFileOpenMode.options.claudian'));
-        dropdown.addOption('markdown', t('settings.chatFileOpenMode.options.markdown'));
-        dropdown.setValue(this.host.settings.chatFileOpenMode ?? 'claudian');
-        dropdown.onChange(async (value) => {
-          await this.host.mutateSettings((settings) => {
-            settings.chatFileOpenMode = CHAT_FILE_OPEN_MODES.find(mode => mode === value)
-              ?? 'claudian';
-          });
-        });
-      });
 
     if (this.host.settings.enableAutoTitleGeneration) {
       new Setting(container)

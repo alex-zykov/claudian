@@ -9,23 +9,30 @@ function setup() {
     handleNewConversationCommand: jest.fn(async () => false),
     createNewTab: jest.fn(async () => null),
   } as unknown as ChatViewHost;
+  const openNewTab = jest.fn(async () => undefined);
   const commands = createChatTabCommands({
     workspace: { getLeavesOfType: () => [] } as unknown as Pick<Workspace, 'getLeavesOfType'>,
-    views: { getView: () => view, activateView: jest.fn(async () => undefined) },
+    views: { getView: () => view },
+    openNewTab,
   });
-  const newTab = commands.find(command => command.id === 'new-tab') as Required<Pick<Command, 'checkCallback'>>;
-  return { newTab, view };
+  const newTab = commands.find(command => command.id === 'new-tab') as Required<Pick<Command, 'callback'>>;
+  return { newTab, view, openNewTab };
 }
 
-const flush = () => new Promise(resolve => window.setTimeout(resolve, 0));
-
 describe('createChatTabCommands new chat', () => {
-  it('opens the new chat as a tab inside the chat view', async () => {
-    const { newTab, view } = setup();
+  it('opens a new Claudian tab where the default placement says, not a tab inside the last chat', async () => {
+    const { newTab, view, openNewTab } = setup();
 
-    expect(newTab.checkCallback(false)).toBe(true);
-    await flush();
+    await newTab.callback();
 
-    expect(view.createNewTab).toHaveBeenCalledTimes(1);
+    expect(openNewTab).toHaveBeenCalledTimes(1);
+    expect(view.createNewTab).not.toHaveBeenCalled();
+    expect(view.handleNewConversationCommand).not.toHaveBeenCalled();
+  });
+
+  it('is named for what it does', () => {
+    const { newTab } = setup();
+
+    expect((newTab as Command).name).toBe('New Claudian tab');
   });
 });

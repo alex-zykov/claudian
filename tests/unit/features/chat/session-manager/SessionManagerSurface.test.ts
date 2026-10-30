@@ -95,7 +95,7 @@ function createHarness(options: HarnessOptions = {}) {
       { notifyConversationListChanged: () => surface.invalidate() },
       { notifyConversationListChanged: notifyOtherViews },
     ] as never },
-    zenMode: { reconcile: jest.fn() }, inactiveSessions: { request: jest.fn() },
+    inactiveSessions: { request: jest.fn() },
     hasLoadedAllSessionMetadata: () => true,
   });
   const sidebarEl = createMockEl();

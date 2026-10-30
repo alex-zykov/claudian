@@ -1,6 +1,6 @@
 import { createClaudianView } from '@test/helpers/features/chat/ClaudianViewHarness';
 import { createMockEl } from '@test/helpers/MockElement';
-import { Platform, Scope } from 'obsidian';
+import { Notice, Platform, Scope } from 'obsidian';
 
 import { ProviderSettingsCoordinator } from '@/core/providers/ProviderSettingsCoordinator';
 import { SessionBrowser } from '@/features/chat/session-manager/SessionBrowser';
@@ -48,6 +48,7 @@ function createFakeTabManager(overrides: Record<string, unknown> = {}): any {
     discardProvisionalTabs: jest.fn().mockResolvedValue(undefined),
     drainForShutdownSnapshot: jest.fn().mockResolvedValue(undefined),
     getActiveTab: jest.fn().mockReturnValue(null),
+    getActiveTabId: jest.fn().mockReturnValue(null),
     getAllTabs: jest.fn().mockReturnValue([]),
     getPersistedState: jest.fn().mockReturnValue({ activeTabId: null, openTabs: [] }),
     getTab: jest.fn().mockReturnValue(null),
@@ -317,6 +318,36 @@ describe('ClaudianView tab controls', () => {
     expect(historyContainer.querySelector('.claudian-history-menu')?.hasClass('visible')).toBe(true);
   });
 
+  describe('zen button', () => {
+    it('floats the chat and brings it back, keeping the request in the view state', async () => {
+      const { contentEl, view } = await openView();
+      const button = contentEl.querySelector('.claudian-zen-btn')!;
+
+      expect(button.getAttribute('aria-label')).toBe('Float this chat (zen mode)');
+      expect(view.isZenRequested()).toBe(false);
+
+      button.click();
+      expect(view.isZenRequested()).toBe(true);
+      expect(view.getState()).toMatchObject({ claudianZen: true });
+      expect(contentEl.hasClass('claudian-zen-active')).toBe(true);
+      expect(button.hasClass('is-active')).toBe(true);
+
+      button.click();
+      expect(view.isZenRequested()).toBe(false);
+      expect(view.getState()).not.toHaveProperty('claudianZen');
+      expect(contentEl.hasClass('claudian-zen-active')).toBe(false);
+    });
+
+    it('restores the request from the saved view state', async () => {
+      const { contentEl, view } = await openView();
+
+      await view.setState({ claudianZen: true }, { history: false });
+
+      expect(view.isZenRequested()).toBe(true);
+      expect(contentEl.hasClass('claudian-zen-active')).toBe(true);
+    });
+  });
+
   describe('move to main area button', () => {
     function appWithSplits(leftSplit: unknown) {
       return {
@@ -360,6 +391,20 @@ describe('ClaudianView tab controls', () => {
       expect(button.hasClass('claudian-hidden')).toBe(false);
       expect(moveView).toHaveBeenCalledWith(view, 'main');
     });
+  });
+
+  it('says why New conversation does nothing while an answer is running', async () => {
+    const manager = createFakeTabManager();
+    const { contentEl } = await openView({ manager });
+    // The turn starts after the view is up, so the rest of the view never sees this partial tab.
+    manager.getActiveTab.mockReturnValue({ session: { hasActiveTurn: true } });
+    (Notice as unknown as jest.Mock).mockClear();
+
+    contentEl.querySelector('.claudian-new-conversation-btn')!.click();
+    await Promise.resolve();
+
+    expect(manager.createNewConversation).not.toHaveBeenCalled();
+    expect(Notice).toHaveBeenCalledWith('Stop the running answer or wait for it to finish before starting a new conversation.');
   });
 
   it('keeps tab controls in the view-owned input row', async () => {
@@ -595,8 +640,10 @@ describe('ClaudianView dual-pane wiring', () => {
     const { contentEl, view } = await openView();
 
     // CSS positions the column by this order: chat panel, resizer, then the sidebar.
-    expect(contentEl.children).toHaveLength(3);
-    const [chatPanel, resizer, sidebar] = contentEl.children;
+    // The pane that stands in for a floating chat comes last and stays hidden until then.
+    expect(contentEl.children).toHaveLength(4);
+    const [chatPanel, resizer, sidebar, zenPlaceholder] = contentEl.children;
+    expect(zenPlaceholder.hasClass('claudian-zen-placeholder')).toBe(true);
     expect(chatPanel.hasClass('claudian-chat-panel')).toBe(true);
     expect(resizer.hasClass('claudian-session-resizer')).toBe(true);
     expect(resizer.getAttribute('role')).toBe('separator');

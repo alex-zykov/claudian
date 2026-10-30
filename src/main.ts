@@ -8,7 +8,7 @@ import './providers';
 
 StartupProfiler.finishModuleEvaluation();
 
-import { Notice, Plugin } from 'obsidian';
+import { Notice, Platform, Plugin } from 'obsidian';
 
 import type { NativeSessionArchiveSync } from './app/conversations/NativeSessionArchiveSync';
 import type { SessionMetadataLoader } from './app/conversations/SessionMetadataLoader';
@@ -71,7 +71,6 @@ export default class ClaudianPlugin extends Plugin {
   private readonly inlineEditSessions = new InlineEditSessionOwner();
   private readonly zenMode = new ZenModeController({
     app: this.app,
-    isEnabled: () => this.settings.enableZenMode,
     getPosition: () => this.settings.zenModePosition,
     savePosition: (position) => {
       // A failed write restores the committed position; the panel stays where it was dropped.
@@ -80,7 +79,6 @@ export default class ClaudianPlugin extends Plugin {
   });
   private readonly chatViews = new ChatViewPublisher({
     views: this.views,
-    zenMode: this.zenMode,
     inactiveSessions: { request: () => this.inactiveSessionArchiver.request() },
     hasLoadedAllSessionMetadata: () => this.sessionMetadata.hasLoadedAll,
   });
@@ -113,8 +111,8 @@ export default class ClaudianPlugin extends Plugin {
       this.vaultContentEvents.register(eventRef => this.registerEvent(eventRef));
       this.chatHistoryFiles.register(eventRef => this.registerEvent(eventRef));
 
-      this.addRibbonIcon('bot', 'Open Claudian', () => {
-        void this.views.activateView();
+      this.addRibbonIcon('bot', 'New Claudian tab', () => {
+        void this.views.openNewTab();
       });
 
       this.addCommand({
@@ -134,6 +132,7 @@ export default class ClaudianPlugin extends Plugin {
       for (const command of createChatTabCommands({
         workspace: this.app.workspace,
         views: this.views,
+        openNewTab: () => this.views.openNewTab(),
       })) {
         this.addCommand(command);
       }
@@ -141,6 +140,16 @@ export default class ClaudianPlugin extends Plugin {
         () => this.views.getInputFocusView(this.zenMode.getActiveLeaf())?.getActiveTab()?.composer ?? null,
       ));
       this.addCommand(this.zenMode.createToggleHistoryCommand());
+      this.addCommand({
+        id: 'toggle-zen-mode',
+        name: 'Toggle zen mode for this chat',
+        checkCallback: (checking: boolean) => {
+          const view = this.views.getView();
+          if (!view || Platform.isMobile) return false;
+          if (!checking) view.toggleZen();
+          return true;
+        },
+      });
 
       this.addCommand({
         id: 'copy-startup-diagnostics',
@@ -287,7 +296,6 @@ export default class ClaudianPlugin extends Plugin {
       isWriteHistoryFileEnabled: () => this.settings.writeHistoryFile === true,
       isWriteHistoryFileTextEnabled: () => this.settings.writeHistoryFileText !== false,
       getChatFileCustomFields: () => this.settings.chatFileCustomFields,
-      getChatFileOpenMode: () => this.settings.chatFileOpenMode,
       reportError: () => {
         new Notice('Chat history file operation failed');
       },

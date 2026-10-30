@@ -88,6 +88,7 @@ describe('ChatViewHeader', () => {
     let folder = 'Projects/A';
     let side: 'left' | 'right' | 'main' = 'main';
     let hasFile = true;
+    let zen = false;
     const actions = new Map<string, HTMLElement>();
     const addAction = jest.fn((icon: string, _title: string, onClick: () => void) => {
       const el = document.createElement('div');
@@ -107,6 +108,7 @@ describe('ChatViewHeader', () => {
       moveToSide: jest.fn(async () => true),
       onMoveRefused: jest.fn(),
       hasChatFile: () => hasFile,
+      isZenActive: () => zen,
       openChatFile: jest.fn(async () => true),
       onEditRefused: jest.fn(),
       ...overrides,
@@ -122,6 +124,7 @@ describe('ChatViewHeader', () => {
       setFolder: (value: string) => { folder = value; },
       setSide: (value: typeof side) => { side = value; },
       setHasFile: (value: boolean) => { hasFile = value; },
+      setZen: (value: boolean) => { zen = value; },
     };
   }
 
@@ -227,6 +230,17 @@ describe('ChatViewHeader', () => {
     await Promise.resolve();
 
     expect(deps.onEditRefused).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides every header button while the chat floats in the zen window', () => {
+    const { header, actions, setZen } = setup();
+    setZen(true);
+
+    header.refresh();
+
+    for (const icon of ['panel-left', 'file-pen', 'panel-right']) {
+      expect(actions.get(icon)!.classList.contains('claudian-hidden')).toBe(true);
+    }
   });
 
   it('tells the user when the move is refused', async () => {

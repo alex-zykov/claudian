@@ -86,6 +86,7 @@ function createWorkspace() {
     getLeavesOfType: () => leaves,
     getActiveViewOfType: jest.fn(),
     getActiveFile: () => null,
+    requestSaveLayout: () => undefined,
     revealLeaf: jest.fn(async (leaf: Leaf) => {
       const root = leaf.getRoot() as Split;
       root.collapsed = false;
@@ -97,24 +98,39 @@ function createWorkspace() {
     pushScope: (scope: unknown) => { scopes.push(scope); },
     popScope: (scope: unknown) => { scopes.splice(scopes.indexOf(scope), 1); },
   };
+  /**
+   * Collapsing a sidebar no longer floats a chat by itself. These tests keep driving zen through
+   * it, so collapsing sends the chats of that sidebar to the zen window and expanding sends them back.
+   */
   const setCollapsed = (split: Split, collapsed: boolean) => {
+    split.collapsed = collapsed;
+    split.containerEl.hidden = collapsed;
+    for (const leaf of leaves) {
+      const view = leaf.view as { isZenRequested?: () => boolean; toggleZen?: () => void; leaveZen?: () => void } | null;
+      if (!view?.toggleZen || leaf.getRoot() !== split) continue;
+      if (collapsed && !view.isZenRequested?.()) view.toggleZen();
+      if (!collapsed) view.leaveZen?.();
+    }
+    workspace.trigger('resize');
+  };
+  /** Collapses a sidebar the way the user does, without asking any chat to float. */
+  const collapseOnly = (split: Split, collapsed: boolean) => {
     split.collapsed = collapsed;
     split.containerEl.hidden = collapsed;
     workspace.trigger('resize');
   };
-  return { workspace, keymap, scopes, rootEl, rootSplit, leftSplit, rightSplit, noteEditor, leaves, setCollapsed };
+  return { workspace, keymap, scopes, rootEl, rootSplit, leftSplit, rightSplit, noteEditor, leaves, setCollapsed, collapseOnly };
 }
 
-function createSettings(enabled: boolean): ClaudianSettings {
+function createSettings(): ClaudianSettings {
   const entry = modelCatalogCases.find(candidate => candidate.id === 'claude')!;
   const settings = JSON.parse(JSON.stringify(DEFAULT_CLAUDIAN_SETTINGS)) as ClaudianSettings;
   entry.populate(settings);
-  settings.enableZenMode = enabled;
   return settings;
 }
 
-async function createZenFixture(options: { enabled?: boolean; ready?: boolean } = {}) {
-  const settings = createSettings(options.enabled ?? true);
+async function createZenFixture(options: { ready?: boolean } = {}) {
+  const settings = createSettings();
   const harness = createHarness({ settings: settings as unknown as Record<string, unknown> });
   ProviderWorkspaceRegistry.setServices('claude', {});
   const app = new App();
@@ -134,7 +150,6 @@ async function createZenFixture(options: { enabled?: boolean; ready?: boolean } 
   const conversations: Conversation[] = [];
   const zen = new ZenModeController({
     app,
-    isEnabled: (): boolean => settingsCoordinator.getCommittedSettings().enableZenMode,
     getPosition: () => settingsCoordinator.getCommittedSettings().zenModePosition,
     savePosition: (position) => {
       void settingsCoordinator.mutate((draft) => { draft.zenModePosition = position; });
@@ -215,8 +230,10 @@ async function createZenFixture(options: { enabled?: boolean; ready?: boolean } 
     cleanups.push(() => destroyTab(tab));
     view.tabManager = {
       getActiveTab: () => tab,
+      getActiveTabId: () => tab.id,
       getTab: (id: string) => id === tab.id ? tab : null,
       getTabCount: () => 1,
+      switchToTab: async () => undefined,
     };
 
     Object.assign(view.tabWorkspace, { lifecycleRevision: 1, initializedRevision: ready ? 1 : -1 });
@@ -297,23 +314,62 @@ it('follows the view brand provider after it changes while zen is open', async (
   expect(zenPanel()!.dataset.provider).toBe('codex');
 });
 
-it.each([
-  ['the setting is off', { enabled: false }, 'right'],
-  ['only the other sidebar collapses', {}, 'left'],
-])('does not activate when %s', async (_label, options, collapse) => {
-  const fixture = await createZenFixture(options);
-  fixture.setCollapsed(collapse === 'left' ? fixture.leftSplit : fixture.rightSplit, true);
+it('does not float a chat just because a sidebar collapses', async () => {
+  const fixture = await createZenFixture();
+  fixture.collapseOnly(fixture.rightSplit, true);
   expect(zenPanel()).toBeNull();
   expect(fixture.tab.dom.inputComposerEl.parentElement).toBe(fixture.activeInputSlotEl);
 });
 
-it('ignores a chat in the central workspace', async () => {
+it('floats a chat that sits in the central workspace and brings it back', async () => {
   const fixture = await createZenFixture({ ready: false });
   const central = await fixture.addView('main');
-  fixture.setCollapsed(fixture.rightSplit, true);
-  fixture.setCollapsed(fixture.leftSplit, true);
+
+  central.view.toggleZen();
+  expect(zenPanel()!.contains(central.tab.dom.inputComposerEl)).toBe(true);
+  expect(central.view.viewContainerEl.classList.contains('claudian-zen-active')).toBe(true);
+
+  central.view.toggleZen();
   expect(zenPanel()).toBeNull();
   expect(central.tab.dom.inputComposerEl.parentElement).toBe(central.activeInputSlotEl);
+  expect(central.view.viewContainerEl.classList.contains('claudian-zen-active')).toBe(false);
+});
+
+it('leaves the zen window from its own button and from the placeholder pane', async () => {
+  const fixture = await createZenFixture();
+  fixture.view.toggleZen();
+  fireEvent.click(within(zenPanel()!).getByRole('button', { name: 'Leave zen mode' }));
+  expect(zenPanel()).toBeNull();
+  expect(fixture.view.isZenRequested()).toBe(false);
+
+  fixture.view.toggleZen();
+  fireEvent.click(within(fixture.view.viewContainerEl).getByRole('button', { name: 'Leave zen mode' }));
+  expect(zenPanel()).toBeNull();
+  expect(fixture.view.isZenRequested()).toBe(false);
+});
+
+it('hides the tab header and shows the placeholder only while the chat floats', async () => {
+  const fixture = await createZenFixture();
+  const tabHeaderEl = document.body.createDiv();
+  (fixture.leaf as unknown as { tabHeaderEl: HTMLElement }).tabHeaderEl = tabHeaderEl;
+
+  fixture.view.toggleZen();
+  expect(tabHeaderEl.classList.contains('claudian-tab-header--zen')).toBe(true);
+
+  fixture.view.leaveZen();
+  expect(tabHeaderEl.classList.contains('claudian-tab-header--zen')).toBe(false);
+});
+
+it('keeps the request in the view state so it survives a restart', async () => {
+  const fixture = await createZenFixture();
+  fixture.view.tabManager.getPersistedState = () => ({ openTabs: [], activeTabId: null });
+  expect(fixture.view.getState()).not.toHaveProperty('claudianZen');
+
+  fixture.view.toggleZen();
+  expect(fixture.view.getState()).toMatchObject({ claudianZen: true });
+
+  fixture.view.leaveZen();
+  expect(fixture.view.getState()).not.toHaveProperty('claudianZen');
 });
 
 it('waits for ordinary restoration before presenting an already collapsed sidebar', async () => {
@@ -329,64 +385,77 @@ it('waits for ordinary restoration before presenting an already collapsed sideba
   expect(fixture.sessions).toHaveLength(0);
 });
 
-it('loads a chat that Obsidian deferred in an already collapsed sidebar', async () => {
+it('loads a requesting chat that Obsidian deferred', async () => {
   const fixture = await createZenFixture();
   let loaded: Awaited<ReturnType<typeof fixture.addView>> | null = null;
   const deferred: Leaf = {
     view: {},
     getRoot: () => fixture.leftSplit,
     isDeferred: true,
+    getViewState: () => ({ state: { claudianZen: true } }),
     loadIfDeferred: jest.fn(async () => {
       fixture.leaves.splice(fixture.leaves.indexOf(deferred), 1);
       loaded = await fixture.addView('left');
+      // The view restores the request from its saved state.
+      loaded.view.toggleZen();
     }),
-  };
+  } as Leaf;
   fixture.leaves.push(deferred);
 
-  // Nothing collapsed, or the setting off, leaves the deferred chat alone.
   fixture.workspace.trigger('layout-change');
-  await fixture.settingsCoordinator.mutate(settings => { settings.enableZenMode = false; });
-  fixture.setCollapsed(fixture.leftSplit, true);
-  expect(deferred.loadIfDeferred).not.toHaveBeenCalled();
-
-  await fixture.settingsCoordinator.mutate(settings => { settings.enableZenMode = true; });
-  fixture.workspace.trigger('resize');
   expect(deferred.loadIfDeferred).toHaveBeenCalledTimes(1);
 
   await waitFor(() => expect(loaded).not.toBeNull());
   expect(zenPanel()!.contains(loaded!.tab.dom.inputComposerEl)).toBe(true);
+  fixture.workspace.trigger('layout-change');
   expect(deferred.loadIfDeferred).toHaveBeenCalledTimes(1);
 });
 
-it('prefers a loaded chat over loading a deferred one', async () => {
+it('leaves a deferred chat alone unless it asked for the zen window', async () => {
   const fixture = await createZenFixture();
   const deferred: Leaf = {
     view: {},
     getRoot: () => fixture.leftSplit,
     isDeferred: true,
+    getViewState: () => ({ state: {} }),
     loadIfDeferred: jest.fn(async () => undefined),
-  };
+  } as Leaf;
   fixture.leaves.push(deferred);
-  fixture.setCollapsed(fixture.rightSplit, true);
-  fixture.setCollapsed(fixture.leftSplit, true);
+
+  fixture.workspace.trigger('layout-change');
+
+  expect(deferred.loadIfDeferred).not.toHaveBeenCalled();
+});
+
+it('prefers a loaded requesting chat over loading a deferred one', async () => {
+  const fixture = await createZenFixture();
+  const deferred: Leaf = {
+    view: {},
+    getRoot: () => fixture.leftSplit,
+    isDeferred: true,
+    getViewState: () => ({ state: { claudianZen: true } }),
+    loadIfDeferred: jest.fn(async () => undefined),
+  } as Leaf;
+  fixture.leaves.push(deferred);
+  fixture.view.toggleZen();
 
   expect(zenPanel()!.contains(fixture.tab.dom.inputComposerEl)).toBe(true);
   expect(deferred.loadIfDeferred).not.toHaveBeenCalled();
 });
 
-it('applies committed setting changes without reopening the sidebar or touching execution', async () => {
+it('returns to its tab and floats again without reopening anything or touching execution', async () => {
   const fixture = await createZenFixture();
-  const { tab, sessions, settingsCoordinator } = fixture;
+  const { tab, sessions, view } = fixture;
   fixture.setCollapsed(fixture.rightSplit, true);
   const session = await sendFromZen(tab, sessions, 'Keep working');
   tab.dom.inputEl.value = 'Unsent draft';
 
-  await settingsCoordinator.mutate(settings => { settings.enableZenMode = false; });
+  view.leaveZen();
   expect(zenPanel()).toBeNull();
   expect(fixture.rightSplit.collapsed).toBe(true);
   expect(tab.dom.inputComposerEl.parentElement).toBe(fixture.activeInputSlotEl);
 
-  await settingsCoordinator.mutate(settings => { settings.enableZenMode = true; });
+  view.toggleZen();
   expect(zenPanel()!.contains(tab.dom.inputComposerEl)).toBe(true);
   expect(tab.dom.inputEl.value).toBe('Unsent draft');
   expect(tab.state.isStreaming).toBe(true);
@@ -660,7 +729,7 @@ it('offers no history for a new conversation until it has messages', async () =>
   expect(disclosure.classList.contains('claudian-hidden')).toBe(false);
   // The whole preview line is the disclosure control, and the drawer holds nothing else.
   expect(disclosure.contains(panel.querySelector('.claudian-zen-preview'))).toBe(true);
-  expect(panel.querySelector('.claudian-zen-bar')!.children).toHaveLength(1);
+  expect(panel.querySelector('.claudian-zen-bar')!.children).toHaveLength(2);
   fireEvent.click(panel.querySelector('.claudian-zen-preview')!);
   expect(disclosure.getAttribute('aria-expanded')).toBe('true');
   expect(history.classList.contains('claudian-hidden')).toBe(false);
@@ -761,8 +830,8 @@ it('follows chat state while transcript rendering is suspended', async () => {
   await waitFor(() => expect(tab.state.isStreaming).toBe(false));
 });
 
-it.each([true, false])('toggles the normal sidebar composer with zen enabled=%s', async (enabled) => {
-  const { focusCommand: command, tab, noteEditor, rightSplit, sessions } = await createZenFixture({ enabled });
+it('toggles the normal sidebar composer while no chat floats', async () => {
+  const { focusCommand: command, tab, noteEditor, rightSplit, sessions } = await createZenFixture();
   noteEditor.value = 'Selected note text';
   noteEditor.focus();
   noteEditor.setSelectionRange(2, 7);
@@ -801,14 +870,14 @@ it('focuses the selected normal chat view and keeps its return target independen
 });
 
 it('leaves focus alone when there is no existing composer or its sidebar is collapsed without zen', async () => {
-  const { focusCommand, noteEditor, rightSplit, setCollapsed, leaves, view } = await createZenFixture({ enabled: false });
+  const { focusCommand, noteEditor, rightSplit, collapseOnly, leaves, view } = await createZenFixture();
   noteEditor.focus();
-  setCollapsed(rightSplit, true);
+  collapseOnly(rightSplit, true);
   expect(focusCommand.checkCallback!(true)).toBe(false);
   expect(focusCommand.checkCallback!(false)).toBe(false);
   expect(document.activeElement).toBe(noteEditor);
   expect(rightSplit.collapsed).toBe(true);
-  setCollapsed(rightSplit, false);
+  collapseOnly(rightSplit, false);
   expect(focusCommand.checkCallback!(true)).toBe(true);
   view.tabManager = null;
   expect(focusCommand.checkCallback!(true)).toBe(false);
@@ -818,7 +887,7 @@ it('leaves focus alone when there is no existing composer or its sidebar is coll
 });
 
 it.each(['display', 'visibility', 'opacity', 'detached'])('skips a composer hidden by %s and rejects the command if none remain visible', async (reason) => {
-  const { focusCommand, addView, view, noteEditor, leftSplit, setCollapsed } = await createZenFixture({ enabled: false });
+  const { focusCommand, addView, view, noteEditor, leftSplit, collapseOnly } = await createZenFixture();
   const other = await addView('left');
   noteEditor.focus();
   expect(focusCommand.checkCallback!(true)).toBe(true);
@@ -831,14 +900,14 @@ it.each(['display', 'visibility', 'opacity', 'detached'])('skips a composer hidd
   expect(document.activeElement).toBe(within(other.tab.dom.inputComposerEl).getByRole('textbox', { name: 'Message' }));
   focusCommand.checkCallback!(false);
   expect(document.activeElement).toBe(noteEditor);
-  setCollapsed(leftSplit, true);
+  collapseOnly(leftSplit, true);
   expect(focusCommand.checkCallback!(true)).toBe(false);
   expect(focusCommand.checkCallback!(false)).toBe(false);
   expect(document.activeElement).toBe(noteEditor);
 });
 
 it('toggles focus between the attached zen composer and the previous control without changing drafts or execution', async () => {
-  const { focusCommand: command, tab, sessions, rightSplit, setCollapsed, noteEditor, scopes, settingsCoordinator } = await createZenFixture();
+  const { focusCommand: command, tab, sessions, rightSplit, setCollapsed, collapseOnly, noteEditor, scopes, view } = await createZenFixture();
   noteEditor.value = 'A note selection';
   noteEditor.focus();
   noteEditor.setSelectionRange(2, 6);
@@ -875,7 +944,8 @@ it('toggles focus between the attached zen composer and the previous control wit
   expect(document.activeElement).toBe(otherControl);
 
   noteEditor.focus();
-  await settingsCoordinator.mutate(settings => { settings.enableZenMode = false; });
+  view.leaveZen();
+  collapseOnly(rightSplit, true);
   expect(command.checkCallback!(false)).toBe(false);
   expect(document.activeElement).toBe(noteEditor);
   expect(scopes).toHaveLength(0);
@@ -1407,28 +1477,80 @@ it('keeps a pending approval actionable while history is collapsed', async () =>
   session.complete();
 });
 
-it('presents one source across multiple views and hands over when it reopens', async () => {
+it('keeps floating the chat it was started on when another tab of the view becomes active', async () => {
+  const fixture = await createZenFixture();
+  const { view, tab } = fixture;
+  const other = { ...tab, id: 'other-tab', zenPresentation: { ...tab.zenPresentation } } as unknown as typeof tab;
+  let activeId = tab.id;
+  view.tabManager.getActiveTab = () => (activeId === tab.id ? tab : other);
+  view.tabManager.getActiveTabId = () => activeId;
+  view.tabManager.getTab = (id: string) => (id === tab.id ? tab : id === 'other-tab' ? other : null);
+
+  view.toggleZen();
+  activeId = 'other-tab';
+  view.presentation.update();
+  view.notifyZenPresentationChanged();
+
+  expect(zenPanel()!.contains(tab.dom.inputComposerEl)).toBe(true);
+  expect(view.getZenPresentation()).toBe(tab.zenPresentation);
+});
+
+it('remembers which chat floats in the view state', async () => {
+  const fixture = await createZenFixture();
+  fixture.view.tabManager.getPersistedState = () => ({ openTabs: [], activeTabId: null });
+  fixture.view.tabManager.getActiveTabId = () => fixture.tab.id;
+
+  fixture.view.toggleZen();
+
+  expect(fixture.view.getState()).toMatchObject({ claudianZen: true, claudianZenTab: fixture.tab.id });
+});
+
+it('puts the focus on the restored chat when the user leaves zen', async () => {
+  const fixture = await createZenFixture();
+  const { view, tab, workspace } = fixture;
+  view.tabManager.getActiveTabId = () => tab.id;
+  view.tabManager.switchToTab = jest.fn(async () => undefined);
+  view.toggleZen();
+  fixture.noteEditor.focus();
+
+  view.exitZen();
+
+  expect(zenPanel()).toBeNull();
+  const input = within(tab.dom.inputComposerEl).getByRole('textbox', { name: 'Message' });
+  await waitFor(() => expect(input.contains(document.activeElement)).toBe(true));
+  expect(workspace.revealLeaf).toHaveBeenCalledWith(view.leaf);
+});
+
+it('does not take the focus when another chat takes over the window', async () => {
   const fixture = await createZenFixture();
   const left = await fixture.addView('left');
-  fixture.setCollapsed(fixture.rightSplit, true);
-  fixture.setCollapsed(fixture.leftSplit, true);
+  fixture.view.toggleZen();
+  const reveal = fixture.workspace.revealLeaf as jest.Mock;
+  reveal.mockClear();
+
+  left.view.toggleZen();
+
+  expect(fixture.view.isZenRequested()).toBe(false);
+  expect(reveal).not.toHaveBeenCalledWith(fixture.view.leaf);
+});
+
+it('floats one chat at a time and the latest request wins', async () => {
+  const fixture = await createZenFixture();
+  const left = await fixture.addView('left');
+  fixture.view.toggleZen();
+  expect(zenPanel()!.contains(fixture.tab.dom.inputComposerEl)).toBe(true);
+
+  left.view.toggleZen();
 
   expect(document.querySelectorAll('.claudian-zen')).toHaveLength(1);
-  expect(zenPanel()!.contains(fixture.tab.dom.inputComposerEl)).toBe(true);
-  expect(zenPanel()!.contains(left.tab.dom.messagesWrapperEl)).toBe(false);
-
-  fixture.setCollapsed(fixture.rightSplit, false);
-  expect(fixture.tab.dom.inputComposerEl.parentElement).toBe(fixture.activeInputSlotEl);
   expect(zenPanel()!.contains(left.tab.dom.inputComposerEl)).toBe(true);
   expect(zenPanel()!.contains(left.tab.dom.messagesWrapperEl)).toBe(true);
+  // The earlier chat went back to its tab.
+  expect(fixture.view.isZenRequested()).toBe(false);
+  expect(fixture.tab.dom.inputComposerEl.parentElement).toBe(fixture.activeInputSlotEl);
 
-  fixture.setCollapsed(fixture.rightSplit, true);
-  expect(zenPanel()!.contains(left.tab.dom.inputComposerEl)).toBe(true);
-
-  fixture.setCollapsed(fixture.leftSplit, false);
-  fixture.workspace.trigger('active-leaf-change', left.leaf);
-  fixture.setCollapsed(fixture.leftSplit, true);
-  expect(zenPanel()!.contains(fixture.tab.dom.inputComposerEl)).toBe(true);
+  left.view.leaveZen();
+  expect(zenPanel()).toBeNull();
 });
 
 it('releases every moved node and subscription on close and disposal', async () => {

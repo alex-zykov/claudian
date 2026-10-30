@@ -11,6 +11,7 @@
     "refresh": "Actualizar"
   },
   "chat": {
+    "newConversationBusy": "Detén la respuesta en curso o espera a que termine antes de iniciar una conversación nueva.",
     "header": {
       "moveToLeftPanel": "Mover al panel izquierdo",
       "moveToRightPanel": "Mover al panel derecho",
@@ -86,6 +87,10 @@
       "regionLabel": "Chat de Claudian",
       "showHistory": "Mostrar conversación",
       "move": "Mover el panel de chat",
+      "leave": "Salir del modo zen",
+      "toggle": "Flotar este chat (modo zen)",
+      "placeholder": "Este chat flota en la ventana zen.",
+      "leavePlaceholder": "Salir del modo zen",
       "working": "Trabajando…",
       "thinking": "Pensando…",
       "interrupted": "Interrumpido",
@@ -155,14 +160,6 @@
       "remove": "Quitar el campo {index}",
       "errorReserved": "Claudian ya usa «{key}» en los archivos de chat. Elige otro nombre.",
       "errorDuplicate": "«{key}» ya lo usa otro campo."
-    },
-    "chatFileOpenMode": {
-      "name": "Abrir archivos de chat",
-      "desc": "Dónde se muestra la conversación al abrir un archivo .chat.md.",
-      "options": {
-        "claudian": "Dentro de Claudian",
-        "markdown": "Como nota"
-      }
     },
     "titleLanguage": {
       "name": "Idioma de generación de títulos",
@@ -280,15 +277,11 @@
       "desc": "Mostrar los diffs de Write y Edit expandidos cuando aparecen por primera vez."
     },
     "chatViewPlacement": {
-      "name": "Abrir Claudian en",
-      "desc": "Elige dónde se abre el panel de chat cuando se crea",
+      "name": "Abrir por defecto en",
+      "desc": "Dónde se abre un chat nuevo de Claudian. Después puedes moverlo a cualquier lugar.",
       "rightSidebar": "Barra lateral derecha",
       "leftSidebar": "Barra lateral izquierda",
       "mainTab": "Pestaña del editor principal"
-    },
-    "enableZenMode": {
-      "name": "Activar modo zen",
-      "desc": "Mantiene visible una interfaz de chat mínima cuando la barra lateral está oculta."
     },
     "cliInstallation": {
       "disclosure": "Instalación de {name}",

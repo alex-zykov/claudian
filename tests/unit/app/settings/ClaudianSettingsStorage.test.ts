@@ -91,7 +91,6 @@ describe('ClaudianSettingsStorage', () => {
       expect(result.enableDualPane).toBe(true);
       expect(result.dualPaneSide).toBe('right');
       expect(result.restoreTabsOnStartup).toBe(true);
-      expect(result.enableZenMode).toBe(true);
       expect(mockAdapter.read).not.toHaveBeenCalled();
     });
 
@@ -345,37 +344,14 @@ describe('ClaudianSettingsStorage', () => {
       expect(result.writeHistoryFile).toBe(true);
     });
 
-    it.each([
-      [undefined, 'claudian'],
-      ['bogus', 'claudian'],
-      [true, 'claudian'],
-      ['claudian', 'claudian'],
-      ['markdown', 'markdown'],
-      // Values stored by earlier fork builds.
-      ['in-claudian', 'claudian'],
-      ['separate-tab', 'claudian'],
-      ['note', 'markdown'],
-    ])('decodes chatFileOpenMode %j as %s', async (stored, expected) => {
+    it('drops the retired open chat files setting from the stored file', async () => {
       mockAdapter.exists.mockResolvedValue(true);
-      mockAdapter.read.mockResolvedValue(JSON.stringify(
-        stored === undefined ? {} : { chatFileOpenMode: stored },
-      ));
+      mockAdapter.read.mockResolvedValue(JSON.stringify({ chatFileOpenMode: 'markdown' }));
 
-      expect((await storage.load()).chatFileOpenMode).toBe(expected);
-    });
+      const result = await storage.load();
 
-    it.each([
-      [undefined, true],
-      ['no', true],
-      [false, false],
-      [true, true],
-    ])('decodes writeHistoryFileText %j as %s', async (stored, expected) => {
-      mockAdapter.exists.mockResolvedValue(true);
-      mockAdapter.read.mockResolvedValue(JSON.stringify(
-        stored === undefined ? {} : { writeHistoryFileText: stored },
-      ));
-
-      expect((await storage.load()).writeHistoryFileText).toBe(expected);
+      expect(result).not.toHaveProperty('chatFileOpenMode');
+      expect(JSON.parse(mockAdapter.write.mock.calls.at(-1)![1])).not.toHaveProperty('chatFileOpenMode');
     });
 
     it('has no custom chat file fields by default', async () => {
@@ -406,31 +382,14 @@ describe('ClaudianSettingsStorage', () => {
       expect((await storage.load()).chatFileCustomFields).toEqual([]);
     });
 
-    it.each([
-      ['missing', {}, true],
-      ['disabled', { enableZenMode: false }, false],
-      ['enabled', { enableZenMode: true }, true],
-    ])('loads a %s zen mode preference', async (_label, stored, expected) => {
+    it('drops the retired zen mode setting from the stored file', async () => {
       mockAdapter.exists.mockResolvedValue(true);
-      mockAdapter.read.mockResolvedValue(JSON.stringify(stored));
+      mockAdapter.read.mockResolvedValue(JSON.stringify({ enableZenMode: false }));
 
       const result = await storage.load();
 
-      expect(result.enableZenMode).toBe(expected);
-      const writtenValues = mockAdapter.write.mock.calls
-        .map(([, content]) => (JSON.parse(content) as Record<string, unknown>).enableZenMode)
-        .filter(value => value !== undefined);
-      expect(writtenValues.every(value => value === expected)).toBe(true);
-    });
-
-    it('persists a normalized invalid zen mode preference', async () => {
-      mockAdapter.exists.mockResolvedValue(true);
-      mockAdapter.read.mockResolvedValue(JSON.stringify({ enableZenMode: 'yes' }));
-
-      const result = await storage.load();
-
-      expect(result.enableZenMode).toBe(true);
-      expect(JSON.parse(mockAdapter.write.mock.calls.at(-1)![1]).enableZenMode).toBe(true);
+      expect(result).not.toHaveProperty('enableZenMode');
+      expect(JSON.parse(mockAdapter.write.mock.calls.at(-1)![1])).not.toHaveProperty('enableZenMode');
     });
 
     it.each([

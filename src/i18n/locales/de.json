@@ -11,6 +11,7 @@
     "refresh": "Aktualisieren"
   },
   "chat": {
+    "newConversationBusy": "Stoppe die laufende Antwort oder warte, bis sie fertig ist, bevor du ein neues Gespräch startest.",
     "header": {
       "moveToLeftPanel": "In linkes Seitenfenster verschieben",
       "moveToRightPanel": "In rechtes Seitenfenster verschieben",
@@ -86,6 +87,10 @@
       "regionLabel": "Claudian-Chat",
       "showHistory": "Unterhaltung anzeigen",
       "move": "Chat-Bereich verschieben",
+      "leave": "Zen-Modus verlassen",
+      "toggle": "Chat schweben lassen (Zen-Modus)",
+      "placeholder": "Dieser Chat schwebt im Zen-Fenster.",
+      "leavePlaceholder": "Zen-Modus verlassen",
       "working": "Arbeitet…",
       "thinking": "Denkt nach…",
       "interrupted": "Unterbrochen",
@@ -155,14 +160,6 @@
       "remove": "Feld {index} entfernen",
       "errorReserved": "„{key}“ wird von Claudian in Chat-Dateien verwendet. Wähle einen anderen Namen.",
       "errorDuplicate": "„{key}“ wird bereits von einem anderen Feld verwendet."
-    },
-    "chatFileOpenMode": {
-      "name": "Chat-Dateien öffnen",
-      "desc": "Wo eine Unterhaltung beim Öffnen einer .chat.md-Datei erscheint.",
-      "options": {
-        "claudian": "In Claudian",
-        "markdown": "Als Notiz"
-      }
     },
     "titleLanguage": {
       "name": "Sprache der Titelgenerierung",
@@ -280,15 +277,11 @@
       "desc": "Write- und Edit-Diffs beim ersten Erscheinen ausgeklappt anzeigen."
     },
     "chatViewPlacement": {
-      "name": "Claudian öffnen in",
-      "desc": "Wählen Sie, wo das Chat-Panel beim Erstellen geöffnet wird",
+      "name": "Standardmäßig öffnen in",
+      "desc": "Wo ein neuer Claudian-Chat geöffnet wird. Du kannst ihn danach überallhin verschieben.",
       "rightSidebar": "Rechte Seitenleiste",
       "leftSidebar": "Linke Seitenleiste",
       "mainTab": "Haupteditor-Tab"
-    },
-    "enableZenMode": {
-      "name": "Zen-Modus aktivieren",
-      "desc": "Hält eine reduzierte Chat-Oberfläche sichtbar, wenn die Seitenleiste ausgeblendet ist."
     },
     "cliInstallation": {
       "disclosure": "{name}-Installation",

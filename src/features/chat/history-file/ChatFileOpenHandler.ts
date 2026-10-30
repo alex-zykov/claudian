@@ -1,17 +1,18 @@
 import type { App, TFile, WorkspaceLeaf } from 'obsidian';
 import { TFile as ObsidianTFile, WorkspaceLeaf as ObsidianWorkspaceLeaf } from 'obsidian';
 
-import type { ChatFileOpenMode } from '@/core/types';
 import { readChatFileId } from '@/features/chat/history-file/HistoryFileWriter';
 
 export interface ChatFileOpenHandlerDeps {
   readonly app: App;
-  getMode(): ChatFileOpenMode;
   hasConversation(id: string): boolean;
-  /** Shows a conversation that is already open in a chat view; false when no view has it. */
+  /**
+   * Focuses a conversation that is already open in a chat view, in whichever tab of it, and
+   * returns true; returns false when no view has it.
+   */
   revealOpenConversation(id: string): Promise<boolean>;
-  /** Opens a conversation in the chat view placed by the view-placement setting. */
-  openConversationInClaudian(id: string): Promise<void>;
+  /** Opens a conversation in a new leaf where the default placement says. */
+  openConversationInNewTab(id: string): Promise<void>;
 }
 
 type SetViewState = WorkspaceLeaf['setViewState'];
@@ -21,9 +22,10 @@ interface PatchedLeafPrototype {
 }
 
 /**
- * Opens `claudian-chat` markdown as its conversation unless the chat-file open mode is
- * `markdown`. The chat opens like any other, where the view-placement setting puts it; a
- * conversation that is already open in a chat view is revealed there instead of duplicated.
+ * Opens `claudian-chat` markdown as its conversation. A conversation that is already open is
+ * focused where it is; otherwise it opens in a new leaf where the default placement says. The
+ * tab the click was aimed at is never turned into the chat: a note there stays, and the blank
+ * tab Obsidian makes for a new file is dropped.
  */
 export class ChatFileOpenHandler {
   readonly #deps: ChatFileOpenHandlerDeps;
@@ -90,9 +92,8 @@ export class ChatFileOpenHandler {
     setViewState: SetViewState,
   ): Promise<'passthrough' | 'handled' | 'close-file-leaf'> {
     if (!state || typeof state !== 'object') return 'passthrough';
-    const mode = this.#deps.getMode();
     const record = state as { type?: string; state?: { file?: string } };
-    if (record.type !== 'markdown' || mode === 'markdown') return 'passthrough';
+    if (record.type !== 'markdown') return 'passthrough';
     const path = record.state?.file;
     if (typeof path !== 'string' || path.length === 0) return 'passthrough';
     if (this.#openingAsMarkdown.has(path)) return 'passthrough';
@@ -107,9 +108,10 @@ export class ChatFileOpenHandler {
 
     try {
       if (!(await this.#deps.revealOpenConversation(id))) {
-        await this.#deps.openConversationInClaudian(id);
+        await this.#deps.openConversationInNewTab(id);
       }
-      return 'close-file-leaf';
+      // A leaf that already shows something keeps it; only the blank tab made for the click goes.
+      return leaf.view?.getViewType?.() === 'empty' || !leaf.view ? 'close-file-leaf' : 'handled';
     } catch {
       // The chat could not be opened; put the file back so it stays reachable.
       await setViewState.call(leaf, state);

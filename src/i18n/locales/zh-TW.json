@@ -11,6 +11,7 @@
     "refresh": "重新整理"
   },
   "chat": {
+    "newConversationBusy": "開始新對話前，請先停止進行中的回覆或等待其結束。",
     "header": {
       "moveToLeftPanel": "移到左側面板",
       "moveToRightPanel": "移到右側面板",
@@ -86,6 +87,10 @@
       "regionLabel": "Claudian 聊天",
       "showHistory": "顯示對話",
       "move": "移動聊天面板",
+      "leave": "離開 Zen 模式",
+      "toggle": "讓此聊天懸浮（Zen 模式）",
+      "placeholder": "此聊天正懸浮在 Zen 視窗中。",
+      "leavePlaceholder": "離開 Zen 模式",
       "working": "處理中…",
       "thinking": "思考中…",
       "interrupted": "已中斷",
@@ -155,14 +160,6 @@
       "remove": "刪除欄位 {index}",
       "errorReserved": "「{key}」已被 Claudian 用於聊天檔案，請換一個名稱。",
       "errorDuplicate": "「{key}」已被另一個欄位使用。"
-    },
-    "chatFileOpenMode": {
-      "name": "聊天檔案的開啟方式",
-      "desc": "開啟 .chat.md 檔案時在何處顯示對話。",
-      "options": {
-        "claudian": "在 Claudian 內",
-        "markdown": "作為筆記"
-      }
     },
     "titleLanguage": {
       "name": "標題生成語言",
@@ -280,15 +277,11 @@
       "desc": "Write 和 Edit diff 首次出現時以展開狀態顯示。"
     },
     "chatViewPlacement": {
-      "name": "Claudian 開啟位置",
-      "desc": "選擇新建聊天面板時的開啟位置",
+      "name": "預設開啟位置",
+      "desc": "新的 Claudian 聊天在哪裡開啟。之後可以將其移到任何位置。",
       "rightSidebar": "右側邊欄",
       "leftSidebar": "左側邊欄",
       "mainTab": "主編輯器分頁"
-    },
-    "enableZenMode": {
-      "name": "啟用禪模式",
-      "desc": "側邊欄隱藏時，保持顯示精簡的聊天介面。"
     },
     "cliInstallation": {
       "disclosure": "{name} 安裝",

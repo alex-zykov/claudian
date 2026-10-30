@@ -11,6 +11,7 @@
     "refresh": "Actualiser"
   },
   "chat": {
+    "newConversationBusy": "Arrêtez la réponse en cours ou attendez qu'elle se termine avant de commencer une nouvelle conversation.",
     "header": {
       "moveToLeftPanel": "Déplacer vers le panneau de gauche",
       "moveToRightPanel": "Déplacer vers le panneau de droite",
@@ -86,6 +87,10 @@
       "regionLabel": "Chat Claudian",
       "showHistory": "Afficher la conversation",
       "move": "Déplacer le panneau de discussion",
+      "leave": "Quitter le mode zen",
+      "toggle": "Faire flotter ce chat (mode zen)",
+      "placeholder": "Ce chat flotte dans la fenêtre zen.",
+      "leavePlaceholder": "Quitter le mode zen",
       "working": "En cours…",
       "thinking": "Réflexion…",
       "interrupted": "Interrompu",
@@ -155,14 +160,6 @@
       "remove": "Supprimer le champ {index}",
       "errorReserved": "Claudian utilise déjà « {key} » dans les fichiers de chat. Choisissez un autre nom.",
       "errorDuplicate": "« {key} » est déjà utilisé par un autre champ."
-    },
-    "chatFileOpenMode": {
-      "name": "Ouverture des fichiers de chat",
-      "desc": "Où la conversation s'affiche quand on ouvre un fichier .chat.md.",
-      "options": {
-        "claudian": "Dans Claudian",
-        "markdown": "Comme note"
-      }
     },
     "titleLanguage": {
       "name": "Langue de génération des titres",
@@ -280,15 +277,11 @@
       "desc": "Afficher les diffs Write et Edit développés lors de leur première apparition."
     },
     "chatViewPlacement": {
-      "name": "Ouvrir Claudian dans",
-      "desc": "Choisissez où le panneau de chat s'ouvre lors de sa création",
+      "name": "Ouvrir par défaut dans",
+      "desc": "Où s'ouvre un nouveau chat Claudian. Vous pourrez ensuite le déplacer où vous voulez.",
       "rightSidebar": "Barre latérale droite",
       "leftSidebar": "Barre latérale gauche",
       "mainTab": "Onglet principal de l'éditeur"
-    },
-    "enableZenMode": {
-      "name": "Activer le mode zen",
-      "desc": "Garde une interface de chat minimale visible lorsque la barre latérale est masquée."
     },
     "cliInstallation": {
       "disclosure": "Installation de {name}",

@@ -29,3 +29,12 @@ export function applyLeafHeaderActivity(leaf: WorkspaceLeaf, activity: LeafHeade
     headerEl.classList.toggle(className, kind === activity);
   }
 }
+
+/**
+ * Hides the leaf's tab header while its chat floats in the zen window, so the tab seems gone
+ * and only the placeholder pane stays behind. Same undocumented header element as above.
+ */
+export function applyLeafHeaderZen(leaf: WorkspaceLeaf, floating: boolean): void {
+  const headerEl = (leaf as { tabHeaderEl?: HTMLElement }).tabHeaderEl;
+  headerEl?.classList.toggle('claudian-tab-header--zen', floating);
+}

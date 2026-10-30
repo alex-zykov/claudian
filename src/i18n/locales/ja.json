@@ -11,6 +11,7 @@
     "refresh": "更新"
   },
   "chat": {
+    "newConversationBusy": "新しい会話を始める前に、実行中の回答を停止するか、終わるのを待ってください。",
     "header": {
       "moveToLeftPanel": "左パネルへ移動",
       "moveToRightPanel": "右パネルへ移動",
@@ -86,6 +87,10 @@
       "regionLabel": "Claudian チャット",
       "showHistory": "会話を表示",
       "move": "チャットパネルを移動",
+      "leave": "Zen モードを終了",
+      "toggle": "このチャットを浮かせる（Zen モード）",
+      "placeholder": "このチャットは Zen ウィンドウに表示されています。",
+      "leavePlaceholder": "Zen モードを終了",
       "working": "処理中…",
       "thinking": "思考中…",
       "interrupted": "中断されました",
@@ -155,14 +160,6 @@
       "remove": "項目 {index} を削除",
       "errorReserved": "「{key}」はチャットファイルで Claudian が使用しています。別の名前を選んでください。",
       "errorDuplicate": "「{key}」は別の項目で既に使われています。"
-    },
-    "chatFileOpenMode": {
-      "name": "チャットファイルの開き方",
-      "desc": ".chat.md を開いたときに会話を表示する場所です。",
-      "options": {
-        "claudian": "Claudian 内",
-        "markdown": "ノートとして"
-      }
     },
     "titleLanguage": {
       "name": "タイトル生成言語",
@@ -280,15 +277,11 @@
       "desc": "Write と Edit の diff が最初に表示されるとき、展開した状態で表示します。"
     },
     "chatViewPlacement": {
-      "name": "Claudian を開く場所",
-      "desc": "チャットパネルを作成するときに開く場所を選択します",
+      "name": "デフォルトで開く場所",
+      "desc": "新しい Claudian チャットを開く場所です。後から自由に移動できます。",
       "rightSidebar": "右サイドバー",
       "leftSidebar": "左サイドバー",
       "mainTab": "メインエディタタブ"
-    },
-    "enableZenMode": {
-      "name": "Zen モードを有効化",
-      "desc": "サイドバーが非表示のときも、最小限のチャット UI を表示します。"
     },
     "cliInstallation": {
       "disclosure": "{name} のインストール",

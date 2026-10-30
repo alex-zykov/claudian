@@ -15,9 +15,7 @@ import {
 import { ProviderRegistry } from '../../core/providers/ProviderRegistry';
 import type { VaultFileAdapter } from '../../core/storage/VaultFileAdapter';
 import {
-  CHAT_FILE_OPEN_MODES,
   CHAT_VIEW_PLACEMENTS,
-  type ChatFileOpenMode,
   type ChatViewPlacement,
   type ClaudianSettings,
   DUAL_PANE_SIDES,
@@ -40,6 +38,8 @@ export type StoredClaudianSettings = ClaudianSettings;
 const RETIRED_SHARED_SETTING_FIELDS = [
   'pinnedLinkedNotePaths',
   'enableFilePane',
+  'enableZenMode',
+  'chatFileOpenMode',
   'persistentExternalContextPaths',
   'hiddenProviderCommands',
   'maxWarmAgentProcesses',
@@ -69,12 +69,6 @@ function normalizeEnableDualPane(value: unknown): boolean {
   return typeof value === 'boolean'
     ? value
     : DEFAULT_CLAUDIAN_SETTINGS.enableDualPane;
-}
-
-function normalizeEnableZenMode(value: unknown): boolean {
-  return typeof value === 'boolean'
-    ? value
-    : DEFAULT_CLAUDIAN_SETTINGS.enableZenMode;
 }
 
 function normalizeZenModePosition(value: unknown): ZenModePosition | null {
@@ -110,19 +104,6 @@ function normalizeWriteHistoryFileText(value: unknown): boolean {
     : DEFAULT_CLAUDIAN_SETTINGS.writeHistoryFileText;
 }
 
-/** Values stored by earlier fork builds, mapped onto the current modes. */
-const LEGACY_CHAT_FILE_OPEN_MODES: Readonly<Record<string, ChatFileOpenMode>> = {
-  'in-claudian': 'claudian',
-  'separate-tab': 'claudian',
-  note: 'markdown',
-};
-
-function normalizeChatFileOpenMode(value: unknown): ChatFileOpenMode {
-  return CHAT_FILE_OPEN_MODES.find(mode => mode === value)
-    ?? (typeof value === 'string' ? LEGACY_CHAT_FILE_OPEN_MODES[value] : undefined)
-    ?? DEFAULT_CLAUDIAN_SETTINGS.chatFileOpenMode;
-}
-
 function normalizeSessionManagerOrganization(
   value: unknown,
 ): SessionManagerOrganization {
@@ -148,15 +129,11 @@ function normalizePinnedLinkedContentPaths(value: unknown): string[] {
 
 function shouldPersistChatViewNormalization(
   stored: Record<string, unknown>,
-  enableZenMode: boolean,
   enableDualPane: boolean,
   dualPaneSide: DualPaneSide,
   restoreTabsOnStartup: boolean,
 ): boolean {
-  return 'enableFilePane' in stored || (
-    'enableZenMode' in stored
-    && stored.enableZenMode !== enableZenMode
-  ) || (
+  return 'enableFilePane' in stored || 'enableZenMode' in stored || 'chatFileOpenMode' in stored || (
     'enableDualPane' in stored
     && stored.enableDualPane !== enableDualPane
   ) || (
@@ -493,7 +470,6 @@ export class ClaudianSettingsStorage {
     const chatViewPlacement = isChatViewPlacement(stored.chatViewPlacement)
       ? stored.chatViewPlacement
       : DEFAULT_CLAUDIAN_SETTINGS.chatViewPlacement;
-    const enableZenMode = normalizeEnableZenMode(stored.enableZenMode);
     const zenModePosition = normalizeZenModePosition(stored.zenModePosition);
     const enableDualPane = normalizeEnableDualPane(stored.enableDualPane);
     const dualPaneSide = normalizeDualPaneSide(stored.dualPaneSide);
@@ -503,7 +479,6 @@ export class ClaudianSettingsStorage {
     );
     const writeHistoryFile = normalizeWriteHistoryFile(stored.writeHistoryFile);
     const writeHistoryFileText = normalizeWriteHistoryFileText(stored.writeHistoryFileText);
-    const chatFileOpenMode = normalizeChatFileOpenMode(stored.chatFileOpenMode);
     const chatFileCustomFields = decodeChatFileCustomFields(stored.chatFileCustomFields);
     const hasCanonicalPinnedPaths = Object.prototype.hasOwnProperty.call(
       stored,
@@ -533,14 +508,12 @@ export class ClaudianSettingsStorage {
       hiddenCommands,
       providerConfigs,
       chatViewPlacement,
-      enableZenMode,
       zenModePosition,
       enableDualPane,
       dualPaneSide,
       restoreTabsOnStartup,
       writeHistoryFile,
       writeHistoryFileText,
-      chatFileOpenMode,
       chatFileCustomFields,
       skillsSynced,
       sessionManagerOrganization,
@@ -574,7 +547,6 @@ export class ClaudianSettingsStorage {
       || ('chatViewPlacement' in stored && stored.chatViewPlacement !== chatViewPlacement)
       || shouldPersistChatViewNormalization(
         stored,
-        enableZenMode,
         enableDualPane,
         dualPaneSide,
         restoreTabsOnStartup,
