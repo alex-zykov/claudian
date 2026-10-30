@@ -174,7 +174,7 @@ export interface ClaudianSettings {
   expandFileEditsByDefault: boolean;
   /**
    * When true, write/update a generated `.chat.md` history file in the linked
-   * folder after each turn (providers with `supportsChatHistoryFile` only).
+   * folder after each turn.
    */
   writeHistoryFile: boolean;
   /**

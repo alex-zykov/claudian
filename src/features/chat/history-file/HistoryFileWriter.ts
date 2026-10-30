@@ -6,7 +6,6 @@ import {
   type ChatFileCustomField,
   usableChatFileCustomFields,
 } from '@/core/chat-file/chatFileCustomFields';
-import { ProviderRegistry } from '@/core/providers/ProviderRegistry';
 import type { Conversation, ConversationMeta } from '@/core/types';
 import {
   chatFilePathForTitle,
@@ -39,7 +38,7 @@ export interface HistoryFileWriterDeps {
 }
 
 /**
- * Projects capable conversations into vault `.chat.md` files. One serialized
+ * Projects conversations into vault `.chat.md` files. One serialized
  * write queue per conversation; path cache tracks user renames/moves/deletes.
  */
 export class HistoryFileWriter {
@@ -156,8 +155,6 @@ export class HistoryFileWriter {
     const metas = this.#deps.listConversationMeta();
     for (const meta of metas) {
       if (signal.aborted || this.#disposed || !this.#deps.isEnabled()) return;
-      const capabilities = ProviderRegistry.getCapabilities(meta.providerId);
-      if (!capabilities.supportsChatHistoryFile) continue;
       this.scheduleWrite(meta.id);
       await delay(BACKFILL_GAP_MS, signal);
     }
@@ -168,12 +165,6 @@ export class HistoryFileWriter {
     const conversation = this.#deps.getConversation(conversationId)
       ?? await this.#deps.hydrateConversation(conversationId);
     if (!conversation) return;
-
-    const capabilities = ProviderRegistry.getCapabilities(
-      conversation.providerId,
-      conversation.providerState,
-    );
-    if (!capabilities.supportsChatHistoryFile) return;
 
     const rendered = renderChatFile(conversation);
     const body = this.#deps.isTextEnabled() ? rendered.body : null;

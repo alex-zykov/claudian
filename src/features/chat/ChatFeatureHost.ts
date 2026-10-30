@@ -78,7 +78,7 @@ export interface ChatViewHost extends ChatViewRefreshHost, TabManagerViewHost {
   focusActiveInput(): void;
 }
 
-/** Projects capable conversations into vault `.chat.md` history files. */
+/** Projects conversations into vault `.chat.md` history files. */
 export interface ChatHistoryFilePort {
   scheduleWrite(conversationId: string): void;
   /** Whether a chat file exists for the conversation. */
