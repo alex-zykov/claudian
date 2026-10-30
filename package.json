@@ -1,6 +1,6 @@
 {
   "name": "claudian",
-  "version": "2.3.16-fork.2",
+  "version": "2.3.16-fork.3",
   "description": "Claudian Folders - fork of Claudian with folder-bound chat history files",
   "main": "main.js",
   "engines": {
