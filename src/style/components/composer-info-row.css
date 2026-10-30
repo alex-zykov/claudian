@@ -78,6 +78,19 @@
   white-space: nowrap;
 }
 
+.claudian-input-info-linked-detail {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-faint);
+}
+
+.claudian-input-info-linked-detail::before {
+  content: '· ';
+}
+
 .claudian-input-info-linked > button.claudian-input-info-linked-remove,
 .claudian-input-info-linked > button.claudian-input-info-linked-remove:is(:hover, :focus, :focus-visible, :active) {
   appearance: none;

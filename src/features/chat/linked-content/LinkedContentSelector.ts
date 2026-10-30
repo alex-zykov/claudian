@@ -6,6 +6,8 @@ export interface LinkedContentSelectorState {
   readonly mode: 'auto-draft' | 'explicit-draft' | 'submitting' | 'locked';
   readonly path: string | null;
   readonly label: string | null;
+  /** Project folder of the linked content; '' is the vault root. */
+  readonly folder: string;
 }
 
 export interface LinkedContentSelectorOptions {
@@ -19,6 +21,7 @@ export class LinkedContentSelector {
   private readonly prefixId = `claudian-linked-content-prefix-${++linkedContentSelectorSequence}`;
   private selectorRow: HTMLElement | null = null;
   private selectorButton: HTMLButtonElement | null = null;
+  private folderEl: HTMLElement | null = null;
   private pickerEl: HTMLElement | null = null;
   private searchInput: HTMLInputElement | null = null;
   private pickerKeyTarget: Window | null = null;
@@ -70,12 +73,14 @@ export class LinkedContentSelector {
       },
     });
     this.selectorButton.addEventListener('click', this.handleSelectorClick);
+    this.folderEl = this.mountEl.createDiv({ cls: 'claudian-linked-content-folder' });
   }
 
   #updateSelectorButton(): void {
     if (!this.selectorButton || !this.state) return;
     const value = this.state.label ?? 'None';
     this.selectorButton.setText(value);
+    this.folderEl?.setText(`Folder: ${this.state.folder || 'Vault root'}`);
   }
 
   private readonly handleSelectorClick = (): void => {
@@ -304,6 +309,7 @@ export class LinkedContentSelector {
     this.selectorButton?.removeEventListener('click', this.handleSelectorClick);
     this.selectorButton = null;
     this.selectorRow = null;
+    this.folderEl = null;
     this.mountEl.empty();
   }
 }

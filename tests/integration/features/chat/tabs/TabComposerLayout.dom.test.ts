@@ -123,8 +123,9 @@ it('shows the linked note in an info row under the input box', async () => {
   try {
     const row = infoRowOf(tab);
     const info = within(row);
-    const linked = info.getByRole('button', { name: 'Linked content: Notes/Plan.md' });
-    expect(linked.textContent).toBe('Plan');
+    const linked = info.getByRole('button', { name: 'Linked content: Notes/Plan.md. Folder: Notes' });
+    expect(linked.querySelector('.claudian-input-info-linked-label')?.textContent).toBe('Plan');
+    expect(linked.querySelector('.claudian-input-info-linked-detail')?.textContent).toBe('Notes');
     // Locked after the first message: shown, activatable, not removable.
     expect(info.queryByRole('button', { name: /^Remove/ })).toBeNull();
     // The in-box tray is left to per-turn context.

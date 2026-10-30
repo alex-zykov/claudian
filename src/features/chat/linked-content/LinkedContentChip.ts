@@ -14,12 +14,15 @@ export class LinkedContentChip {
       this.infoRow.setLinkedContent(null);
       return;
     }
+    const detail = folderDetail(content);
+    const folderLabel = detail ? `. Folder: ${detail}` : '';
     this.infoRow.setLinkedContent({
       label: content.missing ? `${content.label} · Missing content` : content.label,
+      ...(detail ? { detail } : {}),
       icon: content.icon,
       ariaLabel: content.missing
-        ? `Linked content: ${content.path}. Missing content`
-        : `Linked content: ${content.path}`,
+        ? `Linked content: ${content.path}. Missing content${folderLabel}`
+        : `Linked content: ${content.path}${folderLabel}`,
       missing: content.missing,
       onActivate: this.onActivate,
       ...(removable ? { onRemove: this.onRemove } : {}),
@@ -29,4 +32,10 @@ export class LinkedContentChip {
   destroy(): void {
     this.infoRow.setLinkedContent(null);
   }
+}
+
+/** The project folder, unless the label already names it (a top-level folder). */
+function folderDetail(content: LinkedContentPresentation): string | undefined {
+  if (content.kind === 'folder' && !content.folder.includes('/')) return undefined;
+  return content.folder || 'Vault root';
 }

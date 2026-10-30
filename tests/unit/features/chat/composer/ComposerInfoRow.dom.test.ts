@@ -56,6 +56,27 @@ it('shows the linked note as an activatable button with a remove control only wh
   row.destroy();
 });
 
+it('shows the project folder beside the linked label without changing the button name', () => {
+  const { row, view } = mount();
+
+  row.setLinkedContent({
+    label: 'Plan',
+    detail: 'Projects/A',
+    ariaLabel: 'Linked content: Projects/A/Plan.md. Folder: Projects/A',
+    onActivate: jest.fn(),
+  });
+
+  const button = view.getByRole('button', {
+    name: 'Linked content: Projects/A/Plan.md. Folder: Projects/A',
+  });
+  expect(button.querySelector('.claudian-input-info-linked-label')?.textContent).toBe('Plan');
+  expect(button.querySelector('.claudian-input-info-linked-detail')?.textContent).toBe('Projects/A');
+
+  row.setLinkedContent({ label: 'Plan', onActivate: jest.fn() });
+  expect(view.getByRole('button').querySelector('.claudian-input-info-linked-detail')).toBeNull();
+  row.destroy();
+});
+
 it('keeps missing linked content visible and marked', async () => {
   const { row, rowEl, view } = mount();
 

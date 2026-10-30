@@ -152,6 +152,23 @@ describe('LinkedContentController DOM', () => {
     expect(focus).toHaveBeenCalled();
   });
 
+  it('shows the project folder under the selector and falls back to the vault root', () => {
+    const note = createFile('Notes/Plan.md');
+    const folder = createFolder('Projects');
+    const harness = createHarness({ entries: [note, folder] });
+    const welcomeEl = createWelcomeElement(createMockEl(), 'Good morning') as unknown as MockElement;
+    harness.controller.mountWelcome(welcomeEl as unknown as HTMLElement);
+    const folderText = () => welcomeEl.querySelector('.claudian-linked-content-folder')?.textContent;
+
+    expect(folderText()).toBe('Folder: Vault root');
+    harness.controller.selectExplicit(note.path);
+    expect(folderText()).toBe('Folder: Notes');
+    harness.controller.selectExplicit(folder.path);
+    expect(folderText()).toBe('Folder: Projects');
+    harness.controller.selectExplicit(null);
+    expect(folderText()).toBe('Folder: Vault root');
+  });
+
   it('closes the expanded picker with Escape from the picker boundary', () => {
     const harness = createHarness({ entries: [createFolder('Projects')] });
     const welcome = createWelcomeElement(createMockEl(), 'Hello') as unknown as MockElement;
@@ -289,7 +306,8 @@ describe('LinkedContentController DOM', () => {
     let item = rowEl.querySelector('.claudian-input-info-linked')!;
     expect(item.querySelector('.claudian-input-info-linked-remove')).not.toBeNull();
     const noteButton = item.querySelector('.claudian-input-info-linked-main');
-    expect(noteButton?.getAttribute('aria-label')).toBe('Linked content: Notes/Plan.md');
+    expect(noteButton?.getAttribute('aria-label')).toBe('Linked content: Notes/Plan.md. Folder: Notes');
+    expect(noteButton?.querySelector('.claudian-input-info-linked-detail')?.textContent).toBe('Notes');
     expect(noteButton?.getAttribute('title')).toBeNull();
     noteButton?.click();
     await flushPromises();
@@ -309,7 +327,7 @@ describe('LinkedContentController DOM', () => {
     expect(item.querySelector('.claudian-input-info-linked-label')?.textContent)
       .toContain('Missing content');
     expect(item.querySelector('.claudian-input-info-linked-main')?.getAttribute('aria-label'))
-      .toBe('Linked content: Missing/Plan.md. Missing content');
+      .toBe('Linked content: Missing/Plan.md. Missing content. Folder: Missing');
     item.querySelector('.claudian-input-info-linked-main')?.click();
     expect(Notice).toHaveBeenCalledWith('Linked content is missing: Missing/Plan.md');
   });

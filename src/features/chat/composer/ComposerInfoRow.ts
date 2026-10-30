@@ -3,6 +3,8 @@ import { setIcon } from 'obsidian';
 /** Read-only conversation fact shown in the info row; it may still be opened or, before the first message, removed. */
 export interface ComposerInfoItem {
   label: string;
+  /** Secondary text beside the label, such as the project folder. */
+  detail?: string;
   icon?: string;
   ariaLabel?: string;
   missing?: boolean;
@@ -47,6 +49,9 @@ export class ComposerInfoRow {
       setIcon(iconEl, item.icon);
     }
     mainEl.createSpan({ cls: 'claudian-input-info-linked-label', text: item.label });
+    if (item.detail) {
+      mainEl.createSpan({ cls: 'claudian-input-info-linked-detail', text: item.detail });
+    }
 
     if (item.onRemove) {
       const removeEl = this.linkedSlotEl.createEl('button', {
