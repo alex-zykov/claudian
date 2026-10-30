@@ -365,6 +365,48 @@ describe('ClaudianSettingsStorage', () => {
     });
 
     it.each([
+      [undefined, true],
+      ['no', true],
+      [false, false],
+      [true, true],
+    ])('decodes writeHistoryFileText %j as %s', async (stored, expected) => {
+      mockAdapter.exists.mockResolvedValue(true);
+      mockAdapter.read.mockResolvedValue(JSON.stringify(
+        stored === undefined ? {} : { writeHistoryFileText: stored },
+      ));
+
+      expect((await storage.load()).writeHistoryFileText).toBe(expected);
+    });
+
+    it('has no custom chat file fields by default', async () => {
+      mockAdapter.exists.mockResolvedValue(false);
+
+      expect((await storage.load()).chatFileCustomFields).toEqual([]);
+    });
+
+    it('keeps only usable custom chat file fields', async () => {
+      mockAdapter.exists.mockResolvedValue(true);
+      mockAdapter.read.mockResolvedValue(JSON.stringify({
+        chatFileCustomFields: [
+          { key: ' type ', value: 'chat' },
+          { key: 'id', value: 'reserved' },
+          { key: 'type', value: 'repeated' },
+          { key: 'n', value: 3 },
+          'bogus',
+        ],
+      }));
+
+      expect((await storage.load()).chatFileCustomFields).toEqual([{ key: 'type', value: 'chat' }]);
+    });
+
+    it('decodes a non-array custom chat file fields value as none', async () => {
+      mockAdapter.exists.mockResolvedValue(true);
+      mockAdapter.read.mockResolvedValue(JSON.stringify({ chatFileCustomFields: 'type' }));
+
+      expect((await storage.load()).chatFileCustomFields).toEqual([]);
+    });
+
+    it.each([
       ['missing', {}, true],
       ['disabled', { enableZenMode: false }, false],
       ['enabled', { enableZenMode: true }, true],

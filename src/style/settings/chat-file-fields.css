@@ -1,0 +1,41 @@
+/* Custom frontmatter fields of generated chat files */
+.claudian-chat-fields {
+  margin: 12px 0;
+}
+
+.claudian-chat-fields-label {
+  font-weight: var(--font-medium);
+}
+
+.claudian-chat-fields-desc {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  margin: 2px 0 8px;
+}
+
+.claudian-chat-fields-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.claudian-chat-fields-key,
+.claudian-chat-fields-value {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.claudian-chat-fields-key.claudian-input-error {
+  border-color: var(--text-error);
+}
+
+.claudian-chat-fields-error {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-error);
+  margin-top: 2px;
+}
+
+.claudian-chat-fields-add {
+  margin-top: 8px;
+}

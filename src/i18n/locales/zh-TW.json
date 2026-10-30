@@ -132,6 +132,22 @@
       "name": "Write history file into linked folder",
       "desc": "After each turn, create or update a generated .chat.md file in the conversation's linked folder. Turning this on backfills existing chats."
     },
+    "writeHistoryFileText": {
+      "name": "將對話文字寫入聊天檔案",
+      "desc": "聊天檔案內文包含請求與回覆的記錄，其他聊天與沒有 Claudian 的應用程式都能讀取和搜尋。關閉後只寫入 frontmatter，既有內文維持不變。"
+    },
+    "chatFileFields": {
+      "name": "聊天檔案 frontmatter 欄位",
+      "desc": "加入聊天檔案 frontmatter 的額外欄位。檔案中已有的欄位會保留原值。",
+      "keyPlaceholder": "欄位",
+      "valuePlaceholder": "值",
+      "keyAria": "欄位名稱 {index}",
+      "valueAria": "欄位值 {index}",
+      "add": "新增欄位",
+      "remove": "刪除欄位 {index}",
+      "errorReserved": "「{key}」已被 Claudian 用於聊天檔案，請換一個名稱。",
+      "errorDuplicate": "「{key}」已被另一個欄位使用。"
+    },
     "chatFileOpenMode": {
       "name": "聊天檔案的開啟方式",
       "desc": "開啟 .chat.md 檔案時在何處顯示對話。",

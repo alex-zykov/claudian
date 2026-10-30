@@ -1,4 +1,6 @@
 
+import type { ChatFileCustomField } from '../chat-file/chatFileCustomFields';
+
 export interface ApprovalSelectionDecision {
   type: 'select-option';
   value: string;
@@ -183,8 +185,15 @@ export interface ClaudianSettings {
    * folder after each turn (providers with `supportsChatHistoryFile` only).
    */
   writeHistoryFile: boolean;
+  /**
+   * When true (default), the generated `.chat.md` body holds the conversation transcript.
+   * When false, only the frontmatter is written and an existing body is left alone.
+   */
+  writeHistoryFileText: boolean;
   /** Where opening a `.chat.md` file shows its conversation. */
   chatFileOpenMode: ChatFileOpenMode;
+  /** Extra frontmatter fields for generated `.chat.md` files; empty by default. */
+  chatFileCustomFields: ChatFileCustomField[];
   chatViewPlacement: ChatViewPlacement;
   enableZenMode: boolean;
   /** Null keeps the zen panel docked. */

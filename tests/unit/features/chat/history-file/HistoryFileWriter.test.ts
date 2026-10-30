@@ -158,6 +158,8 @@ describe('HistoryFileWriter', () => {
     const writer = new HistoryFileWriter({
       app: harness.app,
       isEnabled: () => enabled,
+      getCustomFields: () => [],
+      isTextEnabled: () => true,
       getConversation: (id) => (id === conversation.id ? conversation : null),
       hydrateConversation: async (id) => (id === conversation.id ? conversation : null),
       listConversationMeta: () => [],
@@ -196,6 +198,8 @@ describe('HistoryFileWriter', () => {
     const writer = new HistoryFileWriter({
       app: harness.app,
       isEnabled: () => true,
+      getCustomFields: () => [],
+      isTextEnabled: () => true,
       getConversation: () => conversation,
       hydrateConversation: async () => conversation,
       listConversationMeta: () => [],
@@ -230,6 +234,8 @@ describe('HistoryFileWriter', () => {
     const writer = new HistoryFileWriter({
       app: harness.app,
       isEnabled: () => false,
+      getCustomFields: () => [],
+      isTextEnabled: () => true,
       getConversation: () => conversation,
       hydrateConversation: async () => conversation,
       listConversationMeta: () => [],
@@ -256,6 +262,8 @@ describe('HistoryFileWriter', () => {
     const writer = new HistoryFileWriter({
       app: harness.app,
       isEnabled: () => true,
+      getCustomFields: () => [],
+      isTextEnabled: () => true,
       getConversation: () => conversation,
       hydrateConversation: async () => conversation,
       listConversationMeta: () => [meta],
@@ -275,6 +283,8 @@ describe('HistoryFileWriter', () => {
     const writer = new HistoryFileWriter({
       app: harness.app,
       isEnabled: () => true,
+      getCustomFields: () => [],
+      isTextEnabled: () => true,
       getConversation: () => conversation,
       hydrateConversation: async () => conversation,
       listConversationMeta: () => [],
@@ -297,6 +307,8 @@ describe('HistoryFileWriter', () => {
     const writer = new HistoryFileWriter({
       app: harness.app,
       isEnabled: () => true,
+      getCustomFields: () => [],
+      isTextEnabled: () => true,
       getConversation: () => conversation,
       hydrateConversation: async () => conversation,
       listConversationMeta: () => [],
@@ -320,6 +332,8 @@ describe('HistoryFileWriter', () => {
     const writer = new HistoryFileWriter({
       app: harness.app,
       isEnabled: () => true,
+      getCustomFields: () => [],
+      isTextEnabled: () => true,
       getConversation: () => conversation,
       hydrateConversation: async () => conversation,
       listConversationMeta: () => [],
@@ -333,38 +347,153 @@ describe('HistoryFileWriter', () => {
       .toBe(conversation.id);
   });
 
-  it.each([
-    ['no tags', undefined, ['chat']],
-    ['a tag list', ['project', 'draft'], ['project', 'draft', 'chat']],
-    ['a tag string', 'project, draft', ['project', 'draft', 'chat']],
-    ['the chat tag already', ['#chat', 'project'], ['#chat', 'project']],
-  ])('tags a chat file with chat and keeps the user tags when it has %s', async (_case, userTags, expected) => {
-    const harness = createVaultHarness([createFolder('Projects/A'), createFile('Projects/A/x.md')]);
-    let conversation = createConversation();
-    const writer = new HistoryFileWriter({
-      app: harness.app,
-      isEnabled: () => true,
-      getConversation: () => conversation,
-      hydrateConversation: async () => conversation,
-      listConversationMeta: () => [],
-      reportError: jest.fn(),
+  describe('conversation text switch', () => {
+    function setup() {
+      const harness = createVaultHarness([createFolder('Projects/A'), createFile('Projects/A/x.md')]);
+      let conversation = createConversation();
+      let textEnabled = true;
+      const writer = new HistoryFileWriter({
+        app: harness.app,
+        isEnabled: () => true,
+        isTextEnabled: () => textEnabled,
+        getCustomFields: () => [],
+        getConversation: () => conversation,
+        hydrateConversation: async () => conversation,
+        listConversationMeta: () => [],
+        reportError: jest.fn(),
+      });
+      const write = async (patch: Parameters<typeof createConversation>[0] = {}) => {
+        conversation = createConversation(patch);
+        writer.scheduleWrite(conversation.id);
+        await flushQueues();
+      };
+      return {
+        harness,
+        write,
+        setText: (value: boolean) => { textEnabled = value; },
+        path: 'Projects/A/Plan review.chat.md',
+      };
+    }
+
+    it('writes only the frontmatter into a new chat file while the text is off', async () => {
+      const { harness, write, setText, path } = setup();
+      setText(false);
+
+      await write();
+
+      const content = harness.contents.get(path) ?? '';
+      expect(content).toMatch(/^---\n[\s\S]*claudian-chat: true[\s\S]*\n---\n$/);
+      expect(content).not.toContain('hello');
+      expect(content).not.toContain('Generated transcript');
     });
 
-    writer.scheduleWrite(conversation.id);
-    await flushQueues();
-    const path = 'Projects/A/Plan review.chat.md';
-    expect(parseYaml(harness.contents.get(path)?.match(/^---\n([\s\S]*?)\n---/)?.[1] ?? ''))
-      .toMatchObject({ tags: ['chat'] });
+    it('leaves the body of an existing file alone while the text is off', async () => {
+      const { harness, write, setText, path } = setup();
+      await write();
+      expect(harness.contents.get(path)).toContain('world');
 
-    const fm = harness.frontmatterByPath.get(path) ?? {};
-    if (userTags === undefined) delete fm.tags;
-    else fm.tags = userTags;
-    harness.frontmatterByPath.set(path, fm);
-    conversation = createConversation({ lastActivityAt: UPDATED_AT + 1 });
-    writer.scheduleWrite(conversation.id);
-    await flushQueues();
+      setText(false);
+      await write({
+        lastActivityAt: UPDATED_AT + 1,
+        messages: [user('hello'), assistant('world'), user('more'), assistant('later')],
+      });
 
-    expect(harness.frontmatterByPath.get(path)?.tags).toEqual(expected);
+      const content = harness.contents.get(path) ?? '';
+      expect(content).toContain('world');
+      expect(content).not.toContain('later');
+    });
+
+    it('brings the transcript up to date once the text is turned back on', async () => {
+      const { harness, write, setText, path } = setup();
+      setText(false);
+      await write();
+
+      setText(true);
+      await write({ lastActivityAt: UPDATED_AT + 1 });
+
+      expect(harness.contents.get(path)).toContain('world');
+    });
+  });
+
+  describe('custom frontmatter fields', () => {
+    function setup(getCustomFields: () => { key: string; value: string }[]) {
+      const harness = createVaultHarness([createFolder('Projects/A'), createFile('Projects/A/x.md')]);
+      let conversation = createConversation();
+      const writer = new HistoryFileWriter({
+        app: harness.app,
+        isEnabled: () => true,
+        getCustomFields,
+        isTextEnabled: () => true,
+        getConversation: () => conversation,
+        hydrateConversation: async () => conversation,
+        listConversationMeta: () => [],
+        reportError: jest.fn(),
+      });
+      const write = async (patch: Parameters<typeof createConversation>[0] = {}) => {
+        conversation = createConversation(patch);
+        writer.scheduleWrite(conversation.id);
+        await flushQueues();
+      };
+      return { harness, write, path: 'Projects/A/Plan review.chat.md' };
+    }
+
+    function fileFrontmatter(harness: ReturnType<typeof createVaultHarness>, path: string) {
+      return parseYaml(harness.contents.get(path)?.match(/^---\n([\s\S]*?)\n---/)?.[1] ?? '');
+    }
+
+    it('writes no tags and no extra fields by default', async () => {
+      const { harness, write, path } = setup(() => []);
+
+      await write();
+
+      const fm = fileFrontmatter(harness, path);
+      expect(fm).toMatchObject({ 'claudian-chat': true });
+      expect(fm).not.toHaveProperty('tags');
+    });
+
+    it('writes the configured fields into a new chat file', async () => {
+      const { harness, write, path } = setup(() => [
+        { key: 'type', value: 'chat' },
+        { key: 'kind', value: 'ai' },
+      ]);
+
+      await write();
+
+      expect(fileFrontmatter(harness, path)).toMatchObject({ type: 'chat', kind: 'ai' });
+    });
+
+    it('adds a missing field to an existing file but keeps a value the file already has', async () => {
+      let fields = [{ key: 'type', value: 'chat' }];
+      const { harness, write, path } = setup(() => fields);
+      await write();
+
+      const fm = harness.frontmatterByPath.get(path) ?? {};
+      fm.type = 'mine';
+      fm.tags = ['project'];
+      harness.frontmatterByPath.set(path, fm);
+      fields = [{ key: 'type', value: 'chat' }, { key: 'kind', value: 'ai' }];
+      await write({ lastActivityAt: UPDATED_AT + 1 });
+
+      expect(harness.frontmatterByPath.get(path)).toMatchObject({
+        type: 'mine',
+        kind: 'ai',
+        tags: ['project'],
+      });
+    });
+
+    it('never lets a field replace a key Claudian writes', async () => {
+      const { harness, write, path } = setup(() => [
+        { key: 'id', value: 'hijacked' },
+        { key: 'Title', value: 'hijacked' },
+      ]);
+
+      await write();
+
+      const fm = fileFrontmatter(harness, path);
+      expect(fm.id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee');
+      expect(fm.title).toBe('Plan review');
+      expect(fm).not.toHaveProperty('Title');
+    });
   });
 
   it('renames on title change after restart using the title stored in the file', async () => {
@@ -386,6 +515,8 @@ describe('HistoryFileWriter', () => {
     const writer = new HistoryFileWriter({
       app: harness.app,
       isEnabled: () => true,
+      getCustomFields: () => [],
+      isTextEnabled: () => true,
       getConversation: () => conversation,
       hydrateConversation: async () => conversation,
       listConversationMeta: () => [],
@@ -410,6 +541,8 @@ describe('HistoryFileWriter', () => {
     const writer = new HistoryFileWriter({
       app: harness.app,
       isEnabled: () => true,
+      getCustomFields: () => [],
+      isTextEnabled: () => true,
       getConversation: () => conversation,
       hydrateConversation: async () => conversation,
       listConversationMeta: () => [],

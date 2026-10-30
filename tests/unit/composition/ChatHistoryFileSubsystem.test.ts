@@ -42,6 +42,8 @@ describe('ChatHistoryFileSubsystem', () => {
       conversations,
       views,
       isWriteHistoryFileEnabled: () => true,
+      getChatFileCustomFields: () => [],
+      isWriteHistoryFileTextEnabled: () => true,
       getChatFileOpenMode: () => 'claudian' as const,
       reportError,
     });
@@ -88,6 +90,8 @@ describe('ChatHistoryFileSubsystem', () => {
       conversations,
       views,
       isWriteHistoryFileEnabled: () => true,
+      getChatFileCustomFields: () => [],
+      isWriteHistoryFileTextEnabled: () => true,
       getChatFileOpenMode: () => 'claudian' as const,
       reportError,
     });
@@ -100,6 +104,20 @@ describe('ChatHistoryFileSubsystem', () => {
     expect(start).toHaveBeenCalledTimes(1);
     subsystem.onSettingsCommitted(off, on);
     expect(cancel).toHaveBeenCalledTimes(1);
+
+    // Turning the conversation text on refreshes files whose body was left behind.
+    start.mockClear();
+    const textOff = { writeHistoryFile: true, writeHistoryFileText: false } as ClaudianSettings;
+    const textOn = { writeHistoryFile: true, writeHistoryFileText: true } as ClaudianSettings;
+    subsystem.onSettingsCommitted(textOn, textOff);
+    expect(start).toHaveBeenCalledTimes(1);
+    subsystem.onSettingsCommitted(textOff, textOn);
+    expect(start).toHaveBeenCalledTimes(1);
+    subsystem.onSettingsCommitted(
+      { writeHistoryFile: false, writeHistoryFileText: true } as ClaudianSettings,
+      { writeHistoryFile: false, writeHistoryFileText: false } as ClaudianSettings,
+    );
+    expect(start).toHaveBeenCalledTimes(1);
     subsystem.dispose();
   });
 });

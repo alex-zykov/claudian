@@ -2,8 +2,6 @@ import { extractUserDisplayContent } from '@/core/prompt/promptContext';
 import type { ChatMessage, Conversation } from '@/core/types';
 
 export const CHAT_FILE_VERSION = 1;
-/** Tag that marks a chat file in the vault, so chats can be found and filtered like notes. */
-export const CHAT_FILE_TAG = 'chat';
 
 export interface ChatFileFrontmatter {
   'claudian-chat': true;
@@ -17,7 +15,6 @@ export interface ChatFileFrontmatter {
   sessionId?: string;
   forkSessionId?: string;
   forkResumeAt?: string;
-  tags: string[];
 }
 
 export interface RenderedChatFile {
@@ -71,7 +68,6 @@ function buildFrontmatter(conversation: Conversation): ChatFileFrontmatter {
     title: conversation.title,
     created: new Date(conversation.createdAt).toISOString(),
     updated: new Date(conversation.lastActivityAt).toISOString(),
-    tags: [CHAT_FILE_TAG],
   };
 
   if (conversation.linkedContentPath) {

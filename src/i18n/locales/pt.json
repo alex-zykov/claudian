@@ -132,6 +132,22 @@
       "name": "Write history file into linked folder",
       "desc": "After each turn, create or update a generated .chat.md file in the conversation's linked folder. Turning this on backfills existing chats."
     },
+    "writeHistoryFileText": {
+      "name": "Gravar o texto da conversa no arquivo de chat",
+      "desc": "O corpo do arquivo de chat contém a transcrição de pedidos e respostas, para que outros chats e apps sem o Claudian possam lê-la e pesquisá-la. Desativado, só o frontmatter é gravado e o corpo existente não muda."
+    },
+    "chatFileFields": {
+      "name": "Campos de frontmatter dos arquivos de chat",
+      "desc": "Campos extras no frontmatter dos arquivos de chat. Um campo que o arquivo já tem mantém o valor.",
+      "keyPlaceholder": "Campo",
+      "valuePlaceholder": "Valor",
+      "keyAria": "Nome do campo {index}",
+      "valueAria": "Valor do campo {index}",
+      "add": "Adicionar campo",
+      "remove": "Remover o campo {index}",
+      "errorReserved": "O Claudian já usa “{key}” nos arquivos de chat. Escolha outro nome.",
+      "errorDuplicate": "“{key}” já é usado por outro campo."
+    },
     "chatFileOpenMode": {
       "name": "Abertura de arquivos de chat",
       "desc": "Onde a conversa aparece ao abrir um arquivo .chat.md.",

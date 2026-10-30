@@ -3,6 +3,7 @@ import { getInstallationKey, getLegacyDeviceSettingsKey } from '@/core/device/In
 import {
   CLAUDIAN_SETTINGS_PATH,
 } from '../../core/bootstrap/storagePaths';
+import { decodeChatFileCustomFields } from '../../core/chat-file/chatFileCustomFields';
 import { normalizeLinkedContentPath } from '../../core/path/LinkedContentPath';
 import {
   migrateHiddenCommands,
@@ -101,6 +102,12 @@ function normalizeWriteHistoryFile(value: unknown): boolean {
   return typeof value === 'boolean'
     ? value
     : DEFAULT_CLAUDIAN_SETTINGS.writeHistoryFile;
+}
+
+function normalizeWriteHistoryFileText(value: unknown): boolean {
+  return typeof value === 'boolean'
+    ? value
+    : DEFAULT_CLAUDIAN_SETTINGS.writeHistoryFileText;
 }
 
 /** Values stored by earlier fork builds, mapped onto the current modes. */
@@ -495,7 +502,9 @@ export class ClaudianSettingsStorage {
       stored.restoreTabsOnStartup,
     );
     const writeHistoryFile = normalizeWriteHistoryFile(stored.writeHistoryFile);
+    const writeHistoryFileText = normalizeWriteHistoryFileText(stored.writeHistoryFileText);
     const chatFileOpenMode = normalizeChatFileOpenMode(stored.chatFileOpenMode);
+    const chatFileCustomFields = decodeChatFileCustomFields(stored.chatFileCustomFields);
     const hasCanonicalPinnedPaths = Object.prototype.hasOwnProperty.call(
       stored,
       'pinnedLinkedContentPaths',
@@ -530,7 +539,9 @@ export class ClaudianSettingsStorage {
       dualPaneSide,
       restoreTabsOnStartup,
       writeHistoryFile,
+      writeHistoryFileText,
       chatFileOpenMode,
+      chatFileCustomFields,
       skillsSynced,
       sessionManagerOrganization,
       pinnedLinkedContentPaths,

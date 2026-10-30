@@ -1,6 +1,11 @@
 import type { App, TAbstractFile } from 'obsidian';
 import { TFile } from 'obsidian';
 
+import {
+  CHAT_FILE_RESERVED_KEYS,
+  type ChatFileCustomField,
+  usableChatFileCustomFields,
+} from '@/core/chat-file/chatFileCustomFields';
 import { ProviderRegistry } from '@/core/providers/ProviderRegistry';
 import type { Conversation, ConversationMeta } from '@/core/types';
 import {
@@ -8,7 +13,6 @@ import {
   preferredChatFilePath,
 } from '@/features/chat/history-file/chatFilePaths';
 import {
-  CHAT_FILE_TAG,
   type ChatFileFrontmatter,
   renderChatFile,
 } from '@/features/chat/history-file/renderChatFile';
@@ -18,23 +22,15 @@ import { createVaultLinkedContentIsFolder } from '@/features/chat/linked-content
 const BACKFILL_GAP_MS = 25;
 
 /** Frontmatter keys the writer owns; every other key is the user's and is left alone. */
-const OWNED_FRONTMATTER_KEYS: ReadonlySet<string> = new Set([
-  'claudian-chat',
-  'claudian-chat-version',
-  'id',
-  'provider',
-  'title',
-  'created',
-  'updated',
-  'linked',
-  'sessionId',
-  'forkSessionId',
-  'forkResumeAt',
-]);
+const OWNED_FRONTMATTER_KEYS: ReadonlySet<string> = new Set(CHAT_FILE_RESERVED_KEYS);
 
 export interface HistoryFileWriterDeps {
   readonly app: App;
   isEnabled: () => boolean;
+  /** Whether the body carries the transcript; read on every write. */
+  isTextEnabled: () => boolean;
+  /** User-defined frontmatter fields, read on every write so settings changes apply at once. */
+  getCustomFields: () => readonly ChatFileCustomField[];
   getConversation: (id: string) => Conversation | null;
   hydrateConversation: (id: string) => Promise<Conversation | null>;
   listConversationMeta: () => readonly ConversationMeta[];
@@ -172,24 +168,28 @@ export class HistoryFileWriter {
     if (!capabilities.supportsChatHistoryFile) return;
 
     const rendered = renderChatFile(conversation);
+    const body = this.#deps.isTextEnabled() ? rendered.body : null;
     const existingPath = this.#pathByConversationId.get(conversationId)
       ?? this.#findPathById(conversationId);
     if (existingPath) {
-      await this.#updateExisting(conversation, existingPath, rendered.frontmatter, rendered.body);
+      await this.#updateExisting(conversation, existingPath, rendered.frontmatter, body);
       return;
     }
-    await this.#createNew(conversation, rendered.frontmatter, rendered.body);
+    await this.#createNew(conversation, rendered.frontmatter, body);
   }
 
   async #createNew(
     conversation: Conversation,
     frontmatter: ChatFileFrontmatter,
-    body: string,
+    body: string | null,
   ): Promise<void> {
     const { preferred, collision } = preferredChatFilePath(conversation, this.#isFolder);
     const path = this.#needsCollisionName(preferred, conversation.id) ? collision : preferred;
     await this.#ensureParentFolders(path);
-    const content = serializeChatMarkdown(frontmatter, body);
+    const customFields = Object.fromEntries(
+      usableChatFileCustomFields(this.#deps.getCustomFields()).map(({ key, value }) => [key, value]),
+    );
+    const content = serializeChatMarkdown({ ...frontmatter, ...customFields }, body ?? '');
     const created = await this.#deps.app.vault.create(path, content);
     this.#pathByConversationId.set(conversation.id, created.path);
   }
@@ -198,7 +198,7 @@ export class HistoryFileWriter {
     conversation: Conversation,
     path: string,
     frontmatter: ChatFileFrontmatter,
-    body: string,
+    body: string | null,
   ): Promise<void> {
     const existing = this.#deps.app.vault.getAbstractFileByPath(path);
     if (!(existing instanceof TFile)) {
@@ -212,15 +212,18 @@ export class HistoryFileWriter {
     let previousTitle: unknown;
     await this.#deps.app.fileManager.processFrontMatter(existing, (fm: Record<string, unknown>) => {
       previousTitle = fm.title;
-      // Tags are the user's; the writer only makes sure the chat tag is among them.
-      const { tags: _chatTags, ...owned } = frontmatter;
-      Object.assign(fm, owned);
-      fm.tags = withChatTag(fm.tags);
+      Object.assign(fm, frontmatter);
+      // A custom field only fills a gap: whatever the file already holds under that key is the user's.
+      for (const { key, value } of usableChatFileCustomFields(this.#deps.getCustomFields())) {
+        if (!(key in fm)) fm[key] = value;
+      }
       for (const key of Object.keys(fm)) {
         if (!(key in frontmatter) && OWNED_FRONTMATTER_KEYS.has(key)) delete fm[key];
       }
     });
-    await this.#deps.app.vault.process(existing, (data) => replaceMarkdownBody(data, body));
+    if (body !== null) {
+      await this.#deps.app.vault.process(existing, (data) => replaceMarkdownBody(data, body));
+    }
 
     let target: TFile = existing;
     if (typeof previousTitle === 'string' && previousTitle !== conversation.title) {
@@ -306,18 +309,6 @@ export function readChatFileTitle(frontmatter: Record<string, unknown> | undefin
   return typeof frontmatter.title === 'string' && frontmatter.title.length > 0
     ? frontmatter.title
     : undefined;
-}
-
-function withChatTag(tags: unknown): unknown[] {
-  const list: unknown[] = Array.isArray(tags)
-    ? [...(tags as unknown[])]
-    : typeof tags === 'string'
-      ? tags.split(/[,\s]+/).filter(Boolean)
-      : [];
-  const hasChatTag = list.some(tag => (
-    typeof tag === 'string' && tag.replace(/^#/, '').toLowerCase() === CHAT_FILE_TAG
-  ));
-  return hasChatTag ? list : [...list, CHAT_FILE_TAG];
 }
 
 function replaceMarkdownBody(data: string, body: string): string {

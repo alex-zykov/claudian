@@ -1,6 +1,11 @@
 import type { App, Plugin, SettingDefinitionItem } from 'obsidian';
-import { Notice, PluginSettingTab, Setting } from 'obsidian';
+import { Notice, PluginSettingTab, setIcon, Setting } from 'obsidian';
 
+import {
+  type ChatFileCustomField,
+  checkChatFileCustomFields,
+  usableChatFileCustomFields,
+} from '@/core/chat-file/chatFileCustomFields';
 import { parseEnvironmentVariables } from '@/core/process/env';
 import { ProviderRegistry } from '@/core/providers/ProviderRegistry';
 import { ProviderSettingsCoordinator } from '@/core/providers/ProviderSettingsCoordinator';
@@ -421,6 +426,21 @@ export class ClaudianSettingTab extends PluginSettingTab {
       );
 
     new Setting(container)
+      .setName(t('settings.writeHistoryFileText.name'))
+      .setDesc(t('settings.writeHistoryFileText.desc'))
+      .addToggle((toggle) =>
+        toggle
+          .setValue(this.host.settings.writeHistoryFileText ?? true)
+          .onChange(async (value) => {
+            await this.host.mutateSettings((settings) => {
+              settings.writeHistoryFileText = value;
+            });
+          })
+      );
+
+    this.renderChatFileFields(container);
+
+    new Setting(container)
       .setName(t('settings.chatFileOpenMode.name'))
       .setDesc(t('settings.chatFileOpenMode.desc'))
       .addDropdown((dropdown) => {
@@ -702,6 +722,112 @@ export class ClaudianSettingTab extends PluginSettingTab {
     this.host.notifyProviderChatOptionsChanged(providerId);
     this.syncProviderEnablement?.(providerId);
     this.refreshTitleModelOptions?.();
+  }
+
+  /**
+   * Editor for the custom frontmatter fields of chat files. Only complete rows without a
+   * collision reach the settings; a row that clashes shows its error and stays out of them.
+   */
+  private renderChatFileFields(container: HTMLElement): void {
+    const sectionEl = container.createDiv({ cls: 'claudian-chat-fields' });
+    sectionEl.createDiv({ cls: 'claudian-chat-fields-label', text: t('settings.chatFileFields.name') });
+    sectionEl.createDiv({ cls: 'claudian-chat-fields-desc', text: t('settings.chatFileFields.desc') });
+    const listEl = sectionEl.createDiv({ cls: 'claudian-chat-fields-list' });
+    const rows: ChatFileCustomField[] = (this.host.settings.chatFileCustomFields ?? [])
+      .map(field => ({ ...field }));
+    const keyInputs: HTMLInputElement[] = [];
+    const rowEls: HTMLElement[] = [];
+    const errorEls: (HTMLElement | null)[] = [];
+
+    // The error exists only while the row clashes, so it is announced when it appears.
+    const refreshErrors = (): void => {
+      const errors = checkChatFileCustomFields(rows);
+      errors.forEach((error, index) => {
+        errorEls[index]?.remove();
+        errorEls[index] = null;
+        keyInputs[index].toggleClass('claudian-input-error', error !== null);
+        if (error === null) {
+          keyInputs[index].removeAttribute('aria-invalid');
+          return;
+        }
+        keyInputs[index].setAttribute('aria-invalid', 'true');
+        const errorEl = rowEls[index].createDiv({
+          cls: 'claudian-chat-fields-error',
+          text: t(error === 'reserved'
+            ? 'settings.chatFileFields.errorReserved'
+            : 'settings.chatFileFields.errorDuplicate', { key: rows[index].key.trim() }),
+        });
+        errorEl.setAttribute('role', 'alert');
+        errorEls[index] = errorEl;
+      });
+    };
+
+    const save = async (): Promise<void> => {
+      const usable = usableChatFileCustomFields(rows);
+      await this.host.mutateSettings((settings) => {
+        settings.chatFileCustomFields = usable;
+      });
+    };
+
+    const renderRows = (): void => {
+      listEl.empty();
+      keyInputs.length = 0;
+      rowEls.length = 0;
+      errorEls.length = 0;
+      rows.forEach((row, index) => {
+        const number = String(index + 1);
+        const itemEl = listEl.createDiv({ cls: 'claudian-chat-fields-item' });
+        const rowEl = itemEl.createDiv({ cls: 'claudian-chat-fields-row' });
+        const keyEl = rowEl.createEl('input', {
+          type: 'text',
+          cls: 'claudian-chat-fields-key',
+          placeholder: t('settings.chatFileFields.keyPlaceholder'),
+        });
+        keyEl.value = row.key;
+        keyEl.setAttribute('aria-label', t('settings.chatFileFields.keyAria', { index: number }));
+        const valueEl = rowEl.createEl('input', {
+          type: 'text',
+          cls: 'claudian-chat-fields-value',
+          placeholder: t('settings.chatFileFields.valuePlaceholder'),
+        });
+        valueEl.value = row.value;
+        valueEl.setAttribute('aria-label', t('settings.chatFileFields.valueAria', { index: number }));
+        const removeEl = rowEl.createEl('button', { type: 'button', cls: 'clickable-icon' });
+        removeEl.setAttribute('aria-label', t('settings.chatFileFields.remove', { index: number }));
+        setIcon(removeEl, 'x');
+        keyInputs.push(keyEl);
+        rowEls.push(itemEl);
+        errorEls.push(null);
+
+        const onEdit = (): void => {
+          row.key = keyEl.value;
+          row.value = valueEl.value;
+          refreshErrors();
+          void save();
+        };
+        keyEl.addEventListener('input', onEdit);
+        valueEl.addEventListener('input', onEdit);
+        removeEl.addEventListener('click', () => {
+          rows.splice(index, 1);
+          renderRows();
+          void save();
+        });
+      });
+      refreshErrors();
+    };
+
+    renderRows();
+
+    const addEl = sectionEl.createEl('button', {
+      type: 'button',
+      cls: 'claudian-chat-fields-add',
+      text: t('settings.chatFileFields.add'),
+    });
+    addEl.addEventListener('click', () => {
+      rows.push({ key: '', value: '' });
+      renderRows();
+      keyInputs[keyInputs.length - 1]?.focus();
+    });
   }
 
   private renderCustomContextLimits(container: HTMLElement, providerId: ProviderId): void {

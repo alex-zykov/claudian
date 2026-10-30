@@ -7,6 +7,7 @@ import {
   listDeviceSessionFolders,
 } from '@/app/storage/ChatHistoryFileAdmission';
 import type { SharedStorageService } from '@/app/storage/SharedStorageService';
+import type { ChatFileCustomField } from '@/core/chat-file/chatFileCustomFields';
 import type { ChatFileOpenMode, ClaudianSettings } from '@/core/types';
 import type { ChatHistoryFilePort } from '@/features/chat/ChatFeatureHost';
 import { ChatFileOpenHandler } from '@/features/chat/history-file/ChatFileOpenHandler';
@@ -22,6 +23,8 @@ export interface ChatHistoryFileSubsystemDeps {
   readonly conversations: ConversationService;
   readonly views: ClaudianViews;
   isWriteHistoryFileEnabled(): boolean;
+  isWriteHistoryFileTextEnabled(): boolean;
+  getChatFileCustomFields(): readonly ChatFileCustomField[];
   getChatFileOpenMode(): ChatFileOpenMode;
   reportError(error: unknown): void;
 }
@@ -59,6 +62,8 @@ export class ChatHistoryFileSubsystem {
     const writer = new HistoryFileWriter({
       app: deps.app,
       isEnabled: () => deps.isWriteHistoryFileEnabled(),
+      isTextEnabled: () => deps.isWriteHistoryFileTextEnabled(),
+      getCustomFields: () => deps.getChatFileCustomFields(),
       getConversation: id => deps.conversations.getCachedConversation(id)
         ?? deps.conversations.getConversationSync(id),
       hydrateConversation: id => deps.conversations.getConversationById(id),
@@ -138,6 +143,9 @@ export class ChatHistoryFileSubsystem {
     previous: Readonly<ClaudianSettings>,
   ): void {
     if (settings.writeHistoryFile && !previous.writeHistoryFile) {
+      this.writer.startBackfill();
+    } else if (settings.writeHistoryFile && settings.writeHistoryFileText && !previous.writeHistoryFileText) {
+      // Files written while the text was off have no transcript yet.
       this.writer.startBackfill();
     } else if (!settings.writeHistoryFile && previous.writeHistoryFile) {
       this.writer.cancelBackfill();
