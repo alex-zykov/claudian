@@ -25,6 +25,7 @@ import {
 } from '@/features/chat/utils/animationFrame';
 import { ChatPresentationPlacement } from '@/features/chat/view/ChatPresentationPlacement';
 import { DualPaneLayout, type DualPaneLayoutElements } from '@/features/chat/view/DualPaneLayout';
+import { applyLeafHeaderActivity, resolveLeafHeaderActivity } from '@/features/chat/workspace/LeafHeaderActivity';
 import type { ZenModeSlots, ZenModeSource, ZenPresentationPort } from '@/features/chat/zen/types';
 import { VaultMentionDataProvider } from '@/shared/mention/VaultMentionDataProvider';
 import { revealWorkspaceLeaf } from '@/utils/obsidianCompat';
@@ -126,8 +127,16 @@ export class ClaudianView extends ItemView implements ZenModeSource {
     return VIEW_TYPE_CLAUDIAN;
   }
 
+  /** The leaf is named after the chat it shows, like the chat file; blank chats keep the brand name. */
   getDisplayText(): string {
-    return 'Claudian';
+    const conversationId = this.tabManager?.getActiveTab()?.conversationId;
+    const title = conversationId ? this.plugin.getConversationSummary(conversationId)?.title : undefined;
+    return title || 'Claudian';
+  }
+
+  /** Obsidian reads the display text only when the header is told to redraw. */
+  private refreshLeafHeader(): void {
+    (this.leaf as { updateHeader?: () => void }).updateHeader?.();
   }
 
   getIcon(): string {
@@ -330,6 +339,8 @@ export class ClaudianView extends ItemView implements ZenModeSource {
 
   async onClose() {
     const lifecycleRevision = this.tabWorkspace.beginClose();
+    // The leaf may host another view next; it must not keep this chat's activity.
+    applyLeafHeaderActivity(this.leaf, null);
     // Zen presentation returns synchronously before asynchronous shutdown proceeds.
     this.stopZenModeSource();
     const tabManager = this.tabManager;
@@ -524,6 +535,8 @@ export class ClaudianView extends ItemView implements ZenModeSource {
       const items = this.tabManager.getTabBarItems();
       this.tabBar.update(items);
       this.updateTabBarVisibility();
+      this.refreshLeafHeader();
+      applyLeafHeaderActivity(this.leaf, resolveLeafHeaderActivity(items));
     }, this.containerEl.ownerDocument.defaultView ?? null);
   }
 
@@ -688,6 +701,7 @@ export class ClaudianView extends ItemView implements ZenModeSource {
   notifyConversationListChanged(): void {
     for (const tab of this.tabManager?.getAllTabs() ?? []) tab.composer.invalidateSessionMentions();
     this.sessions.invalidate();
+    this.refreshLeafHeader();
   }
 
   private notifyConversationNavigationChanged(): void {

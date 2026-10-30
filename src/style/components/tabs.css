@@ -104,3 +104,21 @@ body.theme-dark .claudian-tab-badge-streaming {
   min-height: 0;
   overflow: hidden;
 }
+
+/* Obsidian tab header of a chat leaf (main-area tab or sidebar tab icon). */
+.workspace-tab-header.claudian-tab-header--working .workspace-tab-header-inner-icon {
+  color: var(--interactive-accent);
+  animation: thinking-pulse 1.4s ease-in-out infinite;
+}
+
+.workspace-tab-header.claudian-tab-header--attention .workspace-tab-header-inner-icon {
+  color: var(--text-warning);
+  animation: thinking-pulse 0.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-tab-header.claudian-tab-header--working .workspace-tab-header-inner-icon,
+  .workspace-tab-header.claudian-tab-header--attention .workspace-tab-header-inner-icon {
+    animation: none;
+  }
+}

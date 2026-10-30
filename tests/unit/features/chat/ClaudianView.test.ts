@@ -1426,3 +1426,38 @@ describe('ClaudianView Escape handling', () => {
     expect(result).toBe(inputFocused ? false : undefined);
   });
 });
+
+describe('ClaudianView leaf title', () => {
+  const summaries: Record<string, { title: string }> = { c1: { title: 'Plan review' } };
+  const plugin = { getConversationSummary: (id: string) => summaries[id] ?? null };
+
+  it('names the leaf after the active chat and falls back to the brand name', () => {
+    const view = createClaudianView({
+      plugin,
+      tabManager: { getActiveTab: () => ({ conversationId: 'c1' }) },
+    });
+    expect(view.getDisplayText()).toBe('Plan review');
+
+    view.tabManager = { getActiveTab: () => ({ conversationId: null }) };
+    expect(view.getDisplayText()).toBe('Claudian');
+
+    view.tabManager = { getActiveTab: () => ({ conversationId: 'gone' }) };
+    expect(view.getDisplayText()).toBe('Claudian');
+
+    view.tabManager = null;
+    expect(view.getDisplayText()).toBe('Claudian');
+  });
+
+  it('refreshes the leaf header when conversation titles may have changed', () => {
+    const updateHeader = jest.fn();
+    const view = createClaudianView({
+      plugin,
+      leaf: { updateHeader, getRoot: () => ({}) },
+      tabManager: { getAllTabs: () => [], getActiveTab: () => null },
+    });
+
+    view.notifyConversationListChanged();
+
+    expect(updateHeader).toHaveBeenCalledTimes(1);
+  });
+});
