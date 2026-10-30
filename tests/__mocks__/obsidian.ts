@@ -101,6 +101,9 @@ export class ItemView {
     this.leaf = leaf;
   }
 
+  addAction = jest.fn((_icon: string, _title: string, _callback: unknown) => ({ toggleClass: jest.fn() }));
+  registerEvent = jest.fn();
+
   getViewType(): string {
     return '';
   }

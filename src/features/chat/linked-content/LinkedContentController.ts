@@ -52,6 +52,8 @@ export interface LinkedContentControllerOptions {
   readonly getExcludedTags: () => readonly string[];
   readonly getCachedVaultFiles: () => readonly TFile[];
   readonly getCachedVaultFolders: () => readonly { readonly name: string; readonly path: string }[];
+  /** Called after the linked content changed and its chip and selector were redrawn. */
+  readonly onChanged?: () => void;
 }
 
 interface DraftCheckpoint {
@@ -389,6 +391,7 @@ export class LinkedContentController {
     const presentation = this.#derivePresentation(snapshot.path);
     this.#renderSelector(snapshot, presentation);
     this.#renderChip(presentation);
+    this.options.onChanged?.();
   }
 
   #renderSelector(

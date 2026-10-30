@@ -11,6 +11,11 @@
     "refresh": "Aktualisieren"
   },
   "chat": {
+    "header": {
+      "moveToLeftPanel": "In linkes Seitenfenster verschieben",
+      "moveToRightPanel": "In rechtes Seitenfenster verschieben",
+      "moveRefused": "Warte, bis die Antwort fertig ist, bevor du den Chat verschiebst."
+    },
     "promptSuggestionHint": "Mit Tab übernehmen",
     "selectAvailableModel": "Wähle vor dem Senden ein verfügbares Modell aus.",
     "selectAvailableTitleModel": "Wähle in den Claudian-Einstellungen ein verfügbares Titelmodell aus.",

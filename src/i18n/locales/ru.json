@@ -11,6 +11,11 @@
     "refresh": "Обновить"
   },
   "chat": {
+    "header": {
+      "moveToLeftPanel": "Перенести в левую панель",
+      "moveToRightPanel": "Перенести в правую панель",
+      "moveRefused": "Дождитесь окончания ответа, прежде чем переносить чат."
+    },
     "promptSuggestionHint": "Tab для принятия",
     "selectAvailableModel": "Перед отправкой выберите доступную модель.",
     "selectAvailableTitleModel": "Выберите доступную модель для заголовков в настройках Claudian.",

@@ -11,6 +11,11 @@
     "refresh": "刷新"
   },
   "chat": {
+    "header": {
+      "moveToLeftPanel": "移到左侧面板",
+      "moveToRightPanel": "移到右侧面板",
+      "moveRefused": "请等回复结束后再移动聊天。"
+    },
     "promptSuggestionHint": "按 Tab 接受",
     "selectAvailableModel": "请先选择可用的模型再发送。",
     "selectAvailableTitleModel": "请在 Claudian 设置中选择可用的标题生成模型。",

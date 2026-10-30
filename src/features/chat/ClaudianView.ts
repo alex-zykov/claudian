@@ -1,11 +1,13 @@
 import type { TFile, ViewStateResult, WorkspaceLeaf } from 'obsidian';
 import { ItemView, Notice, Scope, setIcon } from 'obsidian';
 
+import { resolveLinkedFolder } from '@/core/path/ResolveLinkedFolder';
 import { StartupProfiler } from '@/core/performance/StartupProfiler';
 import { getHiddenCommandSet } from '@/core/providers/commands/hiddenCommands';
 import { DEFAULT_CHAT_PROVIDER_ID, type ProviderId } from '@/core/providers/types';
 import { VIEW_TYPE_CLAUDIAN } from '@/core/types';
 import type { ChatFeatureHost } from '@/features/chat/ChatFeatureHost';
+import { createVaultLinkedContentIsFolder } from '@/features/chat/linked-content/LinkedContentPresentation';
 import { SessionManagerSurface, setControlAvailability } from '@/features/chat/session-manager/SessionManagerSurface';
 import { SessionNavigation } from '@/features/chat/session-manager/SessionNavigation';
 import type { ChatTab, TabId } from '@/features/chat/tabs/ChatTab';
@@ -25,8 +27,14 @@ import {
 } from '@/features/chat/utils/animationFrame';
 import { ChatPresentationPlacement } from '@/features/chat/view/ChatPresentationPlacement';
 import { DualPaneLayout, type DualPaneLayoutElements } from '@/features/chat/view/DualPaneLayout';
+import {
+  ChatViewHeader,
+  resolveViewSide,
+  revealFolderInExplorer,
+} from '@/features/chat/workspace/ChatViewHeader';
 import { applyLeafHeaderActivity, resolveLeafHeaderActivity } from '@/features/chat/workspace/LeafHeaderActivity';
 import type { ZenModeSlots, ZenModeSource, ZenPresentationPort } from '@/features/chat/zen/types';
+import { t } from '@/i18n/i18n';
 import { VaultMentionDataProvider } from '@/shared/mention/VaultMentionDataProvider';
 
 type LoadableView = {
@@ -58,12 +66,15 @@ export class ClaudianView extends ItemView implements ZenModeSource {
   private readonly sessions: SessionManagerSurface;
   private readonly layout: DualPaneLayout;
   private readonly presentation: ChatPresentationPlacement;
+  private readonly header: ChatViewHeader;
+  private headerLayoutRegistered = false;
 
   constructor(leaf: WorkspaceLeaf, plugin: ChatFeatureHost) {
     super(leaf);
     this.plugin = plugin;
     this.mentionDataProvider = new VaultMentionDataProvider(plugin.app);
     this.tabWorkspace = this.createTabWorkspace();
+    this.header = this.createHeader();
     this.sessionNavigation = new SessionNavigation({
       plugin,
       view: this,
@@ -136,6 +147,33 @@ export class ClaudianView extends ItemView implements ZenModeSource {
   /** Obsidian reads the display text only when the header is told to redraw. */
   private refreshLeafHeader(): void {
     (this.leaf as { updateHeader?: () => void }).updateHeader?.();
+    this.header.refresh();
+  }
+
+  /** Breadcrumbs of the project folder and the buttons that move the chat into a sidebar. */
+  private createHeader(): ChatViewHeader {
+    // titleParentEl and titleEl are Obsidian's undocumented header slots; without them only the buttons show.
+    const slots = this as unknown as { titleParentEl?: HTMLElement; titleEl?: HTMLElement };
+    const { app } = this.plugin;
+    const header = new ChatViewHeader({
+      titleParentEl: slots.titleParentEl,
+      titleEl: slots.titleEl,
+      addAction: (icon, title, onClick) => this.addAction(icon, title, onClick),
+      labels: {
+        moveToLeft: t('chat.header.moveToLeftPanel'),
+        moveToRight: t('chat.header.moveToRightPanel'),
+      },
+      getFolder: () => resolveLinkedFolder(
+        this.tabManager?.getActiveTab()?.linkedContent.getSnapshot().path ?? undefined,
+        createVaultLinkedContentIsFolder(app),
+      ),
+      getTitle: () => this.getDisplayText(),
+      getSide: () => resolveViewSide(this.leaf, app.workspace),
+      revealFolder: path => revealFolderInExplorer(app, path),
+      moveToSide: side => this.plugin.moveViewToSide(this, side),
+      onMoveRefused: () => { new Notice(t('chat.header.moveRefused')); },
+    });
+    return header;
   }
 
   getIcon(): string {
@@ -230,6 +268,12 @@ export class ClaudianView extends ItemView implements ZenModeSource {
       container = this.containerEl.createDiv();
     }
 
+    if (!this.headerLayoutRegistered) {
+      this.headerLayoutRegistered = true;
+      // A leaf can be dragged between the main area and the sidebars.
+      this.registerEvent(this.plugin.app.workspace.on('layout-change', () => this.header.refresh()));
+    }
+
     this.viewContainerEl = container;
     this.viewContainerEl.empty();
     this.viewContainerEl.addClass('claudian-container');
@@ -289,6 +333,9 @@ export class ClaudianView extends ItemView implements ZenModeSource {
         },
         onTabTitleChanged: () => {
           if (isTabWorkspaceInitialized()) this.updateTabBar();
+        },
+        onTabLinkedContentChanged: () => {
+          if (isTabWorkspaceInitialized()) this.header.refresh();
         },
         onTabWorkChanged: () => {
           if (isTabWorkspaceInitialized()) {

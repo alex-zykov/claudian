@@ -199,7 +199,7 @@ describe('ClaudianView leaf title', () => {
     const updateHeader = jest.fn();
     const view = createClaudianView({
       plugin,
-      leaf: { updateHeader },
+      leaf: { updateHeader, getRoot: () => ({}) },
       tabManager: { getAllTabs: () => [], getActiveTab: () => null },
     });
 

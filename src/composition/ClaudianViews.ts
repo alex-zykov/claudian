@@ -112,6 +112,25 @@ export class ClaudianViews {
     }
   }
 
+  /**
+   * Moves a chat view into a sidebar: its tabs are reopened there from the saved view state
+   * and the old tab is closed. Refused (false) while an answer is streaming, because closing
+   * the view would cut it off, and when the sidebar has no leaf to give.
+   */
+  async moveViewToSide(view: ClaudianView, side: 'left' | 'right'): Promise<boolean> {
+    const { workspace } = this;
+    const tabs = view.getTabManager()?.getAllTabs() ?? [];
+    if (tabs.some(tab => tab.state.isStreaming)) return false;
+    const target = side === 'left' ? workspace.getLeftLeaf(false) : workspace.getRightLeaf(false);
+    if (!target) return false;
+
+    const { state } = view.leaf.getViewState();
+    view.leaf.detach();
+    await target.setViewState({ type: VIEW_TYPE_CLAUDIAN, state, active: true });
+    await revealWorkspaceLeaf(workspace, target);
+    return true;
+  }
+
   #getLeafForPlacement(placement: ChatViewPlacement): WorkspaceLeaf | null {
     const { workspace } = this;
     switch (placement) {

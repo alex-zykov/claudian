@@ -127,4 +127,6 @@ export interface ChatFeatureHost extends FeatureHost {
   findConversationAcrossViews(
     conversationId: string,
   ): { view: ChatViewHost; tabId: TabId } | null;
+  /** Reopens a chat view's tabs in a sidebar and closes it; false when refused. */
+  moveViewToSide(view: ChatViewHost, side: 'left' | 'right'): Promise<boolean>;
 }

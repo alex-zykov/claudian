@@ -56,6 +56,8 @@ export type TabHydrationState = 'idle' | 'loading' | 'ready' | 'failed';
 
 /** Linked content operations a host view forwards to a tab. */
 export interface TabLinkedContentPort {
+  /** The path the tab links to now, or null. */
+  getSnapshot(): { readonly path: string | null };
   selectExplicit(path: string | null): void;
   handleActiveFileChanged(file: TFile | null, isActiveOwner: boolean): void;
   handleActiveFileMetadataChanged(file: TFile | null): void;

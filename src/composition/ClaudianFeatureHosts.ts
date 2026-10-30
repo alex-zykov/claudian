@@ -33,7 +33,7 @@ import type { ZenModeController } from '@/features/chat/zen/ZenModeController';
 import type { FeatureHost } from '@/features/FeatureHost';
 
 import type { AgentSkillResources } from './AgentSkillResources';
-import type { ClaudianViews } from './ClaudianViews';
+import { type ClaudianViews, isClaudianView } from './ClaudianViews';
 
 export interface FeatureHostDomains {
   readonly app: App;
@@ -239,5 +239,11 @@ export class ClaudianChatFeatureHost extends ClaudianFeatureHost implements Chat
 
   findConversationAcrossViews(conversationId: string): { view: ClaudianView; tabId: string } | null {
     return this.domains.views.findConversationAcrossViews(conversationId);
+  }
+
+  moveViewToSide(view: ChatViewHost, side: 'left' | 'right'): Promise<boolean> {
+    return isClaudianView(view)
+      ? this.domains.views.moveViewToSide(view, side)
+      : Promise.resolve(false);
   }
 }

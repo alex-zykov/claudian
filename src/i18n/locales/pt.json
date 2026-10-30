@@ -11,6 +11,11 @@
     "refresh": "Atualizar"
   },
   "chat": {
+    "header": {
+      "moveToLeftPanel": "Mover para o painel esquerdo",
+      "moveToRightPanel": "Mover para o painel direito",
+      "moveRefused": "Aguarde a resposta terminar antes de mover o chat."
+    },
     "promptSuggestionHint": "Tab para aceitar",
     "selectAvailableModel": "Selecione um modelo disponível antes de enviar.",
     "selectAvailableTitleModel": "Selecione um modelo de título disponível nas configurações do Claudian.",

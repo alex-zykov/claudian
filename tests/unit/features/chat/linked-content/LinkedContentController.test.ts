@@ -74,6 +74,7 @@ function createHarness(initialFiles: Array<TFile | TFolder> = []) {
 
   return {
     app,
+    options,
     controller: new LinkedContentController(options),
     entries,
     setActiveFile(file: TFile | null) {
@@ -364,6 +365,17 @@ describe('LinkedContentController', () => {
       mode: 'explicit-draft',
       path: null,
     });
+  });
+
+  it('reports every change of the linked content', () => {
+    const harness = createHarness([createFile('Notes/One.md')]);
+    const onChanged = jest.fn();
+    const controller = new LinkedContentController({ ...harness.options, onChanged });
+
+    controller.selectExplicit('Notes/One.md');
+    controller.selectExplicit(null);
+
+    expect(onChanged).toHaveBeenCalledTimes(2);
   });
 
   it('locks an existing conversation without linked content', () => {
