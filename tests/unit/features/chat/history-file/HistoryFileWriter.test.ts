@@ -347,6 +347,29 @@ describe('HistoryFileWriter', () => {
       .toBe(conversation.id);
   });
 
+  describe('chat file lookup', () => {
+    it('finds the file of a chat after it was written and not before', async () => {
+      const harness = createVaultHarness([createFolder('Projects/A'), createFile('Projects/A/x.md')]);
+      const conversation = createConversation();
+      const writer = new HistoryFileWriter({
+        app: harness.app,
+        isEnabled: () => true,
+        isTextEnabled: () => true,
+        getCustomFields: () => [],
+        getConversation: () => conversation,
+        hydrateConversation: async () => conversation,
+        listConversationMeta: () => [],
+        reportError: jest.fn(),
+      });
+      expect(writer.getFile(conversation.id)).toBeNull();
+
+      writer.scheduleWrite(conversation.id);
+      await flushQueues();
+
+      expect(writer.getFile(conversation.id)?.path).toBe('Projects/A/Plan review.chat.md');
+    });
+  });
+
   describe('conversation text switch', () => {
     function setup() {
       const harness = createVaultHarness([createFolder('Projects/A'), createFile('Projects/A/x.md')]);

@@ -14,7 +14,10 @@
     "header": {
       "moveToLeftPanel": "Move to left panel",
       "moveToRightPanel": "Move to right panel",
-      "moveRefused": "Wait for the answer to finish before moving the chat."
+      "moveToMainArea": "Move to main area",
+      "moveRefused": "Wait for the answer to finish before moving the chat.",
+      "editNote": "Edit note",
+      "editNoteRefused": "This chat has no file yet."
     },
     "promptSuggestionHint": "Tab to accept",
     "selectAvailableModel": "Select an available model before sending.",

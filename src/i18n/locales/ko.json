@@ -14,7 +14,10 @@
     "header": {
       "moveToLeftPanel": "왼쪽 패널로 이동",
       "moveToRightPanel": "오른쪽 패널로 이동",
-      "moveRefused": "답변이 끝난 뒤에 채팅을 이동하세요."
+      "moveToMainArea": "메인 영역으로 이동",
+      "moveRefused": "답변이 끝난 뒤에 채팅을 이동하세요.",
+      "editNote": "노트 편집",
+      "editNoteRefused": "이 채팅에는 아직 파일이 없습니다."
     },
     "promptSuggestionHint": "Tab으로 수락",
     "selectAvailableModel": "전송하기 전에 사용 가능한 모델을 선택하세요.",

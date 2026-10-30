@@ -126,6 +126,45 @@ describe('ChatFileOpenHandler', () => {
     restore();
   });
 
+  describe('openAsMarkdown', () => {
+    function withWorkspace() {
+      const harness = setup('claudian');
+      const fileLeaf = harness.leaf;
+      const openFile = jest.fn(async (file: TFile) => {
+        await fileLeaf.setViewState(markdownState(file));
+      });
+      (harness.deps.app as unknown as { workspace: unknown }).workspace = {
+        getLeaf: jest.fn(() => Object.assign(fileLeaf, { openFile })),
+      };
+      return { ...harness, openFile };
+    }
+
+    it('opens the chat file as a note in a new tab instead of routing it to Claudian', async () => {
+      const { handler, deps, original, detach, openFile, restore } = withWorkspace();
+
+      await handler.openAsMarkdown(chatFile);
+
+      expect(openFile).toHaveBeenCalledWith(chatFile);
+      expect(original).toHaveBeenCalledWith(markdownState(chatFile));
+      expect(deps.openConversationInClaudian).not.toHaveBeenCalled();
+      expect(detach).not.toHaveBeenCalled();
+      restore();
+    });
+
+    it('routes the chat file to Claudian again once the note is open', async () => {
+      const { handler, deps, leaf, original, detach, restore } = withWorkspace();
+      await handler.openAsMarkdown(chatFile);
+      original.mockClear();
+
+      await leaf.setViewState(markdownState(chatFile));
+
+      expect(deps.openConversationInClaudian).toHaveBeenCalledWith('conv-open-1');
+      expect(original).not.toHaveBeenCalled();
+      expect(detach).toHaveBeenCalledTimes(1);
+      restore();
+    });
+  });
+
   it('forwards ordinary setViewState with the calling leaf as this', async () => {
     const { leaf, original, restore } = setup('claudian');
 

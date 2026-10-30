@@ -6,7 +6,7 @@ import { StartupProfiler } from '@/core/performance/StartupProfiler';
 import { getHiddenCommandSet } from '@/core/providers/commands/hiddenCommands';
 import { DEFAULT_CHAT_PROVIDER_ID, type ProviderId } from '@/core/providers/types';
 import { VIEW_TYPE_CLAUDIAN } from '@/core/types';
-import type { ChatFeatureHost } from '@/features/chat/ChatFeatureHost';
+import type { ChatFeatureHost, ChatViewHandoff, ChatViewHandoffTab } from '@/features/chat/ChatFeatureHost';
 import { createVaultLinkedContentIsFolder } from '@/features/chat/linked-content/LinkedContentPresentation';
 import { SessionManagerSurface, setControlAvailability } from '@/features/chat/session-manager/SessionManagerSurface';
 import { SessionNavigation } from '@/features/chat/session-manager/SessionNavigation';
@@ -68,6 +68,8 @@ export class ClaudianView extends ItemView implements ZenModeSource {
   private readonly presentation: ChatPresentationPlacement;
   private readonly header: ChatViewHeader;
   private headerLayoutRegistered = false;
+  private moveToMainButtonEl: HTMLElement | null = null;
+  private pendingHandoff: ChatViewHandoff | null = null;
 
   constructor(leaf: WorkspaceLeaf, plugin: ChatFeatureHost) {
     super(leaf);
@@ -148,6 +150,56 @@ export class ClaudianView extends ItemView implements ZenModeSource {
   private refreshLeafHeader(): void {
     (this.leaf as { updateHeader?: () => void }).updateHeader?.();
     this.header.refresh();
+    this.syncMoveToMainButton();
+  }
+
+  /** Redraws what depends on where the view sits (header buttons, the move-to-main button). */
+  refreshPlacement(): void {
+    this.refreshLeafHeader();
+  }
+
+  /** The move-to-main button only makes sense in a sidebar. */
+  private syncMoveToMainButton(): void {
+    this.moveToMainButtonEl?.toggleClass(
+      'claudian-hidden',
+      resolveViewSide(this.leaf, this.plugin.app.workspace) === 'main',
+    );
+  }
+
+  /**
+   * What lives only in this view's interface and not in its saved state: every tab's unsent input
+   * and the reading position of the active tab. Taken before the view is closed for a move.
+   */
+  captureHandoff(): ChatViewHandoff {
+    const tabs = new Map<string, ChatViewHandoffTab>();
+    for (const tab of this.tabManager?.getAllTabs() ?? []) {
+      tabs.set(tab.id, { draft: tab.composer.captureDraft(), scroll: tab.zenPresentation.captureScroll() });
+    }
+    return { activeTabId: this.tabManager?.getActiveTab()?.id ?? null, tabs };
+  }
+
+  /** Restores a handoff into the tabs with the same ids, as soon as the restored workspace is ready. */
+  receiveHandoff(handoff: ChatViewHandoff): void {
+    this.pendingHandoff = handoff;
+    if (this.tabWorkspace.isReady) this.applyPendingHandoff();
+  }
+
+  private applyPendingHandoff(): void {
+    const handoff = this.pendingHandoff;
+    if (!handoff || !this.tabManager) return;
+    this.pendingHandoff = null;
+    for (const tab of this.tabManager.getAllTabs()) {
+      const saved = handoff.tabs.get(tab.id);
+      if (!saved) continue;
+      if (saved.draft.content || saved.draft.images.length) tab.composer.restoreDraft(saved.draft);
+      if (tab.id !== handoff.activeTabId) continue;
+      // The new pane was just revealed: scroll once it has its size, and again after layout settles.
+      tab.zenPresentation.restoreScroll(saved.scroll);
+      this.containerEl.ownerDocument?.defaultView?.requestAnimationFrame?.(
+        () => tab.zenPresentation.restoreScroll(saved.scroll),
+      );
+    }
+    this.focusActiveInput();
   }
 
   /** Breadcrumbs of the project folder and the buttons that move the chat into a sidebar. */
@@ -162,6 +214,7 @@ export class ClaudianView extends ItemView implements ZenModeSource {
       labels: {
         moveToLeft: t('chat.header.moveToLeftPanel'),
         moveToRight: t('chat.header.moveToRightPanel'),
+        editNote: t('chat.header.editNote'),
       },
       getFolder: () => resolveLinkedFolder(
         this.tabManager?.getActiveTab()?.linkedContent.getSnapshot().path ?? undefined,
@@ -170,8 +223,17 @@ export class ClaudianView extends ItemView implements ZenModeSource {
       getTitle: () => this.getDisplayText(),
       getSide: () => resolveViewSide(this.leaf, app.workspace),
       revealFolder: path => revealFolderInExplorer(app, path),
-      moveToSide: side => this.plugin.moveViewToSide(this, side),
+      moveToSide: side => this.plugin.moveView(this, side),
       onMoveRefused: () => { new Notice(t('chat.header.moveRefused')); },
+      hasChatFile: () => {
+        const id = this.tabManager?.getActiveTab()?.conversationId;
+        return !!id && this.plugin.chatHistoryFiles.hasFile(id);
+      },
+      openChatFile: async () => {
+        const id = this.tabManager?.getActiveTab()?.conversationId;
+        return !!id && this.plugin.chatHistoryFiles.openFileAsMarkdown(id);
+      },
+      onEditRefused: () => { new Notice(t('chat.header.editNoteRefused')); },
     });
     return header;
   }
@@ -196,6 +258,7 @@ export class ClaudianView extends ItemView implements ZenModeSource {
       getTabBar: () => this.tabBar,
       isWideLayout: () => this.layout.isWide,
       onInitialized: () => {
+        this.applyPendingHandoff();
         this.syncProviderBrandColor();
         this.presentation.update();
         this.updateTabBar();
@@ -271,7 +334,7 @@ export class ClaudianView extends ItemView implements ZenModeSource {
     if (!this.headerLayoutRegistered) {
       this.headerLayoutRegistered = true;
       // A leaf can be dragged between the main area and the sidebars.
-      this.registerEvent(this.plugin.app.workspace.on('layout-change', () => this.header.refresh()));
+      this.registerEvent(this.plugin.app.workspace.on('layout-change', () => this.refreshLeafHeader()));
     }
 
     this.viewContainerEl = container;
@@ -486,6 +549,20 @@ export class ClaudianView extends ItemView implements ZenModeSource {
     newBtn.addEventListener('click', () => this.requestNewConversation());
 
     this.sessions.mountHistoryControl(navActionsEl);
+
+    // A sidebar has no view header, so the way back to the main area lives here.
+    this.moveToMainButtonEl = navActionsEl.createEl('button', {
+      cls: 'claudian-input-nav-btn claudian-move-to-main-btn',
+      attr: { type: 'button' },
+    });
+    setIcon(this.moveToMainButtonEl, 'panel-top');
+    this.moveToMainButtonEl.setAttribute('aria-label', t('chat.header.moveToMainArea'));
+    this.moveToMainButtonEl.addEventListener('click', () => {
+      void this.plugin.moveView(this, 'main').then((moved) => {
+        if (!moved) new Notice(t('chat.header.moveRefused'));
+      });
+    });
+    this.syncMoveToMainButton();
 
     return wrapper;
   }

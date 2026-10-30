@@ -209,6 +209,84 @@ describe('ClaudianView leaf title', () => {
   });
 });
 
+describe('ClaudianView handoff', () => {
+  function fakeTab(id: string, draft: string, scroll: { top: number; follow: boolean }) {
+    return {
+      id,
+      composer: {
+        captureDraft: jest.fn(() => ({ content: draft, images: [] })),
+        restoreDraft: jest.fn(),
+        focus: jest.fn(),
+      },
+      zenPresentation: {
+        captureScroll: jest.fn(() => scroll),
+        restoreScroll: jest.fn(),
+      },
+    };
+  }
+
+  function setup(ready: boolean) {
+    const first = fakeTab('t1', 'first draft', { top: 120, follow: false });
+    const second = fakeTab('t2', '', { top: 0, follow: true });
+    const view = createClaudianView({
+      tabManager: {
+        getAllTabs: () => [first, second],
+        getActiveTab: () => second,
+      },
+    });
+    Object.assign(view.tabWorkspace, { lifecycleRevision: 1, initializedRevision: ready ? 1 : -1 });
+    return { view, first, second };
+  }
+
+  it('captures the draft and the scroll position of every tab', () => {
+    const { view } = setup(true);
+
+    const handoff = view.captureHandoff();
+
+    expect(handoff.activeTabId).toBe('t2');
+    expect(handoff.tabs.get('t1')).toEqual({
+      draft: { content: 'first draft', images: [] },
+      scroll: { top: 120, follow: false },
+    });
+    expect(handoff.tabs.get('t2')?.scroll).toEqual({ top: 0, follow: true });
+  });
+
+  it('restores drafts into the matching tabs and the scroll of the active one', () => {
+    const { view, first, second } = setup(true);
+    const handoff = {
+      activeTabId: 't2',
+      tabs: new Map([
+        ['t1', { draft: { content: 'first draft', images: [] }, scroll: { top: 120, follow: false } }],
+        ['t2', { draft: { content: 'typed', images: [] }, scroll: { top: 500, follow: false } }],
+        ['gone', { draft: { content: 'lost', images: [] }, scroll: { top: 1, follow: false } }],
+      ]),
+    };
+
+    view.receiveHandoff(handoff);
+
+    expect(first.composer.restoreDraft).toHaveBeenCalledWith({ content: 'first draft', images: [] });
+    expect(second.composer.restoreDraft).toHaveBeenCalledWith({ content: 'typed', images: [] });
+    expect(second.zenPresentation.restoreScroll).toHaveBeenCalledWith({ top: 500, follow: false });
+    expect(first.zenPresentation.restoreScroll).not.toHaveBeenCalled();
+  });
+
+  it('waits for the tab workspace before restoring', () => {
+    const { view, second } = setup(false);
+    const handoff = {
+      activeTabId: 't2',
+      tabs: new Map([['t2', { draft: { content: 'typed', images: [] }, scroll: { top: 5, follow: false } }]]),
+    };
+
+    view.receiveHandoff(handoff);
+    expect(second.composer.restoreDraft).not.toHaveBeenCalled();
+
+    Object.assign(view.tabWorkspace, { initializedRevision: 1 });
+    view.applyPendingHandoff();
+
+    expect(second.composer.restoreDraft).toHaveBeenCalledWith({ content: 'typed', images: [] });
+  });
+});
+
 describe('ClaudianView tab controls', () => {
   it('builds chat navigation actions as native buttons that reach their owners', async () => {
     const { contentEl, manager } = await openView();
@@ -237,6 +315,51 @@ describe('ClaudianView tab controls', () => {
     expect(manager.createTab).toHaveBeenCalledTimes(1);
     expect(manager.createNewConversation).toHaveBeenCalledTimes(1);
     expect(historyContainer.querySelector('.claudian-history-menu')?.hasClass('visible')).toBe(true);
+  });
+
+  describe('move to main area button', () => {
+    function appWithSplits(leftSplit: unknown) {
+      return {
+        vault: { getAbstractFileByPath: () => null, offref: jest.fn(), on: jest.fn((name: string) => ({ name })) },
+        workspace: {
+          on: jest.fn((name: string) => ({ name })),
+          requestSaveLayout: Object.assign(jest.fn(), { run: jest.fn() }),
+          leftSplit,
+          rightSplit: {},
+        },
+        metadataCache: { on: jest.fn((name: string) => ({ name })) },
+      };
+    }
+
+    async function openAt(placement: 'main' | 'left') {
+      const sidebarRoot = {};
+      const root = placement === 'left' ? sidebarRoot : {};
+      const moveView = jest.fn(async () => true);
+      const opened = await openView({
+        leaf: { getRoot: () => root },
+        plugin: { app: appWithSplits(sidebarRoot), moveView },
+      });
+      return { ...opened, moveView };
+    }
+
+    it('is hidden while the chat is in the main area', async () => {
+      const { contentEl } = await openAt('main');
+
+      const button = contentEl.querySelector('.claudian-move-to-main-btn')!;
+
+      expect(button.getAttribute('aria-label')).toBe('Move to main area');
+      expect(button.hasClass('claudian-hidden')).toBe(true);
+    });
+
+    it('is shown in a sidebar and moves the chat back to the main area', async () => {
+      const { contentEl, view, moveView } = await openAt('left');
+
+      const button = contentEl.querySelector('.claudian-move-to-main-btn')!;
+      button.click();
+
+      expect(button.hasClass('claudian-hidden')).toBe(false);
+      expect(moveView).toHaveBeenCalledWith(view, 'main');
+    });
   });
 
   it('keeps tab controls in the view-owned input row', async () => {
@@ -839,7 +962,7 @@ describe('ClaudianView composer input', () => {
     const tabManager = {
       getActiveTab: jest.fn().mockReturnValue({
         id: 'active-tab',
-        composer: createTabComposerPort(inputEl as never, {} as never),
+        composer: createTabComposerPort(inputEl as never, {} as never, {} as never),
       }),
       retainTabs: jest.fn(),
     };

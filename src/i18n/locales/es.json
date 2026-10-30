@@ -14,7 +14,10 @@
     "header": {
       "moveToLeftPanel": "Mover al panel izquierdo",
       "moveToRightPanel": "Mover al panel derecho",
-      "moveRefused": "Espera a que termine la respuesta antes de mover el chat."
+      "moveToMainArea": "Mover al área principal",
+      "moveRefused": "Espera a que termine la respuesta antes de mover el chat.",
+      "editNote": "Editar nota",
+      "editNoteRefused": "Este chat aún no tiene archivo."
     },
     "promptSuggestionHint": "Tab para aceptar",
     "selectAvailableModel": "Selecciona un modelo disponible antes de enviar.",

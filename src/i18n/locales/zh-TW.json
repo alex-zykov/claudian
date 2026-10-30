@@ -14,7 +14,10 @@
     "header": {
       "moveToLeftPanel": "移到左側面板",
       "moveToRightPanel": "移到右側面板",
-      "moveRefused": "請等回覆結束後再移動聊天。"
+      "moveToMainArea": "移到主區域",
+      "moveRefused": "請等回覆結束後再移動聊天。",
+      "editNote": "編輯筆記",
+      "editNoteRefused": "此聊天尚無檔案。"
     },
     "promptSuggestionHint": "按 Tab 接受",
     "selectAvailableModel": "請先選擇可用的模型再傳送。",

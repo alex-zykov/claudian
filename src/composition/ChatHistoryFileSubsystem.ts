@@ -52,6 +52,13 @@ export class ChatHistoryFileSubsystem {
     this.openHandler = openHandler;
     this.port = {
       scheduleWrite: id => writer.scheduleWrite(id),
+      hasFile: id => writer.getFile(id) !== null,
+      openFileAsMarkdown: async (id) => {
+        const file = writer.getFile(id);
+        if (!file) return false;
+        await openHandler.openAsMarkdown(file);
+        return true;
+      },
       trashForConversation: id => writer.trashForConversation(id),
       startBackfill: () => writer.startBackfill(),
       cancelBackfill: () => writer.cancelBackfill(),

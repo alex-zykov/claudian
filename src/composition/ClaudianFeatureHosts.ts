@@ -23,6 +23,7 @@ import type {
 import type {
   ChatFeatureHost,
   ChatHistoryFilePort,
+  ChatViewDestination,
   ChatViewHost,
   TabWorkspaceStateDeliveryRegistration,
 } from '@/features/chat/ChatFeatureHost';
@@ -241,9 +242,9 @@ export class ClaudianChatFeatureHost extends ClaudianFeatureHost implements Chat
     return this.domains.views.findConversationAcrossViews(conversationId);
   }
 
-  moveViewToSide(view: ChatViewHost, side: 'left' | 'right'): Promise<boolean> {
+  moveView(view: ChatViewHost, destination: ChatViewDestination): Promise<boolean> {
     return isClaudianView(view)
-      ? this.domains.views.moveViewToSide(view, side)
+      ? this.domains.views.moveView(view, destination)
       : Promise.resolve(false);
   }
 }

@@ -14,7 +14,10 @@
     "header": {
       "moveToLeftPanel": "左パネルへ移動",
       "moveToRightPanel": "右パネルへ移動",
-      "moveRefused": "回答が終わってからチャットを移動してください。"
+      "moveToMainArea": "メインエリアへ移動",
+      "moveRefused": "回答が終わってからチャットを移動してください。",
+      "editNote": "ノートを編集",
+      "editNoteRefused": "このチャットにはまだファイルがありません。"
     },
     "promptSuggestionHint": "Tab で採用",
     "selectAvailableModel": "送信する前に利用可能なモデルを選択してください。",

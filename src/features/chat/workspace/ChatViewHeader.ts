@@ -42,7 +42,11 @@ export interface ChatViewHeaderDeps {
   /** Obsidian's title slot of the view header; absent when the app does not expose it. */
   readonly titleEl?: HTMLElement;
   addAction(icon: string, title: string, onClick: () => void): HTMLElement;
-  readonly labels: { readonly moveToLeft: string; readonly moveToRight: string };
+  readonly labels: {
+    readonly moveToLeft: string;
+    readonly moveToRight: string;
+    readonly editNote: string;
+  };
   getFolder(): string;
   getTitle(): string;
   getSide(): ChatViewSide;
@@ -50,6 +54,11 @@ export interface ChatViewHeaderDeps {
   /** Moves the chat into a sidebar; false when it was refused. */
   moveToSide(side: 'left' | 'right'): Promise<boolean>;
   onMoveRefused(): void;
+  /** Whether the active chat has a `.chat.md` file to edit. */
+  hasChatFile(): boolean;
+  /** Opens the chat file as a note in a new tab; false when it could not be opened. */
+  openChatFile(): Promise<boolean>;
+  onEditRefused(): void;
 }
 
 /**
@@ -58,14 +67,15 @@ export interface ChatViewHeaderDeps {
  */
 export class ChatViewHeader {
   readonly #deps: ChatViewHeaderDeps;
-  readonly #moveActions: Record<'left' | 'right', HTMLElement>;
+  readonly #actions: Record<'left' | 'right' | 'edit', HTMLElement>;
 
   constructor(deps: ChatViewHeaderDeps) {
     this.#deps = deps;
-    this.#moveActions = {
-      left: deps.addAction('panel-left', deps.labels.moveToLeft, () => this.#move('left')),
-      right: deps.addAction('panel-right', deps.labels.moveToRight, () => this.#move('right')),
-    };
+    // Obsidian puts each new action to the left of the previous ones, so they go in right to left.
+    const right = deps.addAction('panel-right', deps.labels.moveToRight, () => this.#move('right'));
+    const edit = deps.addAction('file-pen', deps.labels.editNote, () => this.#editNote());
+    const left = deps.addAction('panel-left', deps.labels.moveToLeft, () => this.#move('left'));
+    this.#actions = { left, edit, right };
   }
 
   /** Redraws everything the header derives from the chat. */
@@ -76,8 +86,15 @@ export class ChatViewHeader {
     }
     titleEl?.setText(this.#deps.getTitle());
     const side = this.#deps.getSide();
-    this.#moveActions.left.toggleClass('claudian-hidden', side === 'left');
-    this.#moveActions.right.toggleClass('claudian-hidden', side === 'right');
+    this.#actions.left.toggleClass('claudian-hidden', side === 'left');
+    this.#actions.right.toggleClass('claudian-hidden', side === 'right');
+    this.#actions.edit.toggleClass('claudian-hidden', !this.#deps.hasChatFile());
+  }
+
+  #editNote(): void {
+    void this.#deps.openChatFile().then((opened) => {
+      if (!opened) this.#deps.onEditRefused();
+    });
   }
 
   #move(side: 'left' | 'right'): void {

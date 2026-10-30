@@ -52,7 +52,7 @@ export function createClaudianView(options: ClaudianViewHarnessOptions = {}): an
     ...options.plugin,
   };
   const view = new ClaudianView(
-    (options.leaf ?? {}) as never,
+    (options.leaf ?? { getRoot: () => ({}) }) as never,
     plugin as unknown as ChatFeatureHost,
   ) as any;
   Object.assign(view, {

@@ -74,6 +74,14 @@ export class HistoryFileWriter {
     });
   }
 
+  /** The `.chat.md` file written for a conversation, or null while there is none. */
+  getFile(conversationId: string): TFile | null {
+    const path = this.#pathByConversationId.get(conversationId) ?? this.#findPathById(conversationId);
+    if (!path) return null;
+    const file = this.#deps.app.vault.getAbstractFileByPath(path);
+    return file instanceof TFile ? file : null;
+  }
+
   startBackfill(): void {
     if (this.#disposed || !this.#deps.isEnabled()) return;
     this.cancelBackfill();

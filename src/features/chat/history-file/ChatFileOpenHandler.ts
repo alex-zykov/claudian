@@ -30,6 +30,7 @@ export class ChatFileOpenHandler {
   #originalSetViewState: SetViewState | null = null;
   #patchedProto: PatchedLeafPrototype | null = null;
   #disposed = false;
+  readonly #openingAsMarkdown = new Set<string>();
 
   constructor(deps: ChatFileOpenHandlerDeps) {
     this.#deps = deps;
@@ -64,6 +65,16 @@ export class ChatFileOpenHandler {
     /* eslint-enable @typescript-eslint/no-this-alias -- end leaf.prototype patch */
   }
 
+  /** Opens a chat file as a plain note in a new tab, without routing it to its conversation. */
+  async openAsMarkdown(file: TFile): Promise<void> {
+    this.#openingAsMarkdown.add(file.path);
+    try {
+      await this.#deps.app.workspace.getLeaf('tab').openFile(file);
+    } finally {
+      this.#openingAsMarkdown.delete(file.path);
+    }
+  }
+
   uninstall(): void {
     this.#disposed = true;
     const original = this.#originalSetViewState;
@@ -84,6 +95,7 @@ export class ChatFileOpenHandler {
     if (record.type !== 'markdown' || mode === 'markdown') return 'passthrough';
     const path = record.state?.file;
     if (typeof path !== 'string' || path.length === 0) return 'passthrough';
+    if (this.#openingAsMarkdown.has(path)) return 'passthrough';
     const file = this.#deps.app.vault.getAbstractFileByPath(path);
     if (!(file instanceof ObsidianTFile) || !this.#isChatFile(file)) return 'passthrough';
 

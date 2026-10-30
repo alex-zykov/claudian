@@ -87,34 +87,41 @@ describe('ChatViewHeader', () => {
     const titleEl = document.createElement('div');
     let folder = 'Projects/A';
     let side: 'left' | 'right' | 'main' = 'main';
+    let hasFile = true;
     const actions = new Map<string, HTMLElement>();
+    const addAction = jest.fn((icon: string, _title: string, onClick: () => void) => {
+      const el = document.createElement('div');
+      el.addEventListener('click', onClick);
+      actions.set(icon, el);
+      return el;
+    });
     const deps = {
       titleParentEl,
       titleEl,
-      addAction: jest.fn((icon: string, _title: string, onClick: () => void) => {
-        const el = document.createElement('div');
-        el.addEventListener('click', onClick);
-        actions.set(icon, el);
-        return el;
-      }),
-      labels: { moveToLeft: 'Move to left panel', moveToRight: 'Move to right panel' },
+      addAction,
+      labels: { moveToLeft: 'Move to left panel', moveToRight: 'Move to right panel', editNote: 'Edit note' },
       getFolder: () => folder,
       getTitle: () => 'Plan review',
       getSide: () => side,
       revealFolder: jest.fn(),
       moveToSide: jest.fn(async () => true),
       onMoveRefused: jest.fn(),
+      hasChatFile: () => hasFile,
+      openChatFile: jest.fn(async () => true),
+      onEditRefused: jest.fn(),
       ...overrides,
     };
     const header = new ChatViewHeader(deps);
     return {
       header,
+      addAction,
       deps,
       titleParentEl,
       titleEl,
       actions,
       setFolder: (value: string) => { folder = value; },
       setSide: (value: typeof side) => { side = value; },
+      setHasFile: (value: boolean) => { hasFile = value; },
     };
   }
 
@@ -154,6 +161,12 @@ describe('ChatViewHeader', () => {
     expect(deps.addAction).toHaveBeenCalledWith('panel-right', 'Move to right panel', expect.any(Function));
   });
 
+  it('adds the buttons right to left, because Obsidian puts each new button to the left of the previous ones', () => {
+    const { addAction } = setup();
+
+    expect(addAction.mock.calls.map(([icon]) => icon)).toEqual(['panel-right', 'file-pen', 'panel-left']);
+  });
+
   it.each([
     ['main', false, false],
     ['left', true, false],
@@ -179,6 +192,41 @@ describe('ChatViewHeader', () => {
 
     expect(deps.moveToSide).toHaveBeenCalledWith(side);
     expect(deps.onMoveRefused).not.toHaveBeenCalled();
+  });
+
+  it('adds an edit note button between the two move buttons', () => {
+    const { deps } = setup();
+
+    expect(deps.addAction).toHaveBeenCalledWith('file-pen', 'Edit note', expect.any(Function));
+  });
+
+  it.each([[true, false], [false, true]])('shows the edit note button only when the chat has a file (file: %s, hidden: %s)', (hasFile, hidden) => {
+    const { header, actions, setHasFile } = setup();
+    setHasFile(hasFile);
+
+    header.refresh();
+
+    expect(actions.get('file-pen')!.classList.contains('claudian-hidden')).toBe(hidden);
+  });
+
+  it('opens the chat file as a note on click', async () => {
+    const { actions, deps } = setup();
+
+    fireEvent.click(actions.get('file-pen')!);
+    await Promise.resolve();
+
+    expect(deps.openChatFile).toHaveBeenCalledTimes(1);
+    expect(deps.onEditRefused).not.toHaveBeenCalled();
+  });
+
+  it('tells the user when the chat file could not be opened', async () => {
+    const { actions, deps } = setup({ openChatFile: jest.fn(async () => false) });
+
+    fireEvent.click(actions.get('file-pen')!);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(deps.onEditRefused).toHaveBeenCalledTimes(1);
   });
 
   it('tells the user when the move is refused', async () => {
