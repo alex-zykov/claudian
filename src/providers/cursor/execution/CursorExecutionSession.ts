@@ -18,7 +18,6 @@ import {
   RequestedRunChannel,
   SessionSnapshotState,
 } from '../../../core/execution';
-import { ProviderModelUnavailableError } from '../../../core/providers/models/ProviderModelUnavailableError';
 import type { ProviderHost } from '../../../core/providers/ProviderHost';
 import type { ChatMessage } from '../../../core/types';
 import {
@@ -54,6 +53,11 @@ import type { CursorModelCatalogCoordinator } from '../runtime/CursorModelCatalo
 import { buildCursorRuntimeEnv } from '../runtime/CursorRuntimeEnvironment';
 import { getCursorProviderSettings } from '../settings';
 import { parseCursorProviderState } from '../types';
+import {
+  classifyCursorExecutionError,
+  formatCursorACPErrorMessage,
+  isCursorSessionMissingError,
+} from './cursorACPErrors';
 import type {
   CursorExecutionNativeConnection,
   CursorExecutionNativeFactory,
@@ -63,6 +67,7 @@ import {
   normalizeCursorSessionModelMetadata,
   normalizeCursorSetModelMetadata,
 } from './CursorSessionModelMetadata';
+import { resolveCursorACPModelID } from './resolveCursorACPModelID';
 
 interface CursorExecutionSessionOptions {
   readonly commandCatalog?: Pick<CursorCommandCatalog, 'setCommandSnapshot'>;
@@ -88,6 +93,7 @@ interface CursorNativeSession {
 }
 
 interface CursorNativeOwner {
+  availableModelIds: string[];
   readonly generation: number;
   initialized: boolean;
   loadedSessionConfigurationKey: string | null;
@@ -270,9 +276,10 @@ export class CursorExecutionSession implements ProviderExecutionSession {
       await Promise.race([closed, active.run.terminated]);
     } catch (error) {
       if (this.#isCancellationRequested(active)) return;
-      const category = classifyError(error);
+      const category = classifyCursorExecutionError(error, this.providerSessionId);
+      const message = formatCursorACPErrorMessage(error);
       this.#updateSnapshot('invalidated', {
-        message: error instanceof Error ? error.message : String(error),
+        message,
         reason: category === 'provider-session-missing'
           ? 'provider-session-missing'
           : category === 'transport'
@@ -283,7 +290,7 @@ export class CursorExecutionSession implements ProviderExecutionSession {
       this.#emitCurrentSnapshot();
       active.run.finish({
         category,
-        message: error instanceof Error ? error.message : String(error),
+        message,
         ...(category === 'provider-session-missing' && this.providerSessionId
           ? { missingProviderSessionId: this.providerSessionId }
           : {}),
@@ -361,6 +368,7 @@ export class CursorExecutionSession implements ProviderExecutionSession {
       version: this.plugin.manifest?.version ?? '0.0.0',
     });
     const owner: CursorNativeOwner = {
+      availableModelIds: [],
       generation,
       initialized: false,
       loadedSessionConfigurationKey: null,
@@ -417,16 +425,25 @@ export class CursorExecutionSession implements ProviderExecutionSession {
         }
         return { native, sessionId: this.providerSessionId };
       }
-      return {
-        native,
-        sessionId: await this.#loadProviderSession(
+      try {
+        return {
           native,
-          this.providerSessionId,
-          request,
-          active,
-          sessionConfigurationKey,
-        ),
-      };
+          sessionId: await this.#loadProviderSession(
+            native,
+            this.providerSessionId,
+            request,
+            active,
+            sessionConfigurationKey,
+          ),
+        };
+      } catch (error) {
+        if (!isCursorSessionMissingError(error, this.providerSessionId)) {
+          throw error;
+        }
+        // Stale ACP ids are common after process restart; Claudian chat history
+        // is replayed into the next prompt when native context is not established.
+        this.#forgetProviderSession();
+      }
     }
 
     const response = await native.newSession({
@@ -476,10 +493,15 @@ export class CursorExecutionSession implements ProviderExecutionSession {
     request: ProviderExecutionRequest,
     active: ActiveExecution,
   ): Promise<void> {
-    const rawModel = decodeCursorModelId(request.configuration.model ?? '');
-    if (rawModel) {
+    const owner = this.#getNativeOwner(native);
+    const configurationModel = request.configuration.model ?? '';
+    const rawModel = decodeCursorModelId(configurationModel);
+    const modelId = rawModel
+      ? resolveCursorACPModelID(rawModel, owner.availableModelIds)
+      : null;
+    if (modelId) {
       await native.setModel({
-        modelId: rawModel,
+        modelId,
         sessionId,
       });
       this.#throwIfCancellationRequested(active);
@@ -595,8 +617,21 @@ export class CursorExecutionSession implements ProviderExecutionSession {
     modelContextKey: string,
   ): Promise<void> {
     const normalized = normalizeCursorSessionModelMetadata(response);
+    if (this.nativeOwner) {
+      this.nativeOwner.availableModelIds = normalized.models.map(model => model.rawId);
+    }
     if (normalized.models.length === 0) return;
     await this.#mergeModelMetadataBestEffort(normalized.models, normalized.currentModelId, modelContextKey);
+  }
+
+  #forgetProviderSession(): void {
+    this.providerSessionId = undefined;
+    this.#setNativeConversationContextEstablished(false);
+    if (this.nativeOwner) {
+      this.nativeOwner.loadedSessionId = null;
+      this.nativeOwner.loadedSessionConfigurationKey = null;
+      this.nativeOwner.availableModelIds = [];
+    }
   }
 
   async #mergeModelMetadataBestEffort(
@@ -788,18 +823,4 @@ function isTurnCompleted(update: unknown): boolean {
 function mapStopReason(reason: string): 'completed' | 'max-tokens' | 'provider-ended' {
   if (reason === 'max_tokens' || reason === 'max-tokens') return 'max-tokens';
   return reason === 'end_turn' || reason === 'completed' ? 'completed' : 'provider-ended';
-}
-
-function classifyError(
-  error: unknown,
-): 'authentication' | 'configuration' | 'provider-session-missing' | 'transport' | 'unknown' {
-  const message = error instanceof Error ? error.message.toLowerCase() : '';
-  if (error instanceof ProviderModelUnavailableError) return 'configuration';
-  if (message.includes('auth')) return 'authentication';
-  if (message.includes('session') && (message.includes('missing') || message.includes('not found'))) {
-    return 'provider-session-missing';
-  }
-  if (message.includes('config') || message.includes('model')) return 'configuration';
-  if (message.includes('transport') || message.includes('closed')) return 'transport';
-  return 'unknown';
 }
