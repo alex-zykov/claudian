@@ -8,6 +8,7 @@ import {
   preferredChatFilePath,
 } from '@/features/chat/history-file/chatFilePaths';
 import {
+  CHAT_FILE_TAG,
   type ChatFileFrontmatter,
   renderChatFile,
 } from '@/features/chat/history-file/renderChatFile';
@@ -211,7 +212,10 @@ export class HistoryFileWriter {
     let previousTitle: unknown;
     await this.#deps.app.fileManager.processFrontMatter(existing, (fm: Record<string, unknown>) => {
       previousTitle = fm.title;
-      Object.assign(fm, frontmatter);
+      // Tags are the user's; the writer only makes sure the chat tag is among them.
+      const { tags: _chatTags, ...owned } = frontmatter;
+      Object.assign(fm, owned);
+      fm.tags = withChatTag(fm.tags);
       for (const key of Object.keys(fm)) {
         if (!(key in frontmatter) && OWNED_FRONTMATTER_KEYS.has(key)) delete fm[key];
       }
@@ -302,6 +306,18 @@ export function readChatFileTitle(frontmatter: Record<string, unknown> | undefin
   return typeof frontmatter.title === 'string' && frontmatter.title.length > 0
     ? frontmatter.title
     : undefined;
+}
+
+function withChatTag(tags: unknown): unknown[] {
+  const list: unknown[] = Array.isArray(tags)
+    ? [...(tags as unknown[])]
+    : typeof tags === 'string'
+      ? tags.split(/[,\s]+/).filter(Boolean)
+      : [];
+  const hasChatTag = list.some(tag => (
+    typeof tag === 'string' && tag.replace(/^#/, '').toLowerCase() === CHAT_FILE_TAG
+  ));
+  return hasChatTag ? list : [...list, CHAT_FILE_TAG];
 }
 
 function replaceMarkdownBody(data: string, body: string): string {

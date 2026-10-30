@@ -2,7 +2,7 @@ import '@/providers';
 
 import { testDate } from '@test/helpers/testClock';
 import type { App } from 'obsidian';
-import { TFile, TFolder } from 'obsidian';
+import { parseYaml, TFile, TFolder } from 'obsidian';
 
 import type { ChatMessage, Conversation, ConversationMeta } from '@/core/types';
 import { HistoryFileWriter } from '@/features/chat/history-file/HistoryFileWriter';
@@ -331,6 +331,40 @@ describe('HistoryFileWriter', () => {
     expect(harness.contents.has('Projects/A/Plan review aaaaaaaa.chat.md')).toBe(true);
     expect(harness.frontmatterByPath.get('Projects/A/Plan review aaaaaaaa.chat.md')?.id)
       .toBe(conversation.id);
+  });
+
+  it.each([
+    ['no tags', undefined, ['chat']],
+    ['a tag list', ['project', 'draft'], ['project', 'draft', 'chat']],
+    ['a tag string', 'project, draft', ['project', 'draft', 'chat']],
+    ['the chat tag already', ['#chat', 'project'], ['#chat', 'project']],
+  ])('tags a chat file with chat and keeps the user tags when it has %s', async (_case, userTags, expected) => {
+    const harness = createVaultHarness([createFolder('Projects/A'), createFile('Projects/A/x.md')]);
+    let conversation = createConversation();
+    const writer = new HistoryFileWriter({
+      app: harness.app,
+      isEnabled: () => true,
+      getConversation: () => conversation,
+      hydrateConversation: async () => conversation,
+      listConversationMeta: () => [],
+      reportError: jest.fn(),
+    });
+
+    writer.scheduleWrite(conversation.id);
+    await flushQueues();
+    const path = 'Projects/A/Plan review.chat.md';
+    expect(parseYaml(harness.contents.get(path)?.match(/^---\n([\s\S]*?)\n---/)?.[1] ?? ''))
+      .toMatchObject({ tags: ['chat'] });
+
+    const fm = harness.frontmatterByPath.get(path) ?? {};
+    if (userTags === undefined) delete fm.tags;
+    else fm.tags = userTags;
+    harness.frontmatterByPath.set(path, fm);
+    conversation = createConversation({ lastActivityAt: UPDATED_AT + 1 });
+    writer.scheduleWrite(conversation.id);
+    await flushQueues();
+
+    expect(harness.frontmatterByPath.get(path)?.tags).toEqual(expected);
   });
 
   it('renames on title change after restart using the title stored in the file', async () => {
