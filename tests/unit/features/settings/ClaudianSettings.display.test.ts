@@ -418,7 +418,6 @@ describe('ClaudianSettingTab display settings', () => {
 
   it.each([
     ['restoreTabsOnStartup', 'settings.restoreTabsOnStartup.name'],
-    ['enableZenMode', 'settings.enableZenMode.name'],
   ] as const)('renders and updates the %s toggle', async (key, name) => {
     const { tab, plugin } = createTab(true);
     (tab as any).renderGeneralTab(createContainer());

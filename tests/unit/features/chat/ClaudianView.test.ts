@@ -318,6 +318,35 @@ describe('ClaudianView tab controls', () => {
     expect(historyContainer.querySelector('.claudian-history-menu')?.hasClass('visible')).toBe(true);
   });
 
+  describe('zen button', () => {
+    it('floats the chat and brings it back, keeping the request in the view state', async () => {
+      const { contentEl, view } = await openView();
+      const button = contentEl.querySelector('.claudian-zen-btn')!;
+
+      expect(button.getAttribute('aria-label')).toBe('Float this chat (zen mode)');
+      expect(view.isZenRequested()).toBe(false);
+
+      button.click();
+      expect(view.isZenRequested()).toBe(true);
+      expect(view.getState()).toMatchObject({ claudianZen: true });
+      expect(contentEl.hasClass('claudian-zen-active')).toBe(true);
+      expect(button.hasClass('is-active')).toBe(true);
+
+      button.click();
+      expect(view.isZenRequested()).toBe(false);
+      expect(view.getState()).not.toHaveProperty('claudianZen');
+      expect(contentEl.hasClass('claudian-zen-active')).toBe(false);
+    });
+
+    it('restores the request from the saved view state', async () => {
+      const { contentEl, view } = await openView();
+
+      await view.setState({ claudianZen: true }, { history: false });
+
+      expect(view.isZenRequested()).toBe(true);
+      expect(contentEl.hasClass('claudian-zen-active')).toBe(true);
+    });
+  });
 
   describe('move to main area button', () => {
     function appWithSplits(leftSplit: unknown) {
@@ -613,7 +642,8 @@ describe('ClaudianView dual-pane wiring', () => {
     // CSS positions the column by this order: chat panel, resizer, then the sidebar.
     // The pane that stands in for a floating chat comes last and stays hidden until then.
     expect(contentEl.children).toHaveLength(4);
-    const [chatPanel, resizer, sidebar] = contentEl.children;
+    const [chatPanel, resizer, sidebar, zenPlaceholder] = contentEl.children;
+    expect(zenPlaceholder.hasClass('claudian-zen-placeholder')).toBe(true);
     expect(chatPanel.hasClass('claudian-chat-panel')).toBe(true);
     expect(resizer.hasClass('claudian-session-resizer')).toBe(true);
     expect(resizer.getAttribute('role')).toBe('separator');

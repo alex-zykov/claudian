@@ -11,6 +11,15 @@
     "refresh": "重新整理"
   },
   "chat": {
+    "newConversationBusy": "開始新對話前，請先停止進行中的回覆或等待其結束。",
+    "header": {
+      "moveToLeftPanel": "移到左側面板",
+      "moveToRightPanel": "移到右側面板",
+      "moveToMainArea": "移到主區域",
+      "moveRefused": "請等回覆結束後再移動聊天。",
+      "editNote": "編輯筆記",
+      "editNoteRefused": "此聊天尚無檔案。"
+    },
     "promptSuggestionHint": "按 Tab 接受",
     "selectAvailableModel": "請先選擇可用的模型再傳送。",
     "selectAvailableTitleModel": "請在 Claudian 設定中選擇可用的標題產生模型。",
@@ -78,6 +87,10 @@
       "regionLabel": "Claudian 聊天",
       "showHistory": "顯示對話",
       "move": "移動聊天面板",
+      "leave": "離開 Zen 模式",
+      "toggle": "讓此聊天懸浮（Zen 模式）",
+      "placeholder": "此聊天正懸浮在 Zen 視窗中。",
+      "leavePlaceholder": "離開 Zen 模式",
       "working": "處理中…",
       "thinking": "思考中…",
       "interrupted": "已中斷",
@@ -89,16 +102,7 @@
       "toolCompleted": "{tool} · 已完成",
       "toolFailed": "{tool} · 失敗",
       "toolBlocked": "{tool} · 已封鎖"
-    },
-    "header": {
-      "moveToLeftPanel": "移到左側面板",
-      "moveToRightPanel": "移到右側面板",
-      "moveToMainArea": "移到主區域",
-      "moveRefused": "請等回覆結束後再移動聊天。",
-      "editNote": "編輯筆記",
-      "editNoteRefused": "此聊天尚無檔案。"
-    },
-    "newConversationBusy": "開始新對話前，請先停止進行中的回覆或等待其結束。"
+    }
   },
   "settings": {
     "tabs": {
@@ -136,6 +140,26 @@
     "autoTitle": {
       "name": "自動生成對話標題",
       "desc": "在使用者送出第一則訊息後自動生成對話標題。"
+    },
+    "writeHistoryFile": {
+      "name": "Write history file into linked folder",
+      "desc": "After each turn, create or update a generated .chat.md file in the conversation's linked folder. Turning this on backfills existing chats."
+    },
+    "writeHistoryFileText": {
+      "name": "將對話文字寫入聊天檔案",
+      "desc": "聊天檔案內文包含請求與回覆的記錄，其他聊天與沒有 Claudian 的應用程式都能讀取和搜尋。關閉後只寫入 frontmatter，既有內文維持不變。"
+    },
+    "chatFileFields": {
+      "name": "聊天檔案 frontmatter 欄位",
+      "desc": "加入聊天檔案 frontmatter 的額外欄位。檔案中已有的欄位會保留原值。",
+      "keyPlaceholder": "欄位",
+      "valuePlaceholder": "值",
+      "keyAria": "欄位名稱 {index}",
+      "valueAria": "欄位值 {index}",
+      "add": "新增欄位",
+      "remove": "刪除欄位 {index}",
+      "errorReserved": "「{key}」已被 Claudian 用於聊天檔案，請換一個名稱。",
+      "errorDuplicate": "「{key}」已被另一個欄位使用。"
     },
     "titleLanguage": {
       "name": "標題生成語言",
@@ -258,10 +282,6 @@
       "rightSidebar": "右側邊欄",
       "leftSidebar": "左側邊欄",
       "mainTab": "主編輯器分頁"
-    },
-    "enableZenMode": {
-      "name": "啟用禪模式",
-      "desc": "側邊欄隱藏時，保持顯示精簡的聊天介面。"
     },
     "cliInstallation": {
       "disclosure": "{name} 安裝",
@@ -531,26 +551,6 @@
         "failed": "同步失敗:{message}",
         "summary": "已移動 {moved},已轉換 {converted},已移至垃圾桶 {trashed},已移除 {unlinked} 個連結。"
       }
-    },
-    "writeHistoryFile": {
-      "name": "Write history file into linked folder",
-      "desc": "After each turn, create or update a generated .chat.md file in the conversation's linked folder. Turning this on backfills existing chats."
-    },
-    "writeHistoryFileText": {
-      "name": "將對話文字寫入聊天檔案",
-      "desc": "聊天檔案內文包含請求與回覆的記錄，其他聊天與沒有 Claudian 的應用程式都能讀取和搜尋。關閉後只寫入 frontmatter，既有內文維持不變。"
-    },
-    "chatFileFields": {
-      "name": "聊天檔案 frontmatter 欄位",
-      "desc": "加入聊天檔案 frontmatter 的額外欄位。檔案中已有的欄位會保留原值。",
-      "keyPlaceholder": "欄位",
-      "valuePlaceholder": "值",
-      "keyAria": "欄位名稱 {index}",
-      "valueAria": "欄位值 {index}",
-      "add": "新增欄位",
-      "remove": "刪除欄位 {index}",
-      "errorReserved": "「{key}」已被 Claudian 用於聊天檔案，請換一個名稱。",
-      "errorDuplicate": "「{key}」已被另一個欄位使用。"
     }
   }
 }

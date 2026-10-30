@@ -6,10 +6,13 @@ import { scheduleAnimationFrame } from '@/features/chat/utils/animationFrame';
 import type { ZenModeSource, ZenPresentationPort, ZenScrollSnapshot } from '@/features/chat/zen/types';
 import { ZenModePanel } from '@/features/chat/zen/ZenModePanel';
 
+/** The view state key that records a chat the user sent to the floating window. */
+export const ZEN_VIEW_STATE_KEY = 'claudianZen';
+/** The view state key that records which tab of that view floats. */
+export const ZEN_TAB_STATE_KEY = 'claudianZenTab';
+
 export interface ZenModeControllerDeps {
   readonly app: App;
-  /** Reads the committed setting. */
-  isEnabled(): boolean;
   /** Reads where the panel was left; null keeps it docked. */
   getPosition(): ZenModePosition | null;
   /** Remembers where the user moved the panel. */
@@ -22,8 +25,6 @@ interface ZenAttachment {
   readonly release: () => void;
 }
 
-type CollapsibleSplit = { collapsed?: unknown };
-
 /**
  * Locates Obsidian's central workspace split. Its element is not in the public
  * typings, so this is the single guarded host lookup; unsupported markup skips zen.
@@ -34,16 +35,19 @@ function findCentralWorkspaceHost(app: App): HTMLElement | null {
 }
 
 /**
- * Single workspace owner for zen mode: selects at most one eligible chat view
- * whose containing sidebar is collapsed and hosts its live presentation in the
- * central workspace. It never creates or reveals views to supply itself; it only
- * loads a chat that Obsidian deferred inside a collapsed sidebar.
+ * Single workspace owner for zen mode: hosts the live presentation of the one chat the user
+ * sent to the floating window last. A chat asks for it (`isZenRequested`) and the leaf stays
+ * wherever it is, so zen no longer depends on a sidebar. When several chats ask, the latest
+ * request wins and the others are sent back to their tabs. It never creates or reveals views
+ * to supply itself; it only loads a requesting chat that Obsidian deferred.
  */
 export class ZenModeController {
   readonly #sources = new Map<ZenModeSource, () => void>();
   readonly #historyExpanded = new WeakMap<ZenModeSource, boolean>();
   readonly #loadRequested = new WeakSet<WorkspaceLeaf>();
-  #focusOrder: ZenModeSource[] = [];
+  /** When each source's current request was first seen; the latest one wins. */
+  readonly #requestOrder = new Map<ZenModeSource, number>();
+  #requestCounter = 0;
   #eventRefs: EventRef[] = [];
   #attachment: ZenAttachment | null = null;
   #listening = false;
@@ -76,12 +80,11 @@ export class ZenModeController {
     workspace.onLayoutReady(() => {
       if (this.#listening || this.#disposed) return;
       this.#listening = true;
+      // Leaf changes bring requesting chats in; resize and theme changes move the panel's clearance.
       this.#eventRefs.push(
-        // Sidebar collapse flips synchronously; resize follows the toggle animation.
         workspace.on('resize', () => this.reconcile()),
         workspace.on('layout-change', () => this.reconcile()),
         workspace.on('css-change', () => this.reconcile()),
-        workspace.on('active-leaf-change', (leaf) => this.#handleActiveLeafChange(leaf)),
       );
       this.reconcile();
     });
@@ -133,73 +136,52 @@ export class ZenModeController {
     this.#eventRefs = [];
     for (const unsubscribe of this.#sources.values()) unsubscribe();
     this.#sources.clear();
-    this.#focusOrder = [];
+    this.#requestOrder.clear();
   }
 
   #unregister(source: ZenModeSource): void {
     const unsubscribe = this.#sources.get(source);
     if (!unsubscribe) return;
     this.#sources.delete(source);
-    this.#focusOrder = this.#focusOrder.filter(candidate => candidate !== source);
+    this.#requestOrder.delete(source);
     unsubscribe();
     if (this.#attachment?.source === source) this.#detach();
     this.reconcile();
   }
 
-  #handleActiveLeafChange(leaf: WorkspaceLeaf | null): void {
-    const source = [...this.#sources.keys()].find(candidate => candidate.leaf === leaf);
-    if (source) {
-      this.#focusOrder = [...this.#focusOrder.filter(candidate => candidate !== source), source];
-    }
-    this.reconcile();
-  }
-
   #canPresent(): boolean {
-    return this.#listening && !Platform.isMobile && this.deps.isEnabled();
-  }
-
-  #selectSource(): ZenModeSource | null {
-    if (!this.#canPresent()) return null;
-    const eligible = [...this.#sources.keys()].filter(source => this.#isEligible(source));
-    if (eligible.length === 0) return null;
-
-    const current = this.#attachment?.source;
-    if (current && eligible.includes(current)) return current;
-    for (let index = this.#focusOrder.length - 1; index >= 0; index -= 1) {
-      if (eligible.includes(this.#focusOrder[index])) return this.#focusOrder[index];
-    }
-    const leafOrder = this.deps.app.workspace.getLeavesOfType(VIEW_TYPE_CLAUDIAN);
-    const orderOf = (source: ZenModeSource) => {
-      const index = leafOrder.indexOf(source.leaf);
-      return index === -1 ? Number.MAX_SAFE_INTEGER : index;
-    };
-    return [...eligible].sort((a, b) => orderOf(a) - orderOf(b))[0];
-  }
-
-  #isEligible(source: ZenModeSource): boolean {
-    if (!source.getZenPresentation()) return false;
-    return this.#isInCollapsedSidebar(source.leaf);
-  }
-
-  #isInCollapsedSidebar(leaf: WorkspaceLeaf): boolean {
-    const { leftSplit, rightSplit } = this.deps.app.workspace;
-    const root = leaf.getRoot();
-    // Actual placement decides; the preferred placement setting is irrelevant here.
-    if (root !== leftSplit && root !== rightSplit) return false;
-    return (root as CollapsibleSplit).collapsed === true;
+    return this.#listening && !Platform.isMobile;
   }
 
   /**
-   * Obsidian defers leaves inside a collapsed sidebar at startup, so their views
-   * never open to register here. Loading one lets it restore normally and present
-   * once ready; a registered view in a collapsed sidebar is already on its way.
+   * The chat that asked for the floating window last, once it is ready. The chats that asked
+   * earlier are sent back to their tabs, so exactly one chat floats.
+   */
+  #selectSource(): ZenModeSource | null {
+    if (!this.#canPresent()) return null;
+    for (const source of this.#sources.keys()) {
+      if (!source.isZenRequested()) this.#requestOrder.delete(source);
+      else if (!this.#requestOrder.has(source)) this.#requestOrder.set(source, ++this.#requestCounter);
+    }
+    const requesting = [...this.#requestOrder.entries()].sort((a, b) => b[1] - a[1]).map(([source]) => source);
+    const [winner, ...others] = requesting;
+    for (const source of others) source.leaveZen();
+    if (!winner || !winner.getZenPresentation()) return null;
+    return winner;
+  }
+
+  /**
+   * Obsidian defers leaves it has not shown yet, so a requesting chat may not have opened to
+   * register here. Loading one lets it restore normally and present once ready; a registered
+   * requesting view is already on its way.
    */
   #loadDeferredSource(): void {
     if (!this.#canPresent()) return;
-    const pending = [...this.#sources.keys()].some(source => this.#isInCollapsedSidebar(source.leaf));
-    if (pending) return;
+    if ([...this.#sources.keys()].some(source => source.isZenRequested())) return;
     const leaf = this.deps.app.workspace.getLeavesOfType(VIEW_TYPE_CLAUDIAN).find(candidate => (
-      candidate.isDeferred && !this.#loadRequested.has(candidate) && this.#isInCollapsedSidebar(candidate)
+      candidate.isDeferred
+      && !this.#loadRequested.has(candidate)
+      && candidate.getViewState().state?.[ZEN_VIEW_STATE_KEY] === true
     ));
     if (!leaf) return;
     // One attempt per leaf, so a failed load cannot repeat on every layout event.
@@ -219,6 +201,7 @@ export class ZenModeController {
       onHistoryExpandedChange: expanded => this.#historyExpanded.set(source, expanded),
       position: this.deps.getPosition(),
       onPositionChange: position => this.deps.savePosition(position),
+      onLeave: () => source.exitZen(),
     });
     this.#attachment = { source, panel, release: source.attachZenPresentation(panel.slots) };
     panel.bind(runtime, source.getZenProviderId());
@@ -241,11 +224,10 @@ export class ZenModeController {
 
   #restoreScroll(runtime: ZenPresentationPort, scroll: ZenScrollSnapshot): void {
     runtime.restoreScroll(scroll);
-    // A reopening sidebar may still be hidden; reapply once it has layout.
+    // A leaf that was just shown may still be hidden; reapply once it has layout.
     scheduleAnimationFrame(() => {
       if (this.#attachment?.panel.runtime === runtime) return;
       runtime.restoreScroll(scroll);
     }, runtime.window);
   }
-
 }

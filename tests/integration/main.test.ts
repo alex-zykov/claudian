@@ -19,7 +19,6 @@ import { ProviderWorkspaceRegistry } from '@/core/providers/ProviderWorkspaceReg
 import { isVersionedRuntimeInputFingerprint } from '@/core/providers/settings/RuntimeInputFingerprint';
 import { TOOL_SUBAGENT } from '@/core/tools/toolNames';
 import { type ClaudianSettings, type Conversation, type SessionMetadata, VIEW_TYPE_CLAUDIAN } from '@/core/types';
-import { ZenModeController } from '@/features/chat/zen/ZenModeController';
 import * as sdkSession from '@/providers/claude/history/ClaudeHistoryStore';
 import { CodexModelCatalogCoordinator } from '@/providers/codex/runtime/CodexModelCatalogCoordinator';
 import {
@@ -242,7 +241,6 @@ describe('ClaudianPlugin', () => {
     await plugin.onload();
     const views = createPublishedViews();
     const viewsSpy = jest.spyOn(viewsOf(plugin), 'getAllViews').mockReturnValue(views as never);
-    const zenReconcile = jest.spyOn(ZenModeController.prototype, 'reconcile');
     let finish!: () => void;
     let started!: () => void;
     const writing = new Promise<void>(resolve => { started = resolve; });
@@ -256,13 +254,11 @@ describe('ClaudianPlugin', () => {
         settings.enableDualPane = !settings.enableDualPane;
         settings.hiddenCommands = ['test-command'];
         settings.customContextLimits = { test: 1000 };
-        settings.enableZenMode = !settings.enableZenMode;
       });
       await writing;
       for (const view of views) {
         for (const refresh of Object.values(view)) expect(refresh).not.toHaveBeenCalled();
       }
-      expect(zenReconcile).not.toHaveBeenCalled();
       finish();
       await change;
       for (const view of views) {
@@ -270,7 +266,6 @@ describe('ClaudianPlugin', () => {
         for (const refresh of Object.values(presentationRefreshes)) expect(refresh).toHaveBeenCalledTimes(1);
         expect(notifyConversationListChanged).not.toHaveBeenCalled();
       }
-      expect(zenReconcile).toHaveBeenCalledTimes(1);
       persist.mockRejectedValueOnce(new Error('disk unavailable'));
       await expect(chatHostOf(plugin).mutateSettings(settings => {
         settings.showMessageTimestamps = !settings.showMessageTimestamps;
@@ -284,7 +279,6 @@ describe('ClaudianPlugin', () => {
       expect(chatHostOf(plugin).getCommittedSettings().customContextLimits).toEqual({ test: 2000 });
     } finally {
       viewsSpy.mockRestore();
-      zenReconcile.mockRestore();
       persist.mockRestore();
     }
   });

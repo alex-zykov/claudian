@@ -11,11 +11,11 @@ import { ProviderRegistry } from '@/core/providers/ProviderRegistry';
 import { ProviderSettingsCoordinator } from '@/core/providers/ProviderSettingsCoordinator';
 import { ProviderWorkspaceRegistry } from '@/core/providers/ProviderWorkspaceRegistry';
 import type { ProviderId, ProviderSettingsTabRenderHandle } from '@/core/providers/types';
-import type {
-  ChatViewPlacement,
-  ClaudianSettings,
-  DualPaneSide,
-  SessionAutoArchiveAfter,
+import {
+  type ChatViewPlacement,
+  type ClaudianSettings,
+  type DualPaneSide,
+  type SessionAutoArchiveAfter,
 } from '@/core/types/settings';
 import { SkillsSettingsTab } from '@/features/agent-skills/SkillsSettingsTab';
 import type { FeatureHost } from '@/features/FeatureHost';
@@ -282,19 +282,6 @@ export class ClaudianSettingTab extends PluginSettingTab {
             });
           });
       });
-
-    new Setting(container)
-      .setName(t('settings.enableZenMode.name'))
-      .setDesc(t('settings.enableZenMode.desc'))
-      .addToggle((toggle) =>
-        toggle
-          .setValue(this.host.settings.enableZenMode)
-          .onChange(async (value) => {
-            await this.host.mutateSettings((settings) => {
-              settings.enableZenMode = value;
-            });
-          })
-      );
 
     new Setting(container)
       .setName(t('settings.enableDualPane.name'))

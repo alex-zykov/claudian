@@ -11,6 +11,15 @@
     "refresh": "Aktualisieren"
   },
   "chat": {
+    "newConversationBusy": "Stoppe die laufende Antwort oder warte, bis sie fertig ist, bevor du ein neues Gespräch startest.",
+    "header": {
+      "moveToLeftPanel": "In linkes Seitenfenster verschieben",
+      "moveToRightPanel": "In rechtes Seitenfenster verschieben",
+      "moveToMainArea": "In den Hauptbereich verschieben",
+      "moveRefused": "Warte, bis die Antwort fertig ist, bevor du den Chat verschiebst.",
+      "editNote": "Notiz bearbeiten",
+      "editNoteRefused": "Dieser Chat hat noch keine Datei."
+    },
     "promptSuggestionHint": "Mit Tab übernehmen",
     "selectAvailableModel": "Wähle vor dem Senden ein verfügbares Modell aus.",
     "selectAvailableTitleModel": "Wähle in den Claudian-Einstellungen ein verfügbares Titelmodell aus.",
@@ -78,6 +87,10 @@
       "regionLabel": "Claudian-Chat",
       "showHistory": "Unterhaltung anzeigen",
       "move": "Chat-Bereich verschieben",
+      "leave": "Zen-Modus verlassen",
+      "toggle": "Chat schweben lassen (Zen-Modus)",
+      "placeholder": "Dieser Chat schwebt im Zen-Fenster.",
+      "leavePlaceholder": "Zen-Modus verlassen",
       "working": "Arbeitet…",
       "thinking": "Denkt nach…",
       "interrupted": "Unterbrochen",
@@ -89,16 +102,7 @@
       "toolCompleted": "{tool} · fertig",
       "toolFailed": "{tool} · fehlgeschlagen",
       "toolBlocked": "{tool} · blockiert"
-    },
-    "header": {
-      "moveToLeftPanel": "In linkes Seitenfenster verschieben",
-      "moveToRightPanel": "In rechtes Seitenfenster verschieben",
-      "moveToMainArea": "In den Hauptbereich verschieben",
-      "moveRefused": "Warte, bis die Antwort fertig ist, bevor du den Chat verschiebst.",
-      "editNote": "Notiz bearbeiten",
-      "editNoteRefused": "Dieser Chat hat noch keine Datei."
-    },
-    "newConversationBusy": "Stoppe die laufende Antwort oder warte, bis sie fertig ist, bevor du ein neues Gespräch startest."
+    }
   },
   "settings": {
     "tabs": {
@@ -136,6 +140,26 @@
     "autoTitle": {
       "name": "Konversationstitel automatisch generieren",
       "desc": "Generiert automatisch Konversationstitel nach der ersten Nutzernachricht."
+    },
+    "writeHistoryFile": {
+      "name": "Write history file into linked folder",
+      "desc": "After each turn, create or update a generated .chat.md file in the conversation's linked folder. Turning this on backfills existing chats."
+    },
+    "writeHistoryFileText": {
+      "name": "Gesprächstext in die Chat-Datei schreiben",
+      "desc": "Der Text der Chat-Datei enthält das Transkript aus Anfragen und Antworten, sodass andere Chats und Apps ohne Claudian es lesen und durchsuchen können. Ist die Option aus, wird nur das Frontmatter geschrieben; ein vorhandener Text bleibt unverändert."
+    },
+    "chatFileFields": {
+      "name": "Frontmatter-Felder der Chat-Dateien",
+      "desc": "Zusätzliche Felder im Frontmatter von Chat-Dateien. Ein Feld, das die Datei schon hat, behält seinen Wert.",
+      "keyPlaceholder": "Feld",
+      "valuePlaceholder": "Wert",
+      "keyAria": "Feldname {index}",
+      "valueAria": "Feldwert {index}",
+      "add": "Feld hinzufügen",
+      "remove": "Feld {index} entfernen",
+      "errorReserved": "„{key}“ wird von Claudian in Chat-Dateien verwendet. Wähle einen anderen Namen.",
+      "errorDuplicate": "„{key}“ wird bereits von einem anderen Feld verwendet."
     },
     "titleLanguage": {
       "name": "Sprache der Titelgenerierung",
@@ -258,10 +282,6 @@
       "rightSidebar": "Rechte Seitenleiste",
       "leftSidebar": "Linke Seitenleiste",
       "mainTab": "Haupteditor-Tab"
-    },
-    "enableZenMode": {
-      "name": "Zen-Modus aktivieren",
-      "desc": "Hält eine reduzierte Chat-Oberfläche sichtbar, wenn die Seitenleiste ausgeblendet ist."
     },
     "cliInstallation": {
       "disclosure": "{name}-Installation",
@@ -531,26 +551,6 @@
         "failed": "Synchronisierung fehlgeschlagen: {message}",
         "summary": "Verschoben {moved}, umgewandelt {converted}, im Papierkorb {trashed}, {unlinked} Link(s) entfernt."
       }
-    },
-    "writeHistoryFile": {
-      "name": "Write history file into linked folder",
-      "desc": "After each turn, create or update a generated .chat.md file in the conversation's linked folder. Turning this on backfills existing chats."
-    },
-    "writeHistoryFileText": {
-      "name": "Gesprächstext in die Chat-Datei schreiben",
-      "desc": "Der Text der Chat-Datei enthält das Transkript aus Anfragen und Antworten, sodass andere Chats und Apps ohne Claudian es lesen und durchsuchen können. Ist die Option aus, wird nur das Frontmatter geschrieben; ein vorhandener Text bleibt unverändert."
-    },
-    "chatFileFields": {
-      "name": "Frontmatter-Felder der Chat-Dateien",
-      "desc": "Zusätzliche Felder im Frontmatter von Chat-Dateien. Ein Feld, das die Datei schon hat, behält seinen Wert.",
-      "keyPlaceholder": "Feld",
-      "valuePlaceholder": "Wert",
-      "keyAria": "Feldname {index}",
-      "valueAria": "Feldwert {index}",
-      "add": "Feld hinzufügen",
-      "remove": "Feld {index} entfernen",
-      "errorReserved": "„{key}“ wird von Claudian in Chat-Dateien verwendet. Wähle einen anderen Namen.",
-      "errorDuplicate": "„{key}“ wird bereits von einem anderen Feld verwendet."
     }
   }
 }

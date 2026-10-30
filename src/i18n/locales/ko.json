@@ -11,6 +11,15 @@
     "refresh": "새로고침"
   },
   "chat": {
+    "newConversationBusy": "새 대화를 시작하기 전에 진행 중인 답변을 중지하거나 끝날 때까지 기다리세요.",
+    "header": {
+      "moveToLeftPanel": "왼쪽 패널로 이동",
+      "moveToRightPanel": "오른쪽 패널로 이동",
+      "moveToMainArea": "메인 영역으로 이동",
+      "moveRefused": "답변이 끝난 뒤에 채팅을 이동하세요.",
+      "editNote": "노트 편집",
+      "editNoteRefused": "이 채팅에는 아직 파일이 없습니다."
+    },
     "promptSuggestionHint": "Tab으로 수락",
     "selectAvailableModel": "전송하기 전에 사용 가능한 모델을 선택하세요.",
     "selectAvailableTitleModel": "Claudian 설정에서 사용 가능한 제목 생성 모델을 선택하세요.",
@@ -78,6 +87,10 @@
       "regionLabel": "Claudian 채팅",
       "showHistory": "대화 표시",
       "move": "채팅 패널 이동",
+      "leave": "Zen 모드 나가기",
+      "toggle": "이 채팅 띄우기 (Zen 모드)",
+      "placeholder": "이 채팅은 Zen 창에 떠 있습니다.",
+      "leavePlaceholder": "Zen 모드 나가기",
       "working": "작업 중…",
       "thinking": "생각 중…",
       "interrupted": "중단됨",
@@ -89,16 +102,7 @@
       "toolCompleted": "{tool} · 완료",
       "toolFailed": "{tool} · 실패",
       "toolBlocked": "{tool} · 차단됨"
-    },
-    "header": {
-      "moveToLeftPanel": "왼쪽 패널로 이동",
-      "moveToRightPanel": "오른쪽 패널로 이동",
-      "moveToMainArea": "메인 영역으로 이동",
-      "moveRefused": "답변이 끝난 뒤에 채팅을 이동하세요.",
-      "editNote": "노트 편집",
-      "editNoteRefused": "이 채팅에는 아직 파일이 없습니다."
-    },
-    "newConversationBusy": "새 대화를 시작하기 전에 진행 중인 답변을 중지하거나 끝날 때까지 기다리세요."
+    }
   },
   "settings": {
     "tabs": {
@@ -136,6 +140,26 @@
     "autoTitle": {
       "name": "대화 제목 자동 생성",
       "desc": "첫 번째 사용자 메시지 전송 후 자동으로 대화 제목을 생성합니다."
+    },
+    "writeHistoryFile": {
+      "name": "Write history file into linked folder",
+      "desc": "After each turn, create or update a generated .chat.md file in the conversation's linked folder. Turning this on backfills existing chats."
+    },
+    "writeHistoryFileText": {
+      "name": "대화 텍스트를 채팅 파일에 쓰기",
+      "desc": "채팅 파일 본문에 요청과 응답의 기록을 씁니다. 다른 채팅이나 Claudian이 없는 앱에서도 읽고 검색할 수 있습니다. 끄면 프런트매터만 쓰고 기존 본문은 바꾸지 않습니다."
+    },
+    "chatFileFields": {
+      "name": "채팅 파일 프런트매터 필드",
+      "desc": "채팅 파일의 프런트매터에 추가할 필드입니다. 파일에 이미 있는 필드는 값이 유지됩니다.",
+      "keyPlaceholder": "필드",
+      "valuePlaceholder": "값",
+      "keyAria": "필드 이름 {index}",
+      "valueAria": "필드 값 {index}",
+      "add": "필드 추가",
+      "remove": "필드 {index} 삭제",
+      "errorReserved": "\"{key}\"은(는) Claudian이 채팅 파일에서 사용합니다. 다른 이름을 선택하세요.",
+      "errorDuplicate": "\"{key}\"은(는) 다른 필드에서 이미 사용 중입니다."
     },
     "titleLanguage": {
       "name": "제목 생성 언어",
@@ -258,10 +282,6 @@
       "rightSidebar": "오른쪽 사이드바",
       "leftSidebar": "왼쪽 사이드바",
       "mainTab": "메인 편집기 탭"
-    },
-    "enableZenMode": {
-      "name": "젠 모드 활성화",
-      "desc": "사이드바가 숨겨져 있을 때도 최소한의 채팅 인터페이스를 표시합니다."
     },
     "cliInstallation": {
       "disclosure": "{name} 설치",
@@ -531,26 +551,6 @@
         "failed": "동기화 실패: {message}",
         "summary": "이동 {moved}, 변환 {converted}, 휴지통 {trashed}, 링크 제거 {unlinked}."
       }
-    },
-    "writeHistoryFile": {
-      "name": "Write history file into linked folder",
-      "desc": "After each turn, create or update a generated .chat.md file in the conversation's linked folder. Turning this on backfills existing chats."
-    },
-    "writeHistoryFileText": {
-      "name": "대화 텍스트를 채팅 파일에 쓰기",
-      "desc": "채팅 파일 본문에 요청과 응답의 기록을 씁니다. 다른 채팅이나 Claudian이 없는 앱에서도 읽고 검색할 수 있습니다. 끄면 프런트매터만 쓰고 기존 본문은 바꾸지 않습니다."
-    },
-    "chatFileFields": {
-      "name": "채팅 파일 프런트매터 필드",
-      "desc": "채팅 파일의 프런트매터에 추가할 필드입니다. 파일에 이미 있는 필드는 값이 유지됩니다.",
-      "keyPlaceholder": "필드",
-      "valuePlaceholder": "값",
-      "keyAria": "필드 이름 {index}",
-      "valueAria": "필드 값 {index}",
-      "add": "필드 추가",
-      "remove": "필드 {index} 삭제",
-      "errorReserved": "\"{key}\"은(는) Claudian이 채팅 파일에서 사용합니다. 다른 이름을 선택하세요.",
-      "errorDuplicate": "\"{key}\"은(는) 다른 필드에서 이미 사용 중입니다."
     }
   }
 }

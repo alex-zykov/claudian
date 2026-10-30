@@ -11,6 +11,15 @@
     "refresh": "刷新"
   },
   "chat": {
+    "newConversationBusy": "开始新对话前，请先停止正在进行的回复或等待其结束。",
+    "header": {
+      "moveToLeftPanel": "移到左侧面板",
+      "moveToRightPanel": "移到右侧面板",
+      "moveToMainArea": "移到主区域",
+      "moveRefused": "请等回复结束后再移动聊天。",
+      "editNote": "编辑笔记",
+      "editNoteRefused": "此聊天还没有文件。"
+    },
     "promptSuggestionHint": "按 Tab 接受",
     "selectAvailableModel": "请先选择可用的模型再发送。",
     "selectAvailableTitleModel": "请在 Claudian 设置中选择可用的标题生成模型。",
@@ -78,6 +87,10 @@
       "regionLabel": "Claudian 聊天",
       "showHistory": "显示对话",
       "move": "移动聊天面板",
+      "leave": "退出 Zen 模式",
+      "toggle": "让此聊天悬浮（Zen 模式）",
+      "placeholder": "此聊天正悬浮在 Zen 窗口中。",
+      "leavePlaceholder": "退出 Zen 模式",
       "working": "处理中…",
       "thinking": "思考中…",
       "interrupted": "已中断",
@@ -89,16 +102,7 @@
       "toolCompleted": "{tool} · 已完成",
       "toolFailed": "{tool} · 失败",
       "toolBlocked": "{tool} · 已阻止"
-    },
-    "header": {
-      "moveToLeftPanel": "移到左侧面板",
-      "moveToRightPanel": "移到右侧面板",
-      "moveToMainArea": "移到主区域",
-      "moveRefused": "请等回复结束后再移动聊天。",
-      "editNote": "编辑笔记",
-      "editNoteRefused": "此聊天还没有文件。"
-    },
-    "newConversationBusy": "开始新对话前，请先停止正在进行的回复或等待其结束。"
+    }
   },
   "settings": {
     "tabs": {
@@ -136,6 +140,26 @@
     "autoTitle": {
       "name": "自动生成对话标题",
       "desc": "在用户发送首条消息后自动生成对话标题。"
+    },
+    "writeHistoryFile": {
+      "name": "Write history file into linked folder",
+      "desc": "After each turn, create or update a generated .chat.md file in the conversation's linked folder. Turning this on backfills existing chats."
+    },
+    "writeHistoryFileText": {
+      "name": "将对话文本写入聊天文件",
+      "desc": "聊天文件正文包含请求与回复的记录，其他聊天和没有 Claudian 的应用都可以读取和搜索。关闭后只写入 frontmatter，已有正文保持不变。"
+    },
+    "chatFileFields": {
+      "name": "聊天文件 frontmatter 字段",
+      "desc": "添加到聊天文件 frontmatter 的额外字段。文件中已有的字段保留其原值。",
+      "keyPlaceholder": "字段",
+      "valuePlaceholder": "值",
+      "keyAria": "字段名 {index}",
+      "valueAria": "字段值 {index}",
+      "add": "添加字段",
+      "remove": "删除字段 {index}",
+      "errorReserved": "“{key}”已被 Claudian 用于聊天文件，请换一个名称。",
+      "errorDuplicate": "“{key}”已被另一个字段使用。"
     },
     "titleLanguage": {
       "name": "标题生成语言",
@@ -258,10 +282,6 @@
       "rightSidebar": "右侧边栏",
       "leftSidebar": "左侧边栏",
       "mainTab": "主编辑器标签页"
-    },
-    "enableZenMode": {
-      "name": "启用禅模式",
-      "desc": "侧边栏隐藏时，保持显示精简的聊天界面。"
     },
     "cliInstallation": {
       "disclosure": "{name} 安装",
@@ -531,26 +551,6 @@
         "failed": "同步失败:{message}",
         "summary": "已移动 {moved},已转换 {converted},已移到回收站 {trashed},已移除 {unlinked} 个链接。"
       }
-    },
-    "writeHistoryFile": {
-      "name": "Write history file into linked folder",
-      "desc": "After each turn, create or update a generated .chat.md file in the conversation's linked folder. Turning this on backfills existing chats."
-    },
-    "writeHistoryFileText": {
-      "name": "将对话文本写入聊天文件",
-      "desc": "聊天文件正文包含请求与回复的记录，其他聊天和没有 Claudian 的应用都可以读取和搜索。关闭后只写入 frontmatter，已有正文保持不变。"
-    },
-    "chatFileFields": {
-      "name": "聊天文件 frontmatter 字段",
-      "desc": "添加到聊天文件 frontmatter 的额外字段。文件中已有的字段保留其原值。",
-      "keyPlaceholder": "字段",
-      "valuePlaceholder": "值",
-      "keyAria": "字段名 {index}",
-      "valueAria": "字段值 {index}",
-      "add": "添加字段",
-      "remove": "删除字段 {index}",
-      "errorReserved": "“{key}”已被 Claudian 用于聊天文件，请换一个名称。",
-      "errorDuplicate": "“{key}”已被另一个字段使用。"
     }
   }
 }

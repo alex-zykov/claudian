@@ -11,6 +11,15 @@
     "refresh": "更新"
   },
   "chat": {
+    "newConversationBusy": "新しい会話を始める前に、実行中の回答を停止するか、終わるのを待ってください。",
+    "header": {
+      "moveToLeftPanel": "左パネルへ移動",
+      "moveToRightPanel": "右パネルへ移動",
+      "moveToMainArea": "メインエリアへ移動",
+      "moveRefused": "回答が終わってからチャットを移動してください。",
+      "editNote": "ノートを編集",
+      "editNoteRefused": "このチャットにはまだファイルがありません。"
+    },
     "promptSuggestionHint": "Tab で採用",
     "selectAvailableModel": "送信する前に利用可能なモデルを選択してください。",
     "selectAvailableTitleModel": "Claudianの設定で利用可能なタイトル生成モデルを選択してください。",
@@ -78,6 +87,10 @@
       "regionLabel": "Claudian チャット",
       "showHistory": "会話を表示",
       "move": "チャットパネルを移動",
+      "leave": "Zen モードを終了",
+      "toggle": "このチャットを浮かせる（Zen モード）",
+      "placeholder": "このチャットは Zen ウィンドウに表示されています。",
+      "leavePlaceholder": "Zen モードを終了",
       "working": "処理中…",
       "thinking": "思考中…",
       "interrupted": "中断されました",
@@ -89,16 +102,7 @@
       "toolCompleted": "{tool} · 完了",
       "toolFailed": "{tool} · 失敗",
       "toolBlocked": "{tool} · ブロック"
-    },
-    "header": {
-      "moveToLeftPanel": "左パネルへ移動",
-      "moveToRightPanel": "右パネルへ移動",
-      "moveToMainArea": "メインエリアへ移動",
-      "moveRefused": "回答が終わってからチャットを移動してください。",
-      "editNote": "ノートを編集",
-      "editNoteRefused": "このチャットにはまだファイルがありません。"
-    },
-    "newConversationBusy": "新しい会話を始める前に、実行中の回答を停止するか、終わるのを待ってください。"
+    }
   },
   "settings": {
     "tabs": {
@@ -136,6 +140,26 @@
     "autoTitle": {
       "name": "会話タイトルを自動生成",
       "desc": "最初のユーザーメッセージ送信後に会話タイトルを自動的に生成します。"
+    },
+    "writeHistoryFile": {
+      "name": "Write history file into linked folder",
+      "desc": "After each turn, create or update a generated .chat.md file in the conversation's linked folder. Turning this on backfills existing chats."
+    },
+    "writeHistoryFileText": {
+      "name": "会話のテキストをチャットファイルに書き込む",
+      "desc": "チャットファイルの本文に、依頼と応答の記録を書き込みます。他のチャットや Claudian のないアプリから読み取り・検索できます。オフにするとフロントマターのみを書き込み、既存の本文は変更しません。"
+    },
+    "chatFileFields": {
+      "name": "チャットファイルのフロントマター項目",
+      "desc": "チャットファイルのフロントマターに追加する項目です。ファイルに既にある項目は値が保持されます。",
+      "keyPlaceholder": "項目",
+      "valuePlaceholder": "値",
+      "keyAria": "項目名 {index}",
+      "valueAria": "項目の値 {index}",
+      "add": "項目を追加",
+      "remove": "項目 {index} を削除",
+      "errorReserved": "「{key}」はチャットファイルで Claudian が使用しています。別の名前を選んでください。",
+      "errorDuplicate": "「{key}」は別の項目で既に使われています。"
     },
     "titleLanguage": {
       "name": "タイトル生成言語",
@@ -258,10 +282,6 @@
       "rightSidebar": "右サイドバー",
       "leftSidebar": "左サイドバー",
       "mainTab": "メインエディタタブ"
-    },
-    "enableZenMode": {
-      "name": "Zen モードを有効化",
-      "desc": "サイドバーが非表示のときも、最小限のチャット UI を表示します。"
     },
     "cliInstallation": {
       "disclosure": "{name} のインストール",
@@ -531,26 +551,6 @@
         "failed": "同期に失敗しました: {message}",
         "summary": "移動 {moved}、変換 {converted}、ゴミ箱 {trashed}、リンク削除 {unlinked}。"
       }
-    },
-    "writeHistoryFile": {
-      "name": "Write history file into linked folder",
-      "desc": "After each turn, create or update a generated .chat.md file in the conversation's linked folder. Turning this on backfills existing chats."
-    },
-    "writeHistoryFileText": {
-      "name": "会話のテキストをチャットファイルに書き込む",
-      "desc": "チャットファイルの本文に、依頼と応答の記録を書き込みます。他のチャットや Claudian のないアプリから読み取り・検索できます。オフにするとフロントマターのみを書き込み、既存の本文は変更しません。"
-    },
-    "chatFileFields": {
-      "name": "チャットファイルのフロントマター項目",
-      "desc": "チャットファイルのフロントマターに追加する項目です。ファイルに既にある項目は値が保持されます。",
-      "keyPlaceholder": "項目",
-      "valuePlaceholder": "値",
-      "keyAria": "項目名 {index}",
-      "valueAria": "項目の値 {index}",
-      "add": "項目を追加",
-      "remove": "項目 {index} を削除",
-      "errorReserved": "「{key}」はチャットファイルで Claudian が使用しています。別の名前を選んでください。",
-      "errorDuplicate": "「{key}」は別の項目で既に使われています。"
     }
   }
 }

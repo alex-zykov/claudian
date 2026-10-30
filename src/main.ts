@@ -8,7 +8,7 @@ import './providers';
 
 StartupProfiler.finishModuleEvaluation();
 
-import { Notice, Plugin } from 'obsidian';
+import { Notice, Platform, Plugin } from 'obsidian';
 
 import type { NativeSessionArchiveSync } from './app/conversations/NativeSessionArchiveSync';
 import type { SessionMetadataLoader } from './app/conversations/SessionMetadataLoader';
@@ -60,6 +60,7 @@ export default class ClaudianPlugin extends Plugin {
   private inactiveSessionArchiver!: InactiveSessionArchiver;
   private conversationLifecycle!: ConversationLifecycle;
   private vaultContentEvents!: VaultContentEvents;
+  private chatHistoryFiles!: ChatHistoryFileSubsystem;
   private settingsTab: ClaudianSettingTab | null = null;
   private readonly views = new ClaudianViews(
     this.app.workspace,
@@ -68,10 +69,8 @@ export default class ClaudianPlugin extends Plugin {
   private readonly agentSkills = new AgentSkillResources(() => this.views.getAllViews());
   private readonly sessionSnapshots = new SessionSnapshotStore();
   private readonly inlineEditSessions = new InlineEditSessionOwner();
-  private chatHistoryFiles!: ChatHistoryFileSubsystem;
   private readonly zenMode = new ZenModeController({
     app: this.app,
-    isEnabled: () => this.settings.enableZenMode,
     getPosition: () => this.settings.zenModePosition,
     savePosition: (position) => {
       // A failed write restores the committed position; the panel stays where it was dropped.
@@ -80,7 +79,6 @@ export default class ClaudianPlugin extends Plugin {
   });
   private readonly chatViews = new ChatViewPublisher({
     views: this.views,
-    zenMode: this.zenMode,
     inactiveSessions: { request: () => this.inactiveSessionArchiver.request() },
     hasLoadedAllSessionMetadata: () => this.sessionMetadata.hasLoadedAll,
   });
@@ -91,6 +89,7 @@ export default class ClaudianPlugin extends Plugin {
   private sessionSnapshotCleanup: Promise<void> | null = null;
   private sessionInputCleanup: Promise<void> | null = null;
   private sessionInputCleanupTimer: number | null = null;
+
 
   async onload() {
     StartupProfiler.startOnload();
@@ -141,6 +140,16 @@ export default class ClaudianPlugin extends Plugin {
         () => this.views.getInputFocusView(this.zenMode.getActiveLeaf())?.getActiveTab()?.composer ?? null,
       ));
       this.addCommand(this.zenMode.createToggleHistoryCommand());
+      this.addCommand({
+        id: 'toggle-zen-mode',
+        name: 'Toggle zen mode for this chat',
+        checkCallback: (checking: boolean) => {
+          const view = this.views.getView();
+          if (!view || Platform.isMobile) return false;
+          if (!checking) view.toggleZen();
+          return true;
+        },
+      });
 
       this.addCommand({
         id: 'copy-startup-diagnostics',
@@ -207,15 +216,15 @@ export default class ClaudianPlugin extends Plugin {
         this.chatHistoryFiles?.onSettingsCommitted(settings, previous);
       },
       // No chat view can hold tabs before loading completes and assigns the lifecycle.
-      onConversationDeleted: async conversationId => {
+      onConversationDeleted: async (conversationId) => {
         if (this.chatHistoryFiles) {
           await this.chatHistoryFiles.onConversationDeleted(
             conversationId,
             () => this.conversationLifecycle.resetDeletedConversationTabs(conversationId),
           );
-        } else {
-          await this.conversationLifecycle.resetDeletedConversationTabs(conversationId);
+          return;
         }
+        await this.conversationLifecycle.resetDeletedConversationTabs(conversationId);
       },
       onConversationListChanged: () => this.chatViews.notifyConversationListChanged(),
       onAllMetadataLoaded: () => this.inactiveSessionArchiver.request(),

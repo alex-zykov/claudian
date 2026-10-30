@@ -1,3 +1,4 @@
+
 import type { ChatFileCustomField } from '../chat-file/chatFileCustomFields';
 
 export interface ApprovalSelectionDecision {
@@ -184,7 +185,6 @@ export interface ClaudianSettings {
   /** Extra frontmatter fields for generated `.chat.md` files; empty by default. */
   chatFileCustomFields: ChatFileCustomField[];
   chatViewPlacement: ChatViewPlacement;
-  enableZenMode: boolean;
   /** Null keeps the zen panel docked. */
   zenModePosition: ZenModePosition | null;
   enableDualPane: boolean;

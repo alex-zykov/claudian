@@ -18,6 +18,12 @@ export interface ZenModeSlots {
  */
 export interface ZenModeSource {
   readonly leaf: WorkspaceLeaf;
+  /** Whether the user asked for this chat to float; kept in the view state, so it survives a restart. */
+  isZenRequested(): boolean;
+  /** Ends the request, so the chat returns to its tab. Idempotent. Quiet: moves no focus. */
+  leaveZen(): void;
+  /** The user's way out: ends the request, then selects the restored tab and focuses its input. */
+  exitZen(): void;
   /** The committed active runtime, or null while the view is not ready. */
   getZenPresentation(): ZenPresentationPort | null;
   /** The provider whose brand color the view currently shows. */

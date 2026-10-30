@@ -11,6 +11,15 @@
     "refresh": "Actualizar"
   },
   "chat": {
+    "newConversationBusy": "Detén la respuesta en curso o espera a que termine antes de iniciar una conversación nueva.",
+    "header": {
+      "moveToLeftPanel": "Mover al panel izquierdo",
+      "moveToRightPanel": "Mover al panel derecho",
+      "moveToMainArea": "Mover al área principal",
+      "moveRefused": "Espera a que termine la respuesta antes de mover el chat.",
+      "editNote": "Editar nota",
+      "editNoteRefused": "Este chat aún no tiene archivo."
+    },
     "promptSuggestionHint": "Tab para aceptar",
     "selectAvailableModel": "Selecciona un modelo disponible antes de enviar.",
     "selectAvailableTitleModel": "Selecciona un modelo de títulos disponible en los ajustes de Claudian.",
@@ -78,6 +87,10 @@
       "regionLabel": "Chat de Claudian",
       "showHistory": "Mostrar conversación",
       "move": "Mover el panel de chat",
+      "leave": "Salir del modo zen",
+      "toggle": "Flotar este chat (modo zen)",
+      "placeholder": "Este chat flota en la ventana zen.",
+      "leavePlaceholder": "Salir del modo zen",
       "working": "Trabajando…",
       "thinking": "Pensando…",
       "interrupted": "Interrumpido",
@@ -89,16 +102,7 @@
       "toolCompleted": "{tool} · completado",
       "toolFailed": "{tool} · falló",
       "toolBlocked": "{tool} · bloqueado"
-    },
-    "header": {
-      "moveToLeftPanel": "Mover al panel izquierdo",
-      "moveToRightPanel": "Mover al panel derecho",
-      "moveToMainArea": "Mover al área principal",
-      "moveRefused": "Espera a que termine la respuesta antes de mover el chat.",
-      "editNote": "Editar nota",
-      "editNoteRefused": "Este chat aún no tiene archivo."
-    },
-    "newConversationBusy": "Detén la respuesta en curso o espera a que termine antes de iniciar una conversación nueva."
+    }
   },
   "settings": {
     "tabs": {
@@ -136,6 +140,26 @@
     "autoTitle": {
       "name": "Generar automáticamente títulos de conversación",
       "desc": "Genera automáticamente títulos de conversación después del primer mensaje del usuario."
+    },
+    "writeHistoryFile": {
+      "name": "Write history file into linked folder",
+      "desc": "After each turn, create or update a generated .chat.md file in the conversation's linked folder. Turning this on backfills existing chats."
+    },
+    "writeHistoryFileText": {
+      "name": "Escribir el texto de la conversación en el archivo de chat",
+      "desc": "El cuerpo del archivo de chat contiene la transcripción de preguntas y respuestas, para que otros chats y apps sin Claudian puedan leerla y buscarla. Si se desactiva, solo se escribe el frontmatter y el cuerpo existente no cambia."
+    },
+    "chatFileFields": {
+      "name": "Campos de frontmatter de los archivos de chat",
+      "desc": "Campos adicionales en el frontmatter de los archivos de chat. Un campo que el archivo ya tiene conserva su valor.",
+      "keyPlaceholder": "Campo",
+      "valuePlaceholder": "Valor",
+      "keyAria": "Nombre del campo {index}",
+      "valueAria": "Valor del campo {index}",
+      "add": "Añadir campo",
+      "remove": "Quitar el campo {index}",
+      "errorReserved": "Claudian ya usa «{key}» en los archivos de chat. Elige otro nombre.",
+      "errorDuplicate": "«{key}» ya lo usa otro campo."
     },
     "titleLanguage": {
       "name": "Idioma de generación de títulos",
@@ -258,10 +282,6 @@
       "rightSidebar": "Barra lateral derecha",
       "leftSidebar": "Barra lateral izquierda",
       "mainTab": "Pestaña del editor principal"
-    },
-    "enableZenMode": {
-      "name": "Activar modo zen",
-      "desc": "Mantiene visible una interfaz de chat mínima cuando la barra lateral está oculta."
     },
     "cliInstallation": {
       "disclosure": "Instalación de {name}",
@@ -531,26 +551,6 @@
         "failed": "Error de sincronización: {message}",
         "summary": "Movidos {moved}, convertidos {converted}, a la papelera {trashed}, {unlinked} enlace(s) eliminado(s)."
       }
-    },
-    "writeHistoryFile": {
-      "name": "Write history file into linked folder",
-      "desc": "After each turn, create or update a generated .chat.md file in the conversation's linked folder. Turning this on backfills existing chats."
-    },
-    "writeHistoryFileText": {
-      "name": "Escribir el texto de la conversación en el archivo de chat",
-      "desc": "El cuerpo del archivo de chat contiene la transcripción de preguntas y respuestas, para que otros chats y apps sin Claudian puedan leerla y buscarla. Si se desactiva, solo se escribe el frontmatter y el cuerpo existente no cambia."
-    },
-    "chatFileFields": {
-      "name": "Campos de frontmatter de los archivos de chat",
-      "desc": "Campos adicionales en el frontmatter de los archivos de chat. Un campo que el archivo ya tiene conserva su valor.",
-      "keyPlaceholder": "Campo",
-      "valuePlaceholder": "Valor",
-      "keyAria": "Nombre del campo {index}",
-      "valueAria": "Valor del campo {index}",
-      "add": "Añadir campo",
-      "remove": "Quitar el campo {index}",
-      "errorReserved": "Claudian ya usa «{key}» en los archivos de chat. Elige otro nombre.",
-      "errorDuplicate": "«{key}» ya lo usa otro campo."
     }
   }
 }

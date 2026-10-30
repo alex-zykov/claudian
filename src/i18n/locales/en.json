@@ -11,6 +11,15 @@
     "refresh": "Refresh"
   },
   "chat": {
+    "newConversationBusy": "Stop the running answer or wait for it to finish before starting a new conversation.",
+    "header": {
+      "moveToLeftPanel": "Move to left panel",
+      "moveToRightPanel": "Move to right panel",
+      "moveToMainArea": "Move to main area",
+      "moveRefused": "Wait for the answer to finish before moving the chat.",
+      "editNote": "Edit note",
+      "editNoteRefused": "This chat has no file yet."
+    },
     "promptSuggestionHint": "Tab to accept",
     "selectAvailableModel": "Select an available model before sending.",
     "selectAvailableTitleModel": "Select an available title model in Claudian settings.",
@@ -78,6 +87,10 @@
       "regionLabel": "Claudian chat",
       "showHistory": "Show conversation",
       "move": "Move chat panel",
+      "leave": "Leave zen mode",
+      "toggle": "Float this chat (zen mode)",
+      "placeholder": "This chat is floating in the zen window.",
+      "leavePlaceholder": "Leave zen mode",
       "working": "Working…",
       "thinking": "Thinking…",
       "interrupted": "Interrupted",
@@ -89,16 +102,7 @@
       "toolCompleted": "{tool} · done",
       "toolFailed": "{tool} · failed",
       "toolBlocked": "{tool} · blocked"
-    },
-    "header": {
-      "moveToLeftPanel": "Move to left panel",
-      "moveToRightPanel": "Move to right panel",
-      "moveToMainArea": "Move to main area",
-      "moveRefused": "Wait for the answer to finish before moving the chat.",
-      "editNote": "Edit note",
-      "editNoteRefused": "This chat has no file yet."
-    },
-    "newConversationBusy": "Stop the running answer or wait for it to finish before starting a new conversation."
+    }
   },
   "settings": {
     "tabs": {
@@ -136,6 +140,26 @@
     "autoTitle": {
       "name": "Auto-generate conversation titles",
       "desc": "Automatically generate conversation titles after the first user message is sent."
+    },
+    "writeHistoryFile": {
+      "name": "Write history file into linked folder",
+      "desc": "After each turn, create or update a generated .chat.md file in the conversation's linked folder. Turning this on backfills existing chats."
+    },
+    "writeHistoryFileText": {
+      "name": "Write conversation text into chat file",
+      "desc": "The chat file body holds the transcript of requests and responses, so other chats and apps without Claudian can read and search it. When off, only the frontmatter is written and an existing body is left unchanged."
+    },
+    "chatFileFields": {
+      "name": "Chat file frontmatter fields",
+      "desc": "Extra fields added to the frontmatter of chat files. A field the file already has keeps its value.",
+      "keyPlaceholder": "Field",
+      "valuePlaceholder": "Value",
+      "keyAria": "Field name {index}",
+      "valueAria": "Field value {index}",
+      "add": "Add field",
+      "remove": "Remove field {index}",
+      "errorReserved": "“{key}” is used by Claudian in chat files. Choose another name.",
+      "errorDuplicate": "“{key}” is already used by another field."
     },
     "titleLanguage": {
       "name": "Title generation language",
@@ -258,10 +282,6 @@
       "rightSidebar": "Right sidebar",
       "leftSidebar": "Left sidebar",
       "mainTab": "Main editor tab"
-    },
-    "enableZenMode": {
-      "name": "Enable zen mode",
-      "desc": "Keep a minimal chat interface visible when the sidebar is hidden."
     },
     "cliInstallation": {
       "disclosure": "{name} installation",
@@ -531,26 +551,6 @@
         "failed": "Sync failed: {message}",
         "summary": "Moved {moved}, converted {converted}, trashed {trashed}, removed {unlinked} link(s)."
       }
-    },
-    "writeHistoryFile": {
-      "name": "Write history file into linked folder",
-      "desc": "After each turn, create or update a generated .chat.md file in the conversation's linked folder. Turning this on backfills existing chats."
-    },
-    "writeHistoryFileText": {
-      "name": "Write conversation text into chat file",
-      "desc": "The chat file body holds the transcript of requests and responses, so other chats and apps without Claudian can read and search it. When off, only the frontmatter is written and an existing body is left unchanged."
-    },
-    "chatFileFields": {
-      "name": "Chat file frontmatter fields",
-      "desc": "Extra fields added to the frontmatter of chat files. A field the file already has keeps its value.",
-      "keyPlaceholder": "Field",
-      "valuePlaceholder": "Value",
-      "keyAria": "Field name {index}",
-      "valueAria": "Field value {index}",
-      "add": "Add field",
-      "remove": "Remove field {index}",
-      "errorReserved": "“{key}” is used by Claudian in chat files. Choose another name.",
-      "errorDuplicate": "“{key}” is already used by another field."
     }
   }
 }

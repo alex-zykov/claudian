@@ -1,5 +1,5 @@
 import type { TFile, ViewStateResult, WorkspaceLeaf } from 'obsidian';
-import { ItemView, Notice, Scope, setIcon } from 'obsidian';
+import { ItemView, Notice, Platform, Scope, setIcon } from 'obsidian';
 
 import { resolveLinkedFolder } from '@/core/path/ResolveLinkedFolder';
 import { StartupProfiler } from '@/core/performance/StartupProfiler';
@@ -32,8 +32,9 @@ import {
   resolveViewSide,
   revealFolderInExplorer,
 } from '@/features/chat/workspace/ChatViewHeader';
-import { applyLeafHeaderActivity, resolveLeafHeaderActivity } from '@/features/chat/workspace/LeafHeaderActivity';
+import { applyLeafHeaderActivity, applyLeafHeaderZen, resolveLeafHeaderActivity } from '@/features/chat/workspace/LeafHeaderActivity';
 import type { ZenModeSlots, ZenModeSource, ZenPresentationPort } from '@/features/chat/zen/types';
+import { ZEN_TAB_STATE_KEY, ZEN_VIEW_STATE_KEY } from '@/features/chat/zen/ZenModeController';
 import { t } from '@/i18n/i18n';
 import { VaultMentionDataProvider } from '@/shared/mention/VaultMentionDataProvider';
 import { revealWorkspaceLeaf } from '@/utils/obsidianCompat';
@@ -70,6 +71,10 @@ export class ClaudianView extends ItemView implements ZenModeSource {
   private readonly header: ChatViewHeader;
   private headerLayoutRegistered = false;
   private moveToMainButtonEl: HTMLElement | null = null;
+  private zenRequested = false;
+  /** The tab that floats; fixed when zen starts, so switching tabs never changes the window's chat. */
+  private zenTabId: TabId | null = null;
+  private zenButtonEl: HTMLElement | null = null;
   private pendingHandoff: ChatViewHandoff | null = null;
 
   constructor(leaf: WorkspaceLeaf, plugin: ChatFeatureHost) {
@@ -107,7 +112,7 @@ export class ClaudianView extends ItemView implements ZenModeSource {
       },
     });
     this.presentation = new ChatPresentationPlacement({
-      getActiveTab: () => this.getActiveTab(),
+      getActiveTab: () => this.presentedTab(),
       getTab: tabId => this.tabManager?.getTab(tabId) ?? null,
       isWide: () => this.layout.isWide,
       getTabCount: () => this.tabManager?.getTabCount() ?? null,
@@ -235,7 +240,7 @@ export class ClaudianView extends ItemView implements ZenModeSource {
         return !!id && this.plugin.chatHistoryFiles.openFileAsMarkdown(id);
       },
       onEditRefused: () => { new Notice(t('chat.header.editNoteRefused')); },
-      isZenActive: () => false,
+      isZenActive: () => this.zenRequested,
     });
     return header;
   }
@@ -245,10 +250,20 @@ export class ClaudianView extends ItemView implements ZenModeSource {
   }
 
   getState(): Record<string, unknown> {
-    return this.tabWorkspace.getState();
+    return {
+      ...this.tabWorkspace.getState(),
+      ...(this.zenRequested ? { [ZEN_VIEW_STATE_KEY]: true } : {}),
+      ...(this.zenRequested && this.zenTabId ? { [ZEN_TAB_STATE_KEY]: this.zenTabId } : {}),
+    };
   }
 
   async setState(state: unknown, _result: ViewStateResult): Promise<void> {
+    const record = state && typeof state === 'object' ? state as Record<string, unknown> : null;
+    // A workspace synced from the desktop can carry the flag to a device without zen.
+    this.zenRequested = record?.[ZEN_VIEW_STATE_KEY] === true && !Platform.isMobile;
+    const zenTab = record?.[ZEN_TAB_STATE_KEY];
+    this.zenTabId = this.zenRequested && typeof zenTab === 'string' ? zenTab : null;
+    this.updateZenChrome();
     await this.tabWorkspace.setState(state);
   }
 
@@ -452,6 +467,7 @@ export class ClaudianView extends ItemView implements ZenModeSource {
     const lifecycleRevision = this.tabWorkspace.beginClose();
     // The leaf may host another view next; it must not keep this chat's activity.
     applyLeafHeaderActivity(this.leaf, null);
+    applyLeafHeaderZen(this.leaf, false);
     // Zen presentation returns synchronously before asynchronous shutdown proceeds.
     this.stopZenModeSource();
     const tabManager = this.tabManager;
@@ -514,6 +530,15 @@ export class ClaudianView extends ItemView implements ZenModeSource {
     const sidebarEl = containerEl.createDiv({ cls: 'claudian-session-sidebar' });
     this.sessions.mountSidebar(sidebarEl);
 
+    // Shown instead of the chat while it floats in the zen window.
+    const placeholderEl = containerEl.createDiv({ cls: 'claudian-zen-placeholder' });
+    placeholderEl.createDiv({ cls: 'claudian-zen-placeholder-text', text: t('chat.zen.placeholder') });
+    const leaveEl = placeholderEl.createEl('button', {
+      cls: 'mod-cta',
+      text: t('chat.zen.leavePlaceholder'),
+      attr: { type: 'button' },
+    });
+    leaveEl.addEventListener('click', () => this.exitZen());
     return { containerEl, resizerEl, sidebarEl };
   }
 
@@ -554,6 +579,15 @@ export class ClaudianView extends ItemView implements ZenModeSource {
     this.sessions.mountHistoryControl(navActionsEl);
 
     // A sidebar has no view header, so the way back to the main area lives here.
+    this.zenButtonEl = navActionsEl.createEl('button', {
+      cls: 'claudian-input-nav-btn claudian-zen-btn',
+      attr: { type: 'button' },
+    });
+    setIcon(this.zenButtonEl, 'picture-in-picture-2');
+    this.zenButtonEl.setAttribute('aria-label', t('chat.zen.toggle'));
+    this.zenButtonEl.toggleClass('claudian-hidden', Platform.isMobile);
+    this.zenButtonEl.addEventListener('click', () => this.toggleZen());
+
     this.moveToMainButtonEl = navActionsEl.createEl('button', {
       cls: 'claudian-input-nav-btn claudian-move-to-main-btn',
       attr: { type: 'button' },
@@ -582,14 +616,14 @@ export class ClaudianView extends ItemView implements ZenModeSource {
     })().catch(() => new Notice('Failed to create tab'));
   }
 
-private requestNewConversation(): void {
-  // The controller ignores the request while a turn runs; say so instead of looking broken.
-  if (this.tabManager?.getActiveTab()?.session.hasActiveTurn) {
-    new Notice(t('chat.newConversationBusy'));
-    return;
-  }
-  void (async () => {
-    await this.tabManager?.createNewConversation();
+  private requestNewConversation(): void {
+    // The controller ignores the request while a turn runs; say so instead of looking broken.
+    if (this.tabManager?.getActiveTab()?.session.hasActiveTurn) {
+      new Notice(t('chat.newConversationBusy'));
+      return;
+    }
+    void (async () => {
+      await this.tabManager?.createNewConversation();
       this.sessions.invalidate();
     })().catch(() => new Notice('Failed to create conversation'));
   }
@@ -853,7 +887,7 @@ private requestNewConversation(): void {
 
   getZenPresentation(): ZenPresentationPort | null {
     if (!this.tabWorkspace.isReady) return null;
-    return this.tabManager?.getActiveTab()?.zenPresentation ?? null;
+    return this.presentedTab()?.zenPresentation ?? null;
   }
 
   getZenProviderId(): ProviderId | null {
@@ -867,14 +901,89 @@ private requestNewConversation(): void {
     };
   }
 
-async focusConversationTab(tabId: TabId): Promise<void> {
-  const manager = this.tabManager;
-  if (!manager) return;
-  await manager.switchToTab(tabId);
-  await revealWorkspaceLeaf(this.plugin.app.workspace, this.leaf);
-  this.focusActiveInput();
-}
+  isZenRequested(): boolean {
+    return this.zenRequested;
+  }
 
+  /**
+   * Brings a tab of this view to the user: when it is the one floating in the zen window, its
+   * input there takes the focus; otherwise the tab is selected and the leaf is shown.
+   */
+  async focusConversationTab(tabId: TabId): Promise<void> {
+    const manager = this.tabManager;
+    if (!manager) return;
+    if (this.zenRequested && this.presentedTab()?.id === tabId) {
+      this.presentedTab()?.composer.focus();
+      return;
+    }
+    await manager.switchToTab(tabId);
+    await revealWorkspaceLeaf(this.plugin.app.workspace, this.leaf);
+    this.focusActiveInput();
+  }
+
+  /**
+   * The tab the window presents: the one that was active when zen started, not whichever tab
+   * is active now. Outside zen, the active tab.
+   */
+  private presentedTab(): ChatTab | null {
+    const manager = this.tabManager;
+    const active = manager?.getActiveTab() ?? null;
+    if (!this.zenRequested || !this.zenTabId) return active;
+    return manager?.getTab(this.zenTabId) ?? active;
+  }
+
+  /** Sends the chat to the floating window, or brings it back to its tab. */
+  toggleZen(): void {
+    if (this.zenRequested) {
+      this.exitZen();
+      return;
+    }
+    if (Platform.isMobile) return;
+    this.setZenRequested(true);
+  }
+
+  leaveZen(): void {
+    this.setZenRequested(false);
+  }
+
+  exitZen(): void {
+    const tabId = this.zenTabId;
+    this.leaveZen();
+    void this.showRestoredTab(tabId);
+  }
+
+  /** After leaving zen: select the tab that floated, show the leaf, and focus the input. */
+  private async showRestoredTab(tabId: TabId | null): Promise<void> {
+    const manager = this.tabManager;
+    if (!manager) return;
+    try {
+      if (tabId && manager.getActiveTabId() !== tabId && manager.getTab(tabId)) {
+        await manager.switchToTab(tabId);
+      }
+      await revealWorkspaceLeaf(this.plugin.app.workspace, this.leaf);
+      this.focusActiveInput();
+    } catch {
+      // The tab closed in the meantime; nothing is left to focus.
+    }
+  }
+
+  private setZenRequested(requested: boolean): void {
+    if (this.zenRequested === requested) return;
+    this.zenRequested = requested;
+    this.zenTabId = requested ? this.tabManager?.getActiveTabId() ?? null : null;
+    this.updateZenChrome();
+    // The request lives in the view state, which Obsidian saves with the layout.
+    this.plugin.app.workspace.requestSaveLayout();
+    this.notifyZenPresentationChanged();
+  }
+
+  /** What the leaf itself shows while its chat floats: no tab header, one placeholder pane. */
+  private updateZenChrome(): void {
+    this.viewContainerEl?.toggleClass('claudian-zen-active', this.zenRequested);
+    this.zenButtonEl?.toggleClass('is-active', this.zenRequested);
+    applyLeafHeaderZen(this.leaf, this.zenRequested);
+    this.header.refresh();
+  }
 
   attachZenPresentation(slots: ZenModeSlots): () => void {
     return this.presentation.attachZen(slots);
