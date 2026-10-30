@@ -1,10 +1,16 @@
 import type { App, EventRef } from 'obsidian';
 
 import type { ConversationService } from '@/app/conversations/ConversationService';
+import {
+  hasAnySessionMetadata,
+  hasSessionTombstone,
+  listDeviceSessionFolders,
+} from '@/app/storage/ChatHistoryFileAdmission';
 import type { SharedStorageService } from '@/app/storage/SharedStorageService';
 import type { ChatFileCustomField } from '@/core/chat-file/chatFileCustomFields';
 import type { ClaudianSettings } from '@/core/types';
 import type { ChatHistoryFilePort } from '@/features/chat/ChatFeatureHost';
+import { ChatHistoryFileImporter } from '@/features/chat/history-file/ChatHistoryFileImporter';
 import { HistoryFileWriter } from '@/features/chat/history-file/HistoryFileWriter';
 
 import type { ClaudianViews } from './ClaudianViews';
@@ -21,20 +27,22 @@ export interface ChatHistoryFileSubsystemDeps {
 }
 
 /**
- * Main-owned wiring for chat history files: writer projection into vault
- * `.chat.md` files. Import admission and open-on-click routing land in later
- * commits on this same subsystem.
+ * Main-owned wiring for chat history files: writer projection and import
+ * admission. Open-on-click routing lands in a later commit on this subsystem.
  */
 export class ChatHistoryFileSubsystem {
   readonly writer: HistoryFileWriter;
+  readonly importer: ChatHistoryFileImporter;
   /** The surface chat features use: writer operations. */
   readonly port: ChatHistoryFilePort;
 
   private constructor(
     writer: HistoryFileWriter,
+    importer: ChatHistoryFileImporter,
     private readonly deps: ChatHistoryFileSubsystemDeps,
   ) {
     this.writer = writer;
+    this.importer = importer;
     this.port = {
       scheduleWrite: id => writer.scheduleWrite(id),
       hasFile: id => writer.getFile(id) !== null,
@@ -58,11 +66,49 @@ export class ChatHistoryFileSubsystem {
       reportError: error => deps.reportError(error),
     });
 
-    return new ChatHistoryFileSubsystem(writer, deps);
+    const adapter = deps.storage.getAdapter();
+    const listDeviceFolders = () => listDeviceSessionFolders(path => adapter.listFolders(path));
+    const importer = new ChatHistoryFileImporter({
+      app: deps.app,
+      hasAnyMetadata: async (id) => {
+        if (deps.conversations.hasLiveConversation(id)) return true;
+        return hasAnySessionMetadata(
+          path => adapter.exists(path),
+          listDeviceFolders,
+          id,
+        );
+      },
+      hasTombstone: async (id) => {
+        if (deps.conversations.wasDeletedInSession(id)) return true;
+        return hasSessionTombstone(
+          path => adapter.exists(path),
+          listDeviceFolders,
+          id,
+        );
+      },
+      importConversation: record => deps.conversations.importFromHistoryFile(record),
+      reportError: error => deps.reportError(error),
+    });
+
+    return new ChatHistoryFileSubsystem(writer, importer, deps);
   }
 
-  register(_registerEvent: (eventRef: EventRef) => void): void {
-    // Vault create/modify listeners for import land with restore-from-file.
+  register(registerEvent: (eventRef: EventRef) => void): void {
+    const { app } = this.deps;
+    this.importer.scheduleScan();
+    if (typeof app.vault?.on === 'function') {
+      registerEvent(app.vault.on('create', file => {
+        this.importer.handleFileChanged(file);
+      }));
+      registerEvent(app.vault.on('modify', file => {
+        this.importer.handleFileChanged(file);
+      }));
+    }
+    if (typeof app.metadataCache?.on === 'function') {
+      registerEvent(app.metadataCache.on('changed', file => {
+        this.importer.handleFileChanged(file);
+      }));
+    }
   }
 
   onSettingsCommitted(
@@ -94,5 +140,6 @@ export class ChatHistoryFileSubsystem {
 
   dispose(): void {
     this.writer.dispose();
+    this.importer.dispose();
   }
 }

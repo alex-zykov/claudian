@@ -2,6 +2,7 @@ import '@/providers';
 
 import { ConversationRepository } from '@/app/conversations/ConversationRepository';
 import type { ConversationPersistence } from '@/app/storage/ConversationPersistenceStore';
+import { resolveLinkedFolder } from '@/core/path/ResolveLinkedFolder';
 import { ProviderRegistry } from '@/core/providers/ProviderRegistry';
 import { ProviderSettingsCoordinator } from '@/core/providers/ProviderSettingsCoordinator';
 import type { Conversation } from '@/core/types';
@@ -677,6 +678,15 @@ describe('ConversationRepository hydration', () => {
       lastActivityAt: 40,
     });
     expect(repository.getSync(unrelatedConversation.id)!.linkedContentPath).toBe('Notes/Other.md');
+    // Derived project folder follows existing Linked content rename reconciliation.
+    expect(resolveLinkedFolder(
+      repository.getSync(fileConversation.id)!.linkedContentPath,
+      () => false,
+    )).toBe('Notes');
+    expect(resolveLinkedFolder(
+      repository.getSync(folderConversation.id)!.linkedContentPath,
+      () => false,
+    )).toBe('Projects/New');
     expect(persistence.saveMetadata).toHaveBeenCalledWith(expect.objectContaining({
       id: 'file',
       linkedContentPath: 'Notes/New.md',
