@@ -390,7 +390,7 @@ describe('SessionManagerSurface session header', () => {
     groupHeader('content').click();
     groupHeader('ungrouped').click();
 
-    expect(collapsedBodies()).toEqual(['content:Projects/Plan.md', 'ungrouped']);
+    expect(collapsedBodies()).toEqual(['content:Projects', 'ungrouped']);
     expect(toggleButton().getAttribute('aria-label')).toBe('Expand all groups');
     expect(toggleButton().querySelector('.claudian-session-header-icon').dataset.iconState)
       .toBe('expand');
@@ -403,7 +403,7 @@ describe('SessionManagerSurface session header', () => {
 
     toggleButton().click();
 
-    expect(collapsedBodies()).toEqual(['content:Projects/Plan.md', 'ungrouped']);
+    expect(collapsedBodies()).toEqual(['content:Projects', 'ungrouped']);
     expect(toggleButton().getAttribute('aria-label')).toBe('Expand all groups');
     expect(h.notifyOtherViews).toHaveBeenCalledTimes(2);
   });
@@ -449,7 +449,7 @@ describe('SessionManagerSurface session header', () => {
       .find(item => item.title === 'Pin Linked content')!.clickHandler!();
     await Promise.resolve();
 
-    expect(h.plugin.setLinkedContentPinned).toHaveBeenCalledWith('Projects/Plan.md', true);
+    expect(h.plugin.setLinkedContentPinned).toHaveBeenCalledWith('Projects', true);
   });
 
   it('renders session options and persists the selected organization', async () => {

@@ -1,5 +1,6 @@
 import { testClock } from '@test/helpers/testClock';
 
+import { resolveLinkedFolder } from '@/core/path/ResolveLinkedFolder';
 import type { ConversationMeta } from '@/core/types';
 import {
   deriveSessionListModel,
@@ -62,12 +63,22 @@ describe('SessionListOrganizer', () => {
     });
 
     expect(sections).toHaveLength(2);
-    expect(sections[0]).toMatchObject({ kind: 'ungrouped', label: 'Unlinked' });
+    expect(sections[0]).toMatchObject({ kind: 'ungrouped', label: 'Vault root' });
     expect(sections[0].conversations.map(conversation => conversation.id)).toEqual([
       'provisional',
       'unlinked',
     ]);
     expect(sections[1]).toMatchObject({ kind: 'content', contentPath: 'Notes/Real note.md' });
+
+    const unlinked = sections[0].conversations.find(conversation => conversation.id === 'unlinked');
+    expect(unlinked).toBeDefined();
+    expect(resolveLinkedFolder(unlinked!.linkedContentPath, () => undefined)).toBe('');
+  });
+
+  it('treats a blank vault-root draft as folder ""', () => {
+    const draft = createConversation('draft');
+    expect(draft.linkedContentPath).toBeUndefined();
+    expect(resolveLinkedFolder(draft.linkedContentPath, () => undefined)).toBe('');
   });
 
   it('does not suppress existing folders or non-Note files with provisional names', () => {
@@ -245,5 +256,63 @@ describe('deriveSessionListModel', () => {
     expect(model.isEmpty).toBe(true);
     expect(model.hasSearchTerms).toBe(true);
     expect(model.groupKeys).toBeNull();
+  });
+});
+
+describe('folder grouping', () => {
+  const folders = new Set(['Projects/A', 'Projects']);
+  const resolveFolder = (path: string) => resolveLinkedFolder(path, candidate => folders.has(candidate));
+  const options = {
+    organization: 'linked-content',
+    sort: 'last-updated',
+    language: 'en',
+    contentExists: () => true,
+    resolveFolder,
+  } as const;
+
+  it('groups sessions of different notes under their shared project folder', () => {
+    const sections = organizeSessionList([
+      createConversation('plan', { linkedContentPath: 'Projects/A/Plan.md', lastActivityAt: 10 }),
+      createConversation('notes', { linkedContentPath: 'Projects/A/Notes.md', lastActivityAt: 30 }),
+      createConversation('folder', { linkedContentPath: 'Projects/A', lastActivityAt: 20 }),
+      createConversation('other', { linkedContentPath: 'Projects/B/Plan.md', lastActivityAt: 5 }),
+    ], options);
+
+    expect(sections.map(section => [section.kind, section.contentPath, section.label])).toEqual([
+      ['content', 'Projects/A', 'A'],
+      ['content', 'Projects/B', 'B'],
+    ]);
+    expect(sections[0].conversations.map(({ id }) => id)).toEqual(['notes', 'folder', 'plan']);
+  });
+
+  it('puts vault-root notes and unlinked sessions into the ungrouped Vault root section', () => {
+    const sections = organizeSessionList([
+      createConversation('root-note', { linkedContentPath: 'Inbox.md', lastActivityAt: 20 }),
+      createConversation('unlinked', { lastActivityAt: 10 }),
+    ], options);
+
+    expect(sections).toHaveLength(1);
+    expect(sections[0]).toMatchObject({ kind: 'ungrouped', label: 'Vault root' });
+    expect(sections[0].conversations.map(({ id }) => id)).toEqual(['root-note', 'unlinked']);
+  });
+
+  it('keys group actions and pinned groups by project folder', () => {
+    const conversations = [
+      createConversation('plan', { linkedContentPath: 'Projects/A/Plan.md', lastActivityAt: 10 }),
+      createConversation('notes', { linkedContentPath: 'Projects/A/Notes.md', lastActivityAt: 20 }),
+      createConversation('other', { linkedContentPath: 'Projects/B/Plan.md', lastActivityAt: 5 }),
+    ];
+    const model = deriveSessionListModel(conversations, {
+      ...options,
+      scope: 'active',
+      showPinnedSection: true,
+      pinnedLinkedContentPaths: new Set(['Projects/A']),
+    });
+
+    expect(model.conversationsByLinkedContent.get('Projects/A')?.map(({ id }) => id))
+      .toEqual(['plan', 'notes']);
+    expect(model.pinnedContentSections.map(section => section.contentPath)).toEqual(['Projects/A']);
+    expect(model.pinnedContentSections[0].conversations.map(({ id }) => id)).toEqual(['notes', 'plan']);
+    expect(model.sections.map(section => section.contentPath)).toEqual(['Projects/B']);
   });
 });

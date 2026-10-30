@@ -560,15 +560,15 @@ describe('SessionBrowser', () => {
         const labels = container
           .querySelectorAll('.claudian-session-group-label')
           .map((label: { textContent: string }) => label.textContent);
-        expect(labels).toEqual(['Plan', 'Plan', 'Unlinked']);
+        expect(labels).toEqual(['Plan', 'Plan', 'Vault root']);
         expect(labels).not.toContain('Untitled 2');
         const groupHeaders = container.querySelectorAll('.claudian-session-group-header');
         expect(groupHeaders[0].getAttribute('title')).toBe('Projects/A/Plan.md');
         expect(groupHeaders[1].getAttribute('title')).toBe('Projects/B/Plan.md');
         const groupIcons = container.querySelectorAll('.claudian-session-group-icon');
         expect(groupIcons).toHaveLength(3);
-        expect(setIcon).toHaveBeenCalledWith(groupIcons[0], 'link');
-        expect(setIcon).toHaveBeenCalledWith(groupIcons[1], 'link');
+        expect(setIcon).toHaveBeenCalledWith(groupIcons[0], 'folder');
+        expect(setIcon).toHaveBeenCalledWith(groupIcons[1], 'folder');
         expect(setIcon).toHaveBeenCalledWith(groupIcons[2], 'inbox');
         const linkedContentActions = container.querySelectorAll(
           '.claudian-session-group-new-action',

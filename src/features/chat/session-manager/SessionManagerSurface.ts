@@ -1,9 +1,11 @@
 import { Menu, Notice, setIcon, TFile } from 'obsidian';
 
+import { resolveLinkedFolder } from '@/core/path/ResolveLinkedFolder';
 import { StartupProfiler } from '@/core/performance/StartupProfiler';
 import { ProviderRegistry } from '@/core/providers/ProviderRegistry';
 import type { ConversationMeta } from '@/core/types';
 import type { ChatFeatureHost } from '@/features/chat/ChatFeatureHost';
+import { createVaultLinkedContentIsFolder } from '@/features/chat/linked-content/LinkedContentPresentation';
 import { getObsidianLanguage } from '@/features/chat/session-manager/ProvisionalNoteNames';
 import { SessionBrowser } from '@/features/chat/session-manager/SessionBrowser';
 import { renderSessionGroupToggleIcon } from '@/features/chat/session-manager/SessionManagerIcons';
@@ -320,6 +322,7 @@ export class SessionManagerSurface {
             language: getObsidianLanguage(plugin.settings.locale),
             contentExists: (contentPath: string) => navigation.contentExists(contentPath),
             contentIsNote: (contentPath: string) => this.contentIsNote(contentPath),
+            resolveFolder: (contentPath: string) => this.resolveFolder(contentPath),
             searchQuery: this.isSearchActive ? this.searchQuery : undefined,
             showMetadataPopover: true,
             showOpenStateActions: false,
@@ -709,6 +712,10 @@ export class SessionManagerSurface {
     } catch {
       return selectedModel;
     }
+  }
+
+  private resolveFolder(contentPath: string): string {
+    return resolveLinkedFolder(contentPath, createVaultLinkedContentIsFolder(this.deps.plugin.app));
   }
 
   private contentIsNote(contentPath: string): boolean {

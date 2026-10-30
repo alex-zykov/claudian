@@ -51,6 +51,8 @@ type HistoryRenderOptions = SessionActionOptions & SessionStatusDisplay & Sessio
   /** Divides an unpinned flat list into recency groups. */
   groupByRecency?: boolean;
   sort?: SessionManagerSort;
+  /** Maps a Linked content path to its project folder, the Linked content group key. */
+  resolveFolder?: (contentPath: string) => string;
   collapsedGroupKeys?: ReadonlySet<string>;
   onGroupCollapseChange?: (groupKey: string, collapsed: boolean) => void;
   onGroupKeysChange?: (groupKeys: readonly string[]) => void;
@@ -152,6 +154,7 @@ export class SessionBrowser {
       collapsedGroupKeys: options.collapsedGroupKeys,
       contentExists: options.contentExists,
       contentIsNote: options.contentIsNote,
+      resolveFolder: options.resolveFolder,
       groupByRecency: options.groupByRecency ? { now: Date.now() } : undefined,
     });
     const { conversationsByLinkedContent, pinnedContentSections, sections } = model;
@@ -350,7 +353,7 @@ export class SessionBrowser {
       const contentIcon = groupHeader.createSpan({
         cls: 'claudian-session-group-icon',
       });
-      setIcon(contentIcon, section.kind === 'missing' ? 'file-question' : 'link');
+      setIcon(contentIcon, section.kind === 'missing' ? 'file-question' : 'folder');
     } else if (section.kind === 'ungrouped') {
       const ungroupedIcon = groupHeader.createSpan({
         cls: 'claudian-session-group-icon',

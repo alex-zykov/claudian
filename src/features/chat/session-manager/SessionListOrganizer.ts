@@ -22,6 +22,8 @@ interface OrganizeSessionListOptions {
   includeContentPaths?: readonly string[];
   contentExists?: (contentPath: string) => boolean;
   contentIsNote?: (contentPath: string) => boolean;
+  /** Maps a Linked content path to its project folder; defaults to the path itself. */
+  resolveFolder?: (contentPath: string) => string;
   /** Splits the flat list into recency groups relative to `now`. */
   groupByRecency?: { now: number };
 }
@@ -41,6 +43,20 @@ export function isLegacyProvisionalLinkedContent(
   if (!isProvisionalNotePath(contentPath, options.language)) return false;
   if (options.contentExists?.(contentPath) === false) return false;
   return options.contentIsNote?.(contentPath) !== false;
+}
+
+/**
+ * The group a session belongs to: its project folder, or undefined for the vault root.
+ * Legacy provisional notes and sessions without Linked content have no group.
+ */
+function getGroupPath(
+  conversation: ConversationMeta,
+  options: Pick<OrganizeSessionListOptions, 'contentExists' | 'contentIsNote' | 'language' | 'resolveFolder'>,
+): string | undefined {
+  const contentPath = conversation.linkedContentPath;
+  if (!contentPath || isLegacyProvisionalLinkedContent(contentPath, options)) return undefined;
+  const folder = options.resolveFolder ? options.resolveFolder(contentPath) : contentPath;
+  return folder.length > 0 ? folder : undefined;
 }
 
 function getLastActivityTimestamp(conversation: ConversationMeta): number {
@@ -147,8 +163,8 @@ export function organizeSessionList(
   }
   const ungrouped: ConversationMeta[] = [];
   for (const conversation of sortedConversations) {
-    const contentPath = conversation.linkedContentPath;
-    if (!contentPath || isLegacyProvisionalLinkedContent(contentPath, options)) {
+    const contentPath = getGroupPath(conversation, options);
+    if (!contentPath) {
       ungrouped.push(conversation);
       continue;
     }
@@ -175,7 +191,7 @@ export function organizeSessionList(
     sections.push({
       key: 'ungrouped',
       kind: 'ungrouped',
-      label: 'Unlinked',
+      label: 'Vault root',
       conversations: ungrouped,
     });
   }
@@ -196,6 +212,7 @@ export interface SessionListModelOptions {
   collapsedGroupKeys?: ReadonlySet<string>;
   contentExists?: (contentPath: string) => boolean;
   contentIsNote?: (contentPath: string) => boolean;
+  resolveFolder?: (contentPath: string) => string;
   /** Divides an unpinned flat list into recency groups relative to `now`. */
   groupByRecency?: { now: number };
 }
@@ -241,22 +258,29 @@ export function deriveSessionListModel(
           .toLocaleLowerCase();
         return searchTerms.every(term => searchableText.includes(term));
       });
+  const groupOptions = {
+    contentExists: options.contentExists,
+    contentIsNote: options.contentIsNote,
+    language,
+    resolveFolder: options.resolveFolder,
+  };
   const conversationsByLinkedContent = new Map<string, ConversationMeta[]>();
   for (const conversation of scopedConversations) {
-    if (!conversation.linkedContentPath) continue;
-    const contentConversations = conversationsByLinkedContent.get(conversation.linkedContentPath) ?? [];
+    const groupPath = getGroupPath(conversation, groupOptions);
+    if (!groupPath) continue;
+    const contentConversations = conversationsByLinkedContent.get(groupPath) ?? [];
     contentConversations.push(conversation);
-    conversationsByLinkedContent.set(conversation.linkedContentPath, contentConversations);
+    conversationsByLinkedContent.set(groupPath, contentConversations);
   }
   const pinnedLinkedContentPaths = organization === 'linked-content'
     && options.showPinnedSection
     && options.scope !== 'archived'
     ? options.pinnedLinkedContentPaths ?? new Set<string>()
     : new Set<string>();
-  const isInPinnedContentGroup = (conversation: ConversationMeta): boolean => (
-    !!conversation.linkedContentPath
-    && pinnedLinkedContentPaths.has(conversation.linkedContentPath)
-  );
+  const isInPinnedContentGroup = (conversation: ConversationMeta): boolean => {
+    const groupPath = getGroupPath(conversation, groupOptions);
+    return !!groupPath && pinnedLinkedContentPaths.has(groupPath);
+  };
   const pinnedContentConversations = filteredConversations.filter(isInPinnedContentGroup);
   const pinnedConversations = options.showPinnedSection
     ? filteredConversations.filter(conversation => (
@@ -269,9 +293,10 @@ export function deriveSessionListModel(
       ))
     : filteredConversations;
   const pinnedPathsWithMatchingSessions = new Set(
-    pinnedContentConversations.flatMap(conversation => (
-      conversation.linkedContentPath ? [conversation.linkedContentPath] : []
-    )),
+    pinnedContentConversations.flatMap(conversation => {
+      const groupPath = getGroupPath(conversation, groupOptions);
+      return groupPath ? [groupPath] : [];
+    }),
   );
   const visiblePinnedContentPaths = [...pinnedLinkedContentPaths].filter(contentPath => (
     searchTerms.length === 0
@@ -285,6 +310,7 @@ export function deriveSessionListModel(
     includeContentPaths: visiblePinnedContentPaths,
     contentExists: options.contentExists,
     contentIsNote: options.contentIsNote,
+    resolveFolder: options.resolveFolder,
   }).filter(section => section.contentPath !== undefined);
   const isEmpty = filteredConversations.length === 0 && pinnedContentSections.length === 0;
   if (isEmpty) {
@@ -311,6 +337,7 @@ export function deriveSessionListModel(
     language,
     contentExists: options.contentExists,
     contentIsNote: options.contentIsNote,
+    resolveFolder: options.resolveFolder,
     groupByRecency: options.groupByRecency,
   });
   const countExpanded = (groupSections: readonly SessionListSection[]): number => (
