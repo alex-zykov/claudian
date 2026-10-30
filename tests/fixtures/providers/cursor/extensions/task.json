@@ -1,0 +1,6 @@
+{
+  "toolCallId": "call_task_1",
+  "description": "Explore codebase",
+  "prompt": "Find where authentication is handled and report the file paths.",
+  "subagentType": "explore"
+}

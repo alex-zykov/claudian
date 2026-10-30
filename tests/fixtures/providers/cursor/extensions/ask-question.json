@@ -1,0 +1,15 @@
+{
+  "toolCallId": "call_ask_1",
+  "title": "Need input",
+  "questions": [
+    {
+      "id": "q1",
+      "prompt": "Which mode should I use?",
+      "options": [
+        { "id": "agent", "label": "Agent" },
+        { "id": "plan", "label": "Plan" }
+      ],
+      "allowMultiple": false
+    }
+  ]
+}

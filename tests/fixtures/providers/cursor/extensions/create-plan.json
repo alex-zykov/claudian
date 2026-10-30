@@ -1,0 +1,12 @@
+{
+  "toolCallId": "call_plan_1",
+  "name": "Refactor tabs layout",
+  "overview": "Tighten layout behavior and preserve existing UX.",
+  "plan": "1. Inspect current tab sizing logic.\n2. Update layout calculations.\n3. Verify editor behavior.",
+  "todos": [
+    { "id": "todo-1", "content": "Inspect current tab sizing logic", "status": "completed" },
+    { "id": "todo-2", "content": "Update layout calculations", "status": "in_progress" },
+    { "id": "todo-3", "content": "Verify editor behavior", "status": "pending" }
+  ],
+  "isProject": false
+}

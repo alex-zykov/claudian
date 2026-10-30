@@ -469,6 +469,12 @@
         "desc": "仅传递给 Grok Build 的环境变量。自定义模型的密钥保留在此提供商范围内，并在原生配置中通过 env_key 引用。"
       }
     },
+    "cursor": {
+      "environment": {
+        "name": "Cursor environment variables",
+        "desc": "Environment variables passed only to Cursor. Auth secrets such as CURSOR_API_KEY stay in this provider scope or the process environment; Claudian never stores a Cursor token in plugin settings."
+      }
+    },
     "skills": {
       "subTabs": {
         "claude": "Claude Code",

@@ -36,6 +36,10 @@ const fileConsumers = [
     'tests/unit/providers/grok/history/GrokConversationHistoryService.test.ts',
     'tests/unit/providers/grok/history/GrokHistoryStore.test.ts',
   ]],
+  [/^tests\/fixtures\/providers\/cursor\//, [
+    'tests/unit/providers/cursor/execution/CursorExecutionNativeConnection.test.ts',
+    'tests/unit/providers/cursor/history/CursorConversationHistoryService.test.ts',
+  ]],
 ];
 const scriptConsumers = new Map(suites.scriptTests.flatMap(file => [
   [file, file], [file.replace('.test.mjs', '.mjs'), file],

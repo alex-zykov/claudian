@@ -13,6 +13,8 @@
   --claudian-brand-pi-rgb: 255, 255, 255;
   --claudian-brand-grok: #fff;
   --claudian-brand-grok-rgb: 255, 255, 255;
+  --claudian-brand-cursor: #fff;
+  --claudian-brand-cursor-rgb: 255, 255, 255;
   --claudian-error: #dc3545;
   --claudian-compact: #5bc0de;
 
@@ -32,6 +34,8 @@ body.theme-light .claudian-container {
   --claudian-brand-pi-rgb: 0, 0, 0;
   --claudian-brand-grok: #000;
   --claudian-brand-grok-rgb: 0, 0, 0;
+  --claudian-brand-cursor: #000;
+  --claudian-brand-cursor-rgb: 0, 0, 0;
   --claudian-selection-check: #16a34a;
 }
 
@@ -64,4 +68,10 @@ body.theme-light .claudian-container {
 .claudian-container .claudian-model-option[data-provider="grok"] {
   --claudian-brand: var(--claudian-brand-grok);
   --claudian-brand-rgb: var(--claudian-brand-grok-rgb);
+}
+
+.claudian-container[data-provider="cursor"],
+.claudian-container .claudian-model-option[data-provider="cursor"] {
+  --claudian-brand: var(--claudian-brand-cursor);
+  --claudian-brand-rgb: var(--claudian-brand-cursor-rgb);
 }

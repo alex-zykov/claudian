@@ -1,0 +1,7 @@
+{
+  "code": -32000,
+  "message": "Authentication required",
+  "data": {
+    "message": "Authentication required. Please run 'agent login' first, then call authenticate() with methodId 'cursor_login'."
+  }
+}

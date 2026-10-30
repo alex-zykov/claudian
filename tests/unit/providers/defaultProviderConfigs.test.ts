@@ -10,11 +10,13 @@ describe('getBuiltInProviderDefaultConfigs', () => {
     expect(first).toHaveProperty('grok');
     expect(first).toHaveProperty('opencode');
     expect(first).toHaveProperty('pi');
+    expect(first).toHaveProperty('cursor');
     expect(first).not.toBe(second);
     expect(first.claude).not.toBe(second.claude);
     expect(first.codex).not.toBe(second.codex);
     expect(first.grok).not.toBe(second.grok);
     expect(first.opencode).not.toBe(second.opencode);
     expect(first.pi).not.toBe(second.pi);
+    expect(first.cursor).not.toBe(second.cursor);
   });
 });

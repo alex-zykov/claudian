@@ -1,0 +1,6 @@
+{
+  "toolCallId": "call_image_1",
+  "description": "Minimal flat app icon for a note-taking app",
+  "filePath": "/tmp/icon.png",
+  "referenceImagePaths": ["/tmp/reference.png"]
+}
