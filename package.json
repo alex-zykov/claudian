@@ -1,7 +1,7 @@
 {
   "name": "claudian",
   "version": "2.3.16",
-  "description": "Claudian - Claude Code embedded in Obsidian sidebar",
+  "description": "Claudian Folders - fork of Claudian with folder-bound chat history files",
   "main": "main.js",
   "engines": {
     "node": ">=24 <25"

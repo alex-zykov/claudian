@@ -19,6 +19,24 @@ describe('Documentation', () => {
     expect(readme).toContain(`- Obsidian v${manifest.minAppVersion}+`);
   });
 
+  it('keeps the fork plugin identity distinct from upstream realclaudian', () => {
+    const manifest = JSON.parse(readFileSync(path.resolve('manifest.json'), 'utf8')) as {
+      id: string;
+      name: string;
+      version: string;
+    };
+    const packageJson = JSON.parse(readFileSync(path.resolve('package.json'), 'utf8')) as {
+      version: string;
+    };
+    const esbuildConfig = readFileSync(path.resolve('esbuild.config.mjs'), 'utf8');
+
+    expect(manifest.id).toBe('claudian-folders');
+    expect(manifest.name).toBe('Claudian Folders');
+    expect(manifest.version).toBe(packageJson.version);
+    expect(esbuildConfig).toContain("OBSIDIAN_PLUGIN_ID = 'claudian-folders'");
+    expect(esbuildConfig).not.toContain("plugins', 'claudian')");
+  });
+
   it('keeps every scoped Claude guide as an import of its adjacent agent guide', () => {
     for (const agentsPath of findFiles(path.resolve('.'), 'AGENTS.md')) {
       if (agentsPath.includes(`${path.sep}node_modules${path.sep}`)) continue;

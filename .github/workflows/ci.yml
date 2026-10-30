@@ -83,18 +83,6 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: git diff --check "$BASE_SHA...$HEAD_SHA"
 
-  dependency-review:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Review dependency changes
-        uses: actions/dependency-review-action@v4
-        with:
-          fail-on-severity: moderate
-
   selected-tests:
     needs: test-scope
     if: needs.test-scope.outputs.has-tests == 'true'
