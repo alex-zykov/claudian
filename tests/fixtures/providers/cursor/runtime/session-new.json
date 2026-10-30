@@ -1,0 +1,21 @@
+{
+  "_source": "docs-derived-placeholder; replace with sanitized live session/new when authenticated",
+  "sessionId": "ses_cursor_example_001",
+  "models": {
+    "currentModelId": "composer-1",
+    "availableModels": [
+      { "modelId": "composer-1", "name": "Composer 1" },
+      { "modelId": "gpt-5", "name": "GPT-5" },
+      { "modelId": "sonnet-4-thinking", "name": "Sonnet 4 Thinking" }
+    ]
+  },
+  "modes": {
+    "currentModeId": "agent",
+    "availableModes": [
+      { "id": "agent", "name": "Agent", "description": "Full tool access" },
+      { "id": "plan", "name": "Plan", "description": "Read-only planning" },
+      { "id": "ask", "name": "Ask", "description": "Read-only Q&A" }
+    ]
+  },
+  "configOptions": []
+}

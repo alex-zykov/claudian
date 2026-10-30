@@ -440,6 +440,12 @@
         "desc": "Grok Build에만 전달되는 환경 변수입니다. 사용자 지정 모델의 비밀 값은 이 제공자 범위에 남아 있으며 네이티브 구성에서 env_key로 참조됩니다."
       }
     },
+    "cursor": {
+      "environment": {
+        "name": "Cursor environment variables",
+        "desc": "Environment variables passed only to Cursor. Auth secrets such as CURSOR_API_KEY stay in this provider scope or the process environment; Claudian never stores a Cursor token in plugin settings."
+      }
+    },
     "skills": {
       "subTabs": {
         "claude": "Claude Code",

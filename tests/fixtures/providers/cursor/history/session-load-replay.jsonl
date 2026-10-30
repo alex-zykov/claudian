@@ -1,0 +1,4 @@
+{"_source":"docs-derived; loadSession replays prior turns as session/update notifications before returning"}
+{"jsonrpc":"2.0","method":"session/update","params":{"sessionId":"ses_cursor_example_001","update":{"sessionUpdate":"user_message_chunk","content":{"type":"text","text":"Say hello"}}}}
+{"jsonrpc":"2.0","method":"session/update","params":{"sessionId":"ses_cursor_example_001","update":{"sessionUpdate":"agent_message_chunk","content":{"type":"text","text":"Hello from Cursor."}}}}
+{"jsonrpc":"2.0","id":2,"result":{"sessionId":"ses_cursor_example_001","models":{"currentModelId":"composer-1","availableModels":[{"modelId":"composer-1","name":"Composer 1"}]},"modes":{"currentModeId":"agent","availableModes":[{"id":"agent","name":"Agent"}]}}}

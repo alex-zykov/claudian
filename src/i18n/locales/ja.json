@@ -440,6 +440,12 @@
         "desc": "Grok Build にのみ渡す環境変数。カスタムモデルのシークレットはこのプロバイダーのスコープ内に留まり、ネイティブ設定からは env_key で参照されます。"
       }
     },
+    "cursor": {
+      "environment": {
+        "name": "Cursor environment variables",
+        "desc": "Environment variables passed only to Cursor. Auth secrets such as CURSOR_API_KEY stay in this provider scope or the process environment; Claudian never stores a Cursor token in plugin settings."
+      }
+    },
     "skills": {
       "subTabs": {
         "claude": "Claude Code",

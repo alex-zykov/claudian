@@ -1,0 +1,9 @@
+{
+  "toolCallId": "call_todos_1",
+  "todos": [
+    { "id": "1", "content": "Set up project structure", "status": "completed" },
+    { "id": "2", "content": "Add authentication", "status": "in_progress" },
+    { "id": "3", "content": "Write unit tests", "status": "pending" }
+  ],
+  "merge": true
+}

@@ -1,0 +1,9 @@
+{
+  "session/fork": { "code": -32601, "message": "\"Method not found\": session/fork", "data": { "method": "session/fork" } },
+  "session/rewind": { "code": -32601, "message": "\"Method not found\": session/rewind", "data": { "method": "session/rewind" } },
+  "session/steer": { "code": -32601, "message": "\"Method not found\": session/steer", "data": { "method": "session/steer" } },
+  "session/set_model": { "note": "Exists; returns Session not found for unknown sessionId" },
+  "session/set_mode": { "note": "Exists; returns Session not found for unknown sessionId" },
+  "session/set_config_option": { "note": "Exists; returns Session not found for unknown sessionId" },
+  "session/cancel": { "note": "Request form returns Method not found; ACP clients send session/cancel as a notification" }
+}

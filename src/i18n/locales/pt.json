@@ -440,6 +440,12 @@
         "desc": "Variáveis de ambiente passadas somente ao Grok Build. Os segredos de modelos personalizados permanecem no escopo deste provedor e são referenciados na configuração nativa por env_key."
       }
     },
+    "cursor": {
+      "environment": {
+        "name": "Cursor environment variables",
+        "desc": "Environment variables passed only to Cursor. Auth secrets such as CURSOR_API_KEY stay in this provider scope or the process environment; Claudian never stores a Cursor token in plugin settings."
+      }
+    },
     "skills": {
       "subTabs": {
         "claude": "Claude Code",
