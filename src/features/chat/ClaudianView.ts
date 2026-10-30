@@ -582,9 +582,14 @@ export class ClaudianView extends ItemView implements ZenModeSource {
     })().catch(() => new Notice('Failed to create tab'));
   }
 
-  private requestNewConversation(): void {
-    void (async () => {
-      await this.tabManager?.createNewConversation();
+private requestNewConversation(): void {
+  // The controller ignores the request while a turn runs; say so instead of looking broken.
+  if (this.tabManager?.getActiveTab()?.session.hasActiveTurn) {
+    new Notice(t('chat.newConversationBusy'));
+    return;
+  }
+  void (async () => {
+    await this.tabManager?.createNewConversation();
       this.sessions.invalidate();
     })().catch(() => new Notice('Failed to create conversation'));
   }

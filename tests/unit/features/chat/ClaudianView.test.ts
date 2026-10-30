@@ -1,6 +1,6 @@
 import { createClaudianView } from '@test/helpers/features/chat/ClaudianViewHarness';
 import { createMockEl } from '@test/helpers/MockElement';
-import { Platform, Scope } from 'obsidian';
+import { Notice, Platform, Scope } from 'obsidian';
 
 import { ProviderSettingsCoordinator } from '@/core/providers/ProviderSettingsCoordinator';
 import { SessionBrowser } from '@/features/chat/session-manager/SessionBrowser';
@@ -364,6 +364,19 @@ describe('ClaudianView tab controls', () => {
     });
   });
 
+  it('says why New conversation does nothing while an answer is running', async () => {
+    const manager = createFakeTabManager();
+    const { contentEl } = await openView({ manager });
+    // The turn starts after the view is up, so the rest of the view never sees this partial tab.
+    manager.getActiveTab.mockReturnValue({ session: { hasActiveTurn: true } });
+    (Notice as unknown as jest.Mock).mockClear();
+
+    contentEl.querySelector('.claudian-new-conversation-btn')!.click();
+    await Promise.resolve();
+
+    expect(manager.createNewConversation).not.toHaveBeenCalled();
+    expect(Notice).toHaveBeenCalledWith('Stop the running answer or wait for it to finish before starting a new conversation.');
+  });
 
   it('keeps tab controls in the view-owned input row', async () => {
     const captureScrollPosition = jest.spyOn(TabBar.prototype, 'captureScrollPosition');

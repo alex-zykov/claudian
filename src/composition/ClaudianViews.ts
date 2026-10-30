@@ -149,6 +149,18 @@ export class ClaudianViews {
     return true;
   }
 
+  /**
+   * Opens a fresh chat in a new leaf where the default placement says, even when a chat view
+   * already exists. Unlike `activateView`, which only shows the first existing one.
+   */
+  async openNewTab(): Promise<void> {
+    const { workspace } = this;
+    const leaf = this.#getLeafForPlacement(this.getPlacement());
+    if (!leaf) return;
+    await leaf.setViewState({ type: VIEW_TYPE_CLAUDIAN, active: true });
+    await revealWorkspaceLeaf(workspace, leaf);
+    if (isClaudianView(leaf.view)) leaf.view.focusActiveInput();
+  }
 
   /**
    * Moves a chat view to a sidebar or a tab of the main area, the way dragging its tab does:

@@ -97,7 +97,8 @@
       "moveRefused": "Warte, bis die Antwort fertig ist, bevor du den Chat verschiebst.",
       "editNote": "Notiz bearbeiten",
       "editNoteRefused": "Dieser Chat hat noch keine Datei."
-    }
+    },
+    "newConversationBusy": "Stoppe die laufende Antwort oder warte, bis sie fertig ist, bevor du ein neues Gespräch startest."
   },
   "settings": {
     "tabs": {
@@ -252,8 +253,8 @@
       "desc": "Write- und Edit-Diffs beim ersten Erscheinen ausgeklappt anzeigen."
     },
     "chatViewPlacement": {
-      "name": "Claudian öffnen in",
-      "desc": "Wählen Sie, wo das Chat-Panel beim Erstellen geöffnet wird",
+      "name": "Standardmäßig öffnen in",
+      "desc": "Wo ein neuer Claudian-Chat geöffnet wird. Du kannst ihn danach überallhin verschieben.",
       "rightSidebar": "Rechte Seitenleiste",
       "leftSidebar": "Linke Seitenleiste",
       "mainTab": "Haupteditor-Tab"

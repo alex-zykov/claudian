@@ -112,8 +112,8 @@ export default class ClaudianPlugin extends Plugin {
       this.vaultContentEvents.register(eventRef => this.registerEvent(eventRef));
       this.chatHistoryFiles.register(eventRef => this.registerEvent(eventRef));
 
-      this.addRibbonIcon('bot', 'Open Claudian', () => {
-        void this.views.activateView();
+      this.addRibbonIcon('bot', 'New Claudian tab', () => {
+        void this.views.openNewTab();
       });
 
       this.addCommand({
@@ -130,7 +130,11 @@ export default class ClaudianPlugin extends Plugin {
         sessions: this.inlineEditSessions,
       }));
 
-      for (const command of createChatTabCommands({ workspace: this.app.workspace, views: this.views })) {
+      for (const command of createChatTabCommands({
+        workspace: this.app.workspace,
+        views: this.views,
+        openNewTab: () => this.views.openNewTab(),
+      })) {
         this.addCommand(command);
       }
       this.addCommand(createChatFocusCommand(

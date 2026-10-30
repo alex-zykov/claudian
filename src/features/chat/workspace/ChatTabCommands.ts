@@ -1,36 +1,19 @@
 import type { Command, Workspace } from 'obsidian';
 
-import { VIEW_TYPE_CLAUDIAN } from '@/core/types';
 import type { ChatViewHost } from '@/features/chat/ChatFeatureHost';
 
 export interface ChatTabCommandsDeps {
   readonly workspace: Pick<Workspace, 'getLeavesOfType'>;
   readonly views: {
     getView(): ChatViewHost | null;
-    activateView(): Promise<void>;
   };
+  /** Opens a fresh chat in a new leaf where the default placement says. */
+  openNewTab(): Promise<void>;
 }
 
 /** Palette commands that act on the focused chat view's tabs. */
 export function createChatTabCommands(deps: ChatTabCommandsDeps): Command[] {
   const { views } = deps;
-
-  const canCreateNewTab = (): boolean => {
-    if (views.getView()?.getTabManager()) return true;
-    // A mounted leaf whose view has not initialized its tabs cannot take the command yet.
-    return deps.workspace.getLeavesOfType(VIEW_TYPE_CLAUDIAN).length === 0;
-  };
-
-  const openNewTab = async (): Promise<void> => {
-    const existingView = views.getView();
-    if (existingView) {
-      if (await existingView.handleNewConversationCommand()) return;
-      await existingView.createNewTab();
-      return;
-    }
-    await views.activateView();
-    views.getView()?.focusActiveInput();
-  };
 
   /** The focused view's tab manager, unless dual-pane navigation owns the tab commands. */
   const getCompactTabManager = () => {
@@ -42,11 +25,10 @@ export function createChatTabCommands(deps: ChatTabCommandsDeps): Command[] {
   return [
     {
       id: 'new-tab',
-      name: 'New',
-      checkCallback: (checking: boolean) => {
-        if (!canCreateNewTab()) return false;
-        if (!checking) void openNewTab();
-        return true;
+      // A new chat of its own, not one more tab inside whichever chat was used last.
+      name: 'New Claudian tab',
+      callback: () => {
+        void deps.openNewTab();
       },
     },
     {

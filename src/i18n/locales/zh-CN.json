@@ -97,7 +97,8 @@
       "moveRefused": "请等回复结束后再移动聊天。",
       "editNote": "编辑笔记",
       "editNoteRefused": "此聊天还没有文件。"
-    }
+    },
+    "newConversationBusy": "开始新对话前，请先停止正在进行的回复或等待其结束。"
   },
   "settings": {
     "tabs": {
@@ -252,8 +253,8 @@
       "desc": "Write 和 Edit diff 首次出现时以展开状态显示。"
     },
     "chatViewPlacement": {
-      "name": "Claudian 打开位置",
-      "desc": "选择新建聊天面板时的打开位置",
+      "name": "默认打开位置",
+      "desc": "新的 Claudian 聊天在哪里打开。之后可以将其移动到任何位置。",
       "rightSidebar": "右侧边栏",
       "leftSidebar": "左侧边栏",
       "mainTab": "主编辑器标签页"

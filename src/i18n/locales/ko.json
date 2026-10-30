@@ -97,7 +97,8 @@
       "moveRefused": "답변이 끝난 뒤에 채팅을 이동하세요.",
       "editNote": "노트 편집",
       "editNoteRefused": "이 채팅에는 아직 파일이 없습니다."
-    }
+    },
+    "newConversationBusy": "새 대화를 시작하기 전에 진행 중인 답변을 중지하거나 끝날 때까지 기다리세요."
   },
   "settings": {
     "tabs": {
@@ -252,8 +253,8 @@
       "desc": "Write 및 Edit diff가 처음 표시될 때 펼친 상태로 보여줍니다."
     },
     "chatViewPlacement": {
-      "name": "Claudian 열 위치",
-      "desc": "채팅 패널이 생성될 때 열릴 위치를 선택합니다",
+      "name": "기본으로 열 위치",
+      "desc": "새 Claudian 채팅을 여는 위치입니다. 이후 어디로든 옮길 수 있습니다.",
       "rightSidebar": "오른쪽 사이드바",
       "leftSidebar": "왼쪽 사이드바",
       "mainTab": "메인 편집기 탭"

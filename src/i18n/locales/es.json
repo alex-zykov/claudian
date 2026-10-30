@@ -97,7 +97,8 @@
       "moveRefused": "Espera a que termine la respuesta antes de mover el chat.",
       "editNote": "Editar nota",
       "editNoteRefused": "Este chat aún no tiene archivo."
-    }
+    },
+    "newConversationBusy": "Detén la respuesta en curso o espera a que termine antes de iniciar una conversación nueva."
   },
   "settings": {
     "tabs": {
@@ -252,8 +253,8 @@
       "desc": "Mostrar los diffs de Write y Edit expandidos cuando aparecen por primera vez."
     },
     "chatViewPlacement": {
-      "name": "Abrir Claudian en",
-      "desc": "Elige dónde se abre el panel de chat cuando se crea",
+      "name": "Abrir por defecto en",
+      "desc": "Dónde se abre un chat nuevo de Claudian. Después puedes moverlo a cualquier lugar.",
       "rightSidebar": "Barra lateral derecha",
       "leftSidebar": "Barra lateral izquierda",
       "mainTab": "Pestaña del editor principal"

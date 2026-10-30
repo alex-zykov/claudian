@@ -2628,20 +2628,24 @@ describe('ClaudianPlugin', () => {
   });
 
   describe('ribbon icon callback', () => {
-    it('reveals existing view when ribbon icon is clicked', async () => {
+    it('opens a new chat tab where the default placement says, leaving an existing view alone', async () => {
       await plugin.onload();
-      const mockLeaf = { id: 'existing' };
-      mockApp.workspace.getLeavesOfType.mockReturnValue([mockLeaf]);
+      const existing = { id: 'existing' };
+      const created = { id: 'created', setViewState: jest.fn(async () => undefined), view: {} };
+      mockApp.workspace.getLeavesOfType.mockReturnValue([existing]);
+      mockApp.workspace.getRightLeaf = jest.fn(() => created);
 
       expect(plugin.addRibbonIcon).toHaveBeenCalledWith(
         'bot',
-        'Open Claudian',
+        'New Claudian tab',
         expect.any(Function),
       );
       const ribbonCallback = (plugin.addRibbonIcon as jest.Mock).mock.calls[0][2];
       await ribbonCallback();
 
-      expect(mockApp.workspace.revealLeaf).toHaveBeenCalledWith(mockLeaf);
+      expect(created.setViewState).toHaveBeenCalledWith({ type: 'claudian-view', active: true });
+      expect(mockApp.workspace.revealLeaf).toHaveBeenCalledWith(created);
+      expect(mockApp.workspace.revealLeaf).not.toHaveBeenCalledWith(existing);
     });
   });
 
@@ -2704,24 +2708,27 @@ describe('ClaudianPlugin', () => {
       expect(chatHostOf(plugin).getView()).toBe(first.view);
     });
 
-    it('delegates New to the active dual-pane navigation policy', async () => {
+    it('opens a new Claudian tab where the default placement says instead of a tab inside the last chat', async () => {
       await plugin.onload();
-
-      const handleNewConversationCommand = jest.fn().mockResolvedValue(true);
+      const created = { setViewState: jest.fn(async () => undefined), view: {} };
+      mockApp.workspace.getRightLeaf = jest.fn(() => created);
       const createNewTab = jest.fn().mockResolvedValue(undefined);
-      jest.spyOn(viewsOf(plugin), 'getView').mockReturnValue({
-        createNewTab,
-        getTabManager: jest.fn().mockReturnValue({}),
-        handleNewConversationCommand,
-      } as any);
+      jest.spyOn(viewsOf(plugin), 'getView').mockReturnValue({ createNewTab } as any);
 
       const command = getRegisteredCommand('new-tab');
-      expect(command.name).toBe('New');
-      expect(command.checkCallback(false)).toBe(true);
-      await new Promise<void>((resolve) => setImmediate(resolve));
+      expect(command.name).toBe('New Claudian tab');
+      await command.callback();
 
-      expect(handleNewConversationCommand).toHaveBeenCalledTimes(1);
+      expect(created.setViewState).toHaveBeenCalledWith({ type: 'claudian-view', active: true });
+      expect(mockApp.workspace.revealLeaf).toHaveBeenCalledWith(created);
       expect(createNewTab).not.toHaveBeenCalled();
+    });
+
+    it('is available even when no chat view is loaded or the chat leaf is still deferred', async () => {
+      await plugin.onload();
+      mockApp.workspace.getLeavesOfType.mockReturnValue([{ view: {} }]);
+
+      expect(getRegisteredCommand('new-tab').callback).toEqual(expect.any(Function));
     });
 
     it('keeps replace and close tab commands out of dual mode', async () => {
@@ -2741,123 +2748,17 @@ describe('ClaudianPlugin', () => {
       expect(closeCommand.checkCallback(true)).toBe(false);
     });
 
-    it('opens the view without creating a duplicate tab when no tab layout is persisted', async () => {
-      await plugin.onload();
-
-      const createNewTab = jest.fn().mockResolvedValue(undefined);
-      const focusActiveInput = jest.fn();
-      const mockView = {
-        createNewTab,
-        focusActiveInput,
-      };
-
-      let viewOpened = false;
-      jest.spyOn(viewsOf(plugin), 'activateView').mockImplementation(async () => {
-        viewOpened = true;
-      });
-      jest.spyOn(viewsOf(plugin), 'getView').mockImplementation(() => (
-        viewOpened ? mockView as any : null
-      ));
-
-      const command = getRegisteredCommand('new-tab');
-
-      expect(command.checkCallback(true)).toBe(true);
-      expect(command.checkCallback(false)).toBe(true);
-
-      await new Promise<void>((resolve) => setImmediate(resolve));
-
-      expect(viewsOf(plugin).activateView).toHaveBeenCalledTimes(1);
-      expect(createNewTab).not.toHaveBeenCalled();
-      expect(focusActiveInput).toHaveBeenCalledTimes(1);
-    });
-
-    it('starts from the fresh runtime tab after reopening a persisted layout', async () => {
-      (plugin.loadData as jest.Mock).mockResolvedValue({
-        tabManagerState: {
-          openTabs: [
-            { tabId: 'tab-1', conversationId: null },
-          ],
-          activeTabId: 'tab-1',
-        },
-      });
-
-      await plugin.onload();
-
-      const createNewTab = jest.fn().mockResolvedValue(undefined);
-      const focusActiveInput = jest.fn();
-      const mockView = {
-        createNewTab,
-        focusActiveInput,
-      };
-
-      let viewOpened = false;
-      jest.spyOn(viewsOf(plugin), 'activateView').mockImplementation(async () => {
-        viewOpened = true;
-      });
-      jest.spyOn(viewsOf(plugin), 'getView').mockImplementation(() => (
-        viewOpened ? mockView as any : null
-      ));
-
-      const command = getRegisteredCommand('new-tab');
-
-      expect(command.checkCallback(true)).toBe(true);
-      expect(command.checkCallback(false)).toBe(true);
-
-      await new Promise<void>((resolve) => setImmediate(resolve));
-
-      expect(viewsOf(plugin).activateView).toHaveBeenCalledTimes(1);
-      expect(createNewTab).not.toHaveBeenCalled();
-      expect(focusActiveInput).toHaveBeenCalledTimes(1);
-    });
-
-    it('stays available regardless of the former tab limit', async () => {
-      await plugin.onload();
-
-      const mockView = {
-        getTabManager: jest.fn().mockReturnValue({
-          canCreateTab: jest.fn().mockReturnValue(false),
-        }),
-      };
-
-      jest.spyOn(viewsOf(plugin), 'getView').mockReturnValue(mockView as any);
-
-      const command = getRegisteredCommand('new-tab');
-
-      expect(command.checkCallback(true)).toBe(true);
-    });
-
-    it('keeps tab commands unavailable while a Claudian leaf view is not initialized', async () => {
+    it('keeps the tab commands that act on a chat unavailable while a Claudian leaf view is not initialized', async () => {
       await plugin.onload();
 
       mockApp.workspace.getLeavesOfType.mockReturnValue([{ view: {} }]);
 
-      for (const commandId of ['new-tab', 'new-session', 'close-current-tab']) {
+      for (const commandId of ['new-session', 'close-current-tab']) {
         const command = getRegisteredCommand(commandId);
 
         expect(() => command.checkCallback(true)).not.toThrow();
         expect(command.checkCallback(true)).toBe(false);
       }
-    });
-
-    it('ignores the persisted runtime layout when checking new-tab availability', async () => {
-      (plugin.loadData as jest.Mock).mockResolvedValue({
-        tabManagerState: {
-          openTabs: [
-            { tabId: 'tab-1', conversationId: null },
-            { tabId: 'tab-2', conversationId: null },
-            { tabId: 'tab-3', conversationId: null },
-          ],
-          activeTabId: 'tab-3',
-        },
-      });
-
-      await plugin.onload();
-
-      jest.spyOn(viewsOf(plugin), 'getView').mockReturnValue(null);
-
-      const command = getRegisteredCommand('new-tab');
-
-      expect(command.checkCallback(true)).toBe(true);
     });
   });
 

@@ -97,7 +97,8 @@
       "moveRefused": "Attendez la fin de la réponse avant de déplacer le chat.",
       "editNote": "Modifier la note",
       "editNoteRefused": "Ce chat n'a pas encore de fichier."
-    }
+    },
+    "newConversationBusy": "Arrêtez la réponse en cours ou attendez qu'elle se termine avant de commencer une nouvelle conversation."
   },
   "settings": {
     "tabs": {
@@ -252,8 +253,8 @@
       "desc": "Afficher les diffs Write et Edit développés lors de leur première apparition."
     },
     "chatViewPlacement": {
-      "name": "Ouvrir Claudian dans",
-      "desc": "Choisissez où le panneau de chat s'ouvre lors de sa création",
+      "name": "Ouvrir par défaut dans",
+      "desc": "Où s'ouvre un nouveau chat Claudian. Vous pourrez ensuite le déplacer où vous voulez.",
       "rightSidebar": "Barre latérale droite",
       "leftSidebar": "Barre latérale gauche",
       "mainTab": "Onglet principal de l'éditeur"

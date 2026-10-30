@@ -97,7 +97,8 @@
       "moveRefused": "Wait for the answer to finish before moving the chat.",
       "editNote": "Edit note",
       "editNoteRefused": "This chat has no file yet."
-    }
+    },
+    "newConversationBusy": "Stop the running answer or wait for it to finish before starting a new conversation."
   },
   "settings": {
     "tabs": {
@@ -252,8 +253,8 @@
       "desc": "Show Write and Edit diffs expanded when they first appear."
     },
     "chatViewPlacement": {
-      "name": "Open Claudian in",
-      "desc": "Choose where the chat panel opens when it is created",
+      "name": "Open by default in",
+      "desc": "Where a new Claudian chat opens. You can move a chat anywhere afterwards.",
       "rightSidebar": "Right sidebar",
       "leftSidebar": "Left sidebar",
       "mainTab": "Main editor tab"
