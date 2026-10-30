@@ -33,6 +33,7 @@ describe('Documentation', () => {
     expect(manifest.id).toBe('claudian-folders');
     expect(manifest.name).toBe('Claudian Folders');
     expect(manifest.version).toBe(packageJson.version);
+    expect(packageJson.version).toMatch(/-fork\./);
     expect(esbuildConfig).toContain("OBSIDIAN_PLUGIN_ID = 'claudian-folders'");
     expect(esbuildConfig).not.toContain("plugins', 'claudian')");
   });

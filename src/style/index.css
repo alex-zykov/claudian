@@ -1,4 +1,3 @@
-@import "./settings/chat-file-fields.css";
 /* CSS module order. scripts/build-css.mjs reads these @import lines. */
 
 /* Add new modules here to include them in the build. */
@@ -52,6 +51,7 @@
 /* Settings */
 @import url("./settings/base.css");
 @import url("./settings/cli-installation.css");
+@import url("./settings/chat-file-fields.css");
 @import url("./settings/env-snippets.css");
 @import url("./settings/slash-settings.css");
 @import url("./settings/agent-skills.css");
