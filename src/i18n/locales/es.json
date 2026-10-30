@@ -89,6 +89,11 @@
       "toolCompleted": "{tool} · completado",
       "toolFailed": "{tool} · falló",
       "toolBlocked": "{tool} · bloqueado"
+    },
+    "header": {
+      "moveToLeftPanel": "Mover al panel izquierdo",
+      "moveToRightPanel": "Mover al panel derecho",
+      "moveRefused": "Espera a que termine la respuesta antes de mover el chat."
     }
   },
   "settings": {

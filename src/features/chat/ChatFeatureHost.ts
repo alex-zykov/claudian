@@ -1,6 +1,7 @@
 import type { AppTabManagerState } from '@/core/bootstrap/tabManagerState';
 import type { ProviderId } from '@/core/providers/types';
 import type { Conversation, ConversationMeta, ConversationMutablePatch, ConversationSummary, StoredChatModelSelection } from '@/core/types';
+import type { ComposerDraft } from '@/features/chat/composer/ComposerDraftController';
 import type { ConversationLifecycle } from '@/features/chat/conversation/ConversationLifecycle';
 import type { ChatExecutionPersistence } from '@/features/chat/execution/ChatExecutionCoordinator';
 import type { ChatTab, TabId, TabManagerViewHost, TabProviderCatalogContext } from '@/features/chat/tabs/ChatTab';
@@ -53,6 +54,20 @@ export interface ChatTabManagerHost {
   invalidateProviderResources(providerIds: ProviderId | ProviderId[], generation: number): void;
 }
 
+/** Where a chat view can be moved. */
+export type ChatViewDestination = 'left' | 'right' | 'main';
+
+/** The state of a chat view that its saved view state does not carry: unsent input and reading position. */
+export interface ChatViewHandoffTab {
+  readonly draft: ComposerDraft;
+  readonly scroll: { readonly top: number; readonly follow: boolean };
+}
+
+export interface ChatViewHandoff {
+  readonly activeTabId: string | null;
+  readonly tabs: ReadonlyMap<string, ChatViewHandoffTab>;
+}
+
 export interface ChatViewHost extends ChatViewRefreshHost, TabManagerViewHost {
   getActiveTab(): ChatTab | null;
   getTabManager(): ChatTabManagerHost | null;
@@ -62,7 +77,6 @@ export interface ChatViewHost extends ChatViewRefreshHost, TabManagerViewHost {
   createNewTab(): Promise<unknown>;
   focusActiveInput(): void;
 }
-
 
 /** Projects capable conversations into vault `.chat.md` history files. */
 export interface ChatHistoryFilePort {
@@ -132,4 +146,6 @@ export interface ChatFeatureHost extends FeatureHost {
   findConversationAcrossViews(
     conversationId: string,
   ): { view: ChatViewHost; tabId: TabId } | null;
+  /** Reopens a chat view's tabs in a sidebar or a main-area tab and closes it; false when refused. */
+  moveView(view: ChatViewHost, destination: ChatViewDestination): Promise<boolean>;
 }

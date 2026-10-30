@@ -89,6 +89,11 @@
       "toolCompleted": "{tool} · готово",
       "toolFailed": "{tool} · ошибка",
       "toolBlocked": "{tool} · заблокировано"
+    },
+    "header": {
+      "moveToLeftPanel": "Перенести в левую панель",
+      "moveToRightPanel": "Перенести в правую панель",
+      "moveRefused": "Дождитесь окончания ответа, прежде чем переносить чат."
     }
   },
   "settings": {

@@ -218,6 +218,9 @@ export interface TabManagerCallbacks {
   /** Called when foreground, continuation, provider-background, or async-subagent work changes. */
   onTabWorkChanged?: (tabId: TabId) => void;
 
+  /** Called when a tab's linked content changes (its project folder may have changed). */
+  onTabLinkedContentChanged?: (tabId: TabId) => void;
+
   /** Called when tab rewind transaction state changes. */
   onTabRewindingChanged?: (tabId: TabId, isRewinding: boolean) => void;
 

@@ -89,6 +89,11 @@
       "toolCompleted": "{tool} · 완료",
       "toolFailed": "{tool} · 실패",
       "toolBlocked": "{tool} · 차단됨"
+    },
+    "header": {
+      "moveToLeftPanel": "왼쪽 패널로 이동",
+      "moveToRightPanel": "오른쪽 패널로 이동",
+      "moveRefused": "답변이 끝난 뒤에 채팅을 이동하세요."
     }
   },
   "settings": {

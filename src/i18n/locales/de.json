@@ -89,6 +89,11 @@
       "toolCompleted": "{tool} · fertig",
       "toolFailed": "{tool} · fehlgeschlagen",
       "toolBlocked": "{tool} · blockiert"
+    },
+    "header": {
+      "moveToLeftPanel": "In linkes Seitenfenster verschieben",
+      "moveToRightPanel": "In rechtes Seitenfenster verschieben",
+      "moveRefused": "Warte, bis die Antwort fertig ist, bevor du den Chat verschiebst."
     }
   },
   "settings": {

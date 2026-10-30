@@ -7,6 +7,7 @@ import {
 } from '@/core/bootstrap/tabManagerState';
 import { VIEW_TYPE_CLAUDIAN } from '@/core/types';
 import type { ChatViewPlacement } from '@/core/types/settings';
+import type { ChatViewDestination } from '@/features/chat/ChatFeatureHost';
 import type { ClaudianView } from '@/features/chat/ClaudianView';
 import { revealWorkspaceLeaf } from '@/utils/obsidianCompat';
 
@@ -112,7 +113,6 @@ export class ClaudianViews {
     }
   }
 
-
   /**
    * Opens a conversation in a new leaf where the default placement says. The new view starts
    * with one blank tab, which the conversation takes over. Throws when the view is not ready.
@@ -149,6 +149,47 @@ export class ClaudianViews {
     return true;
   }
 
+
+  /**
+   * Moves a chat view to a sidebar or a tab of the main area, the way dragging its tab does:
+   * the live view is taken out of its tab group and put into the destination's, so a streaming
+   * answer, the unsent input and the scroll position all stay. Obsidian offers no API for this,
+   * so it relies on the same internals its own drag and drop uses; when they are missing, the
+   * tabs are reopened from the saved view state instead and the old tab is closed. That path
+   * is refused (false) while an answer is streaming, because closing the view would cut it off.
+   * False as well when the destination has no leaf to give.
+   */
+  async moveView(view: ClaudianView, destination: ChatViewDestination): Promise<boolean> {
+    const { workspace } = this;
+    const inPlace = canMoveInPlace(view.leaf);
+    if (!inPlace && isStreaming(view)) return false;
+    const target = destination === 'left'
+      ? workspace.getLeftLeaf(false)
+      : destination === 'right'
+        ? workspace.getRightLeaf(false)
+        : workspace.getLeaf('tab');
+    if (!target) return false;
+
+    if (inPlace && moveLeafInPlace(view.leaf, target)) {
+      workspace.requestSaveLayout();
+      await revealWorkspaceLeaf(workspace, view.leaf);
+      // The move is not a layout event the view hears about, and what it shows depends on where it sits.
+      view.refreshPlacement();
+      return true;
+    }
+
+    if (isStreaming(view)) {
+      target.detach();
+      return false;
+    }
+    // Fallback: reopen from the saved view state (unsent input and reading position are lost).
+    const { state } = view.leaf.getViewState();
+    view.leaf.detach();
+    await target.setViewState({ type: VIEW_TYPE_CLAUDIAN, state, active: true });
+    await revealWorkspaceLeaf(workspace, target);
+    return true;
+  }
+
   #getLeafForPlacement(placement: ChatViewPlacement): WorkspaceLeaf | null {
     const { workspace } = this;
     switch (placement) {
@@ -160,4 +201,54 @@ export class ClaudianViews {
         return workspace.getRightLeaf(false);
     }
   }
+}
+
+function isStreaming(view: ClaudianView): boolean {
+  return (view.getTabManager()?.getAllTabs() ?? []).some(tab => tab.state.isStreaming);
+}
+
+/** The tab group of a leaf, as Obsidian's own drag and drop sees it (undocumented). */
+interface TabGroupLike {
+  readonly children: unknown[];
+  removeChild(child: unknown): void;
+  insertChild(index: number, child: unknown): void;
+  selectTabIndex?(index: number): void;
+}
+
+interface MovableLeaf {
+  readonly parent?: unknown;
+  setDimension?(dimension: null): void;
+}
+
+function asTabGroup(value: unknown): TabGroupLike | null {
+  const group = value as Partial<TabGroupLike> | null | undefined;
+  return group
+    && Array.isArray(group.children)
+    && typeof group.removeChild === 'function'
+    && typeof group.insertChild === 'function'
+    ? group as TabGroupLike
+    : null;
+}
+
+function canMoveInPlace(leaf: WorkspaceLeaf): boolean {
+  const movable = leaf as unknown as MovableLeaf;
+  return asTabGroup(movable.parent) !== null && typeof movable.setDimension === 'function';
+}
+
+/**
+ * Takes `leaf` out of its tab group and puts it where the empty `placeholder` leaf is, then drops
+ * the placeholder. Mirrors what dropping a dragged tab does; false, without touching anything,
+ * when the destination is not a tab group.
+ */
+function moveLeafInPlace(leaf: WorkspaceLeaf, placeholder: WorkspaceLeaf): boolean {
+  const from = asTabGroup((leaf as unknown as MovableLeaf).parent);
+  const to = asTabGroup((placeholder as unknown as MovableLeaf).parent);
+  if (!from || !to) return false;
+
+  from.removeChild(leaf);
+  (leaf as unknown as Required<MovableLeaf>).setDimension(null);
+  to.insertChild(to.children.indexOf(placeholder), leaf);
+  placeholder.detach();
+  to.selectTabIndex?.(to.children.indexOf(leaf));
+  return true;
 }

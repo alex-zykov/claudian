@@ -233,6 +233,10 @@ export class TabManager implements TabManagerInterface {
           if (!this.#isTabStateMutable(runtime)) return;
           this.callbacks.onTabWorkChanged?.(runtime.id);
         },
+        onLinkedContentChanged: runtime => {
+          if (!this.#isTabStateMutable(runtime)) return;
+          this.callbacks.onTabLinkedContentChanged?.(runtime.id);
+        },
         onRewindingChanged: (runtime, isRewinding) => {
           if (!this.#isTabStateMutable(runtime)) return;
           this.callbacks.onTabRewindingChanged?.(runtime.id, isRewinding);

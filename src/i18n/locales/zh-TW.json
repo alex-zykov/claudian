@@ -89,6 +89,11 @@
       "toolCompleted": "{tool} · 已完成",
       "toolFailed": "{tool} · 失敗",
       "toolBlocked": "{tool} · 已封鎖"
+    },
+    "header": {
+      "moveToLeftPanel": "移到左側面板",
+      "moveToRightPanel": "移到右側面板",
+      "moveRefused": "請等回覆結束後再移動聊天。"
     }
   },
   "settings": {

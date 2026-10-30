@@ -66,6 +66,11 @@ function buildContextManagers(
     getExcludedTags: () => plugin.settings.excludedTags,
     getCachedVaultFiles: () => fileContextManager.getCachedVaultFiles(),
     getCachedVaultFolders: () => fileContextManager.getCachedVaultFolders(),
+    onChanged: () => {
+      // Changes made while the tab is still being assembled have no published runtime to report.
+      const tab = runtimeRef.current();
+      if (tab) options.onLinkedContentChanged?.(tab);
+    },
   });
   options.registerCleanup(
     'tab Linked content controller',
