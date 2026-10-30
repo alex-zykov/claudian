@@ -1,4 +1,5 @@
 import { createConversationPorts, createTestTabSession, holdResponse } from '@test/helpers/ConversationPorts';
+import { NOOP_CHAT_HISTORY_FILES } from '@test/helpers/features/chat/noopChatHistoryFiles';
 import { createMockEl } from '@test/helpers/MockElement';
 
 import type { ProviderExecutionEvent } from '@/core/execution';
@@ -105,6 +106,7 @@ export function createFixture(overrides: Record<string, unknown> = {}) {
     steer: jest.fn().mockResolvedValue({ delivery: 'accepted' }),
   };
   const plugin = {
+    chatHistoryFiles: NOOP_CHAT_HISTORY_FILES,
     getSessionSnapshotDirectory: () => '/tmp/claudian-sessions',
     createConversation: jest.fn(),
     getConversationById: jest.fn().mockResolvedValue(null),

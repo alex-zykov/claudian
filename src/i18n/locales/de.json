@@ -523,6 +523,10 @@
         "summary": "Verschoben {moved}, umgewandelt {converted}, im Papierkorb {trashed}, {unlinked} Link(s) entfernt."
       }
     },
+    "writeHistoryFile": {
+      "name": "Write history file into linked folder",
+      "desc": "After each turn, create or update a generated .chat.md file in the conversation's linked folder. Turning this on backfills existing chats."
+    },
     "writeHistoryFileText": {
       "name": "Gesprächstext in die Chat-Datei schreiben",
       "desc": "Der Text der Chat-Datei enthält das Transkript aus Anfragen und Antworten, sodass andere Chats und Apps ohne Claudian es lesen und durchsuchen können. Ist die Option aus, wird nur das Frontmatter geschrieben; ein vorhandener Text bleibt unverändert."

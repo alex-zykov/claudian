@@ -1,3 +1,4 @@
+import { NOOP_CHAT_HISTORY_FILES } from '@test/helpers/features/chat/noopChatHistoryFiles';
 import { createMockEl } from '@test/helpers/MockElement';
 import { ItemView, Scope } from 'obsidian';
 
@@ -46,11 +47,12 @@ export function createClaudianView(options: ClaudianViewHarnessOptions = {}): an
     getConversationSummary: () => null,
     findConversationAcrossViews: () => null,
     registerZenModeSource: jest.fn(() => jest.fn()),
+    chatHistoryFiles: NOOP_CHAT_HISTORY_FILES,
     settings: {},
     ...options.plugin,
   };
   const view = new ClaudianView(
-    (options.leaf ?? {}) as never,
+    (options.leaf ?? { getRoot: () => ({}) }) as never,
     plugin as unknown as ChatFeatureHost,
   ) as any;
   Object.assign(view, {

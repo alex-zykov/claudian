@@ -523,6 +523,10 @@
         "summary": "已移动 {moved},已转换 {converted},已移到回收站 {trashed},已移除 {unlinked} 个链接。"
       }
     },
+    "writeHistoryFile": {
+      "name": "Write history file into linked folder",
+      "desc": "After each turn, create or update a generated .chat.md file in the conversation's linked folder. Turning this on backfills existing chats."
+    },
     "writeHistoryFileText": {
       "name": "将对话文本写入聊天文件",
       "desc": "聊天文件正文包含请求与回复的记录，其他聊天和没有 Claudian 的应用都可以读取和搜索。关闭后只写入 frontmatter，已有正文保持不变。"

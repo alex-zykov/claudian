@@ -1,6 +1,7 @@
 /** @jest-environment jsdom */
 import '@/providers';
 
+import { NOOP_CHAT_HISTORY_FILES } from '@test/helpers/features/chat/noopChatHistoryFiles';
 import { createHarness, releaseSideChatHarnesses, startSideChat } from '@test/helpers/features/chat/SideChatDOMHarness';
 import { fireEvent, waitFor, within } from '@testing-library/dom';
 import { App, Component } from 'obsidian';
@@ -50,6 +51,7 @@ it('refreshes destination settings when the side panel collapses, expands, and i
     getConversationSummary(id: string) { return (this as unknown as { getConversationSync: (id: string) => any }).getConversationSync(id); },
     getConversationSync: () => conversation,
     getConversationList: () => [conversation],
+    chatHistoryFiles: NOOP_CHAT_HISTORY_FILES,
   } as unknown as ChatFeatureHost;
   const tab = await createTabRuntime({
     plugin,

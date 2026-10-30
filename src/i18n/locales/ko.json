@@ -523,6 +523,10 @@
         "summary": "이동 {moved}, 변환 {converted}, 휴지통 {trashed}, 링크 제거 {unlinked}."
       }
     },
+    "writeHistoryFile": {
+      "name": "Write history file into linked folder",
+      "desc": "After each turn, create or update a generated .chat.md file in the conversation's linked folder. Turning this on backfills existing chats."
+    },
     "writeHistoryFileText": {
       "name": "대화 텍스트를 채팅 파일에 쓰기",
       "desc": "채팅 파일 본문에 요청과 응답의 기록을 씁니다. 다른 채팅이나 Claudian이 없는 앱에서도 읽고 검색할 수 있습니다. 끄면 프런트매터만 쓰고 기존 본문은 바꾸지 않습니다."

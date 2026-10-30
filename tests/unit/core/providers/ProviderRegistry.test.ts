@@ -26,6 +26,14 @@ describe('ProviderRegistry', () => {
     jest.restoreAllMocks();
   });
 
+  it('offers chat history files only for providers whose history can follow the vault', () => {
+    const providers: ProviderId[] = ['claude', 'codex', 'opencode', 'pi', 'grok'];
+    const supported = providers.filter(providerId => (
+      ProviderRegistry.getCapabilities(providerId).supportsChatHistoryFile === true
+    ));
+    expect(supported).toEqual(['claude']);
+  });
+
   it('returns capabilities for the default provider', () => {
     const caps = ProviderRegistry.getCapabilities();
     expect(caps.providerId).toBe('claude');

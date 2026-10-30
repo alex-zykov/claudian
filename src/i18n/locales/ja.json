@@ -523,6 +523,10 @@
         "summary": "移動 {moved}、変換 {converted}、ゴミ箱 {trashed}、リンク削除 {unlinked}。"
       }
     },
+    "writeHistoryFile": {
+      "name": "Write history file into linked folder",
+      "desc": "After each turn, create or update a generated .chat.md file in the conversation's linked folder. Turning this on backfills existing chats."
+    },
     "writeHistoryFileText": {
       "name": "会話のテキストをチャットファイルに書き込む",
       "desc": "チャットファイルの本文に、依頼と応答の記録を書き込みます。他のチャットや Claudian のないアプリから読み取り・検索できます。オフにするとフロントマターのみを書き込み、既存の本文は変更しません。"

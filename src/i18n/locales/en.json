@@ -523,6 +523,10 @@
         "summary": "Moved {moved}, converted {converted}, trashed {trashed}, removed {unlinked} link(s)."
       }
     },
+    "writeHistoryFile": {
+      "name": "Write history file into linked folder",
+      "desc": "After each turn, create or update a generated .chat.md file in the conversation's linked folder. Turning this on backfills existing chats."
+    },
     "writeHistoryFileText": {
       "name": "Write conversation text into chat file",
       "desc": "The chat file body holds the transcript of requests and responses, so other chats and apps without Claudian can read and search it. When off, only the frontmatter is written and an existing body is left unchanged."

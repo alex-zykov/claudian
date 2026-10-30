@@ -3,6 +3,7 @@ import '@/providers';
 
 import { deferred } from '@test/helpers/ChatInputHarness';
 import { createTestTabSession, holdResponse } from '@test/helpers/ConversationPorts';
+import { NOOP_CHAT_HISTORY_FILES } from '@test/helpers/features/chat/noopChatHistoryFiles';
 import {
   createHarness,
   releaseSideChatHarnesses,
@@ -33,7 +34,10 @@ function createRouting(
   failAt?: 'initialization' | 'missing-coordinator' | 'handoff',
   configure?: (deps: InputControllerDeps) => void,
 ) {
-  Object.assign(harness.plugin, { renameConversation: jest.fn().mockResolvedValue(undefined) });
+  Object.assign(harness.plugin, {
+    chatHistoryFiles: NOOP_CHAT_HISTORY_FILES,
+    renameConversation: jest.fn().mockResolvedValue(undefined),
+  });
   const mainExecutions: string[] = [];
   const mainMessages: ChatMessage[] = [];
   const session = createTestTabSession({ coordinator: { cancel: () => deps.getExecutionCoordinator()?.cancel() } });

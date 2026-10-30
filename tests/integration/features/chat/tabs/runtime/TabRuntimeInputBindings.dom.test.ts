@@ -2,6 +2,7 @@
 import '@/providers';
 
 import { holdResponse } from '@test/helpers/ConversationPorts';
+import { NOOP_CHAT_HISTORY_FILES } from '@test/helpers/features/chat/noopChatHistoryFiles';
 import { createHarness, releaseSideChatHarnesses } from '@test/helpers/features/chat/SideChatDOMHarness';
 import { fireEvent } from '@testing-library/dom';
 import { App, Component } from 'obsidian';
@@ -38,6 +39,7 @@ beforeEach(async () => {
     getConversationSummary: () => conversation,
     getConversationSync: () => conversation,
     getConversationList: () => [conversation],
+    chatHistoryFiles: NOOP_CHAT_HISTORY_FILES,
   } as unknown as ChatFeatureHost;
   tab = await createTabRuntime({
     plugin, conversation, component: new Component(),

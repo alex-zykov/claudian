@@ -5,6 +5,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 
 import { claudeCatalogFixture } from '@test/helpers/claudeModels';
+import { NOOP_CHAT_HISTORY_FILES } from '@test/helpers/features/chat/noopChatHistoryFiles';
 import { App } from 'obsidian';
 
 import { ConversationRepository } from '@/app/conversations/ConversationRepository';
@@ -66,6 +67,7 @@ export async function createForkTestEnvironment() {
     app, settings,
     getConversationSummary: (id: string) => repository.getSummary(id),
     getConversationSync: (id: string) => repository.getSync(id),
+    chatHistoryFiles: NOOP_CHAT_HISTORY_FILES,
   } as unknown as ChatFeatureHost;
   const coordinators: ChatExecutionCoordinator[] = [];
   let sequence = 0;

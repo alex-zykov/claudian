@@ -324,6 +324,30 @@ describe('ClaudianSettingsStorage', () => {
 
 
 
+
+    it('fails closed for invalid writeHistoryFile values', async () => {
+      mockAdapter.exists.mockResolvedValue(true);
+      mockAdapter.read.mockResolvedValue(JSON.stringify({
+        writeHistoryFile: 'yes',
+      }));
+
+      const result = await storage.load();
+      const writtenContent = JSON.parse(mockAdapter.write.mock.calls[0][1]);
+
+      expect(result.writeHistoryFile).toBe(false);
+      expect(writtenContent.writeHistoryFile).toBe(false);
+    });
+
+    it('preserves an enabled writeHistoryFile toggle', async () => {
+      mockAdapter.exists.mockResolvedValue(true);
+      mockAdapter.read.mockResolvedValue(JSON.stringify({
+        writeHistoryFile: true,
+      }));
+
+      const result = await storage.load();
+      expect(result.writeHistoryFile).toBe(true);
+    });
+
     it('has no custom chat file fields by default', async () => {
       mockAdapter.exists.mockResolvedValue(false);
 

@@ -22,6 +22,7 @@ import type {
 } from '@/core/types';
 import type {
   ChatFeatureHost,
+  ChatHistoryFilePort,
   ChatViewHost,
   TabWorkspaceStateDeliveryRegistration,
 } from '@/features/chat/ChatFeatureHost';
@@ -54,6 +55,7 @@ export interface ChatFeatureHostDomains extends FeatureHostDomains {
   readonly tabWorkspaceMigration: TabWorkspaceMigrationCoordinator;
   readonly conversationLifecycle: ConversationLifecycle;
   readonly zenMode: Pick<ZenModeController, 'register'>;
+  readonly chatHistoryFiles: ChatHistoryFilePort;
 }
 
 /** Feature-neutral application capabilities for settings, inline edit, and chat. */
@@ -116,12 +118,14 @@ export class ClaudianChatFeatureHost extends ClaudianFeatureHost implements Chat
   readonly chatModelSelection: ChatModelSelectionCoordinator;
   readonly executionPersistence: ConversationRepository;
   readonly conversationLifecycle: ConversationLifecycle;
+  readonly chatHistoryFiles: ChatHistoryFilePort;
 
   constructor(protected readonly domains: ChatFeatureHostDomains) {
     super(domains);
     this.chatModelSelection = domains.chatModelSelection;
     this.executionPersistence = domains.executionPersistence;
     this.conversationLifecycle = domains.conversationLifecycle;
+    this.chatHistoryFiles = domains.chatHistoryFiles;
   }
 
   writeSessionSnapshot(conversationId: string, markdown: string): Promise<string> {
@@ -160,8 +164,10 @@ export class ClaudianChatFeatureHost extends ClaudianFeatureHost implements Chat
     return this.domains.conversations.handleMissingProviderSession(id, missingProviderSessionId);
   }
 
-  renameConversation(id: string, title: string): Promise<void> {
-    return this.domains.conversations.renameConversation(id, title);
+  async renameConversation(id: string, title: string): Promise<void> {
+    await this.domains.conversations.renameConversation(id, title);
+    // The chat file follows the title: generated and manual renames both land here.
+    this.chatHistoryFiles.scheduleWrite(id);
   }
 
   setLinkedContentPinned(contentPath: string, isPinned: boolean): Promise<void> {

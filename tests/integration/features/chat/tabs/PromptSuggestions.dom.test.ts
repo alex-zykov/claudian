@@ -3,6 +3,7 @@ import '@/providers';
 
 import * as sdkModule from '@anthropic-ai/claude-agent-sdk';
 import { claudeCatalogFixture } from '@test/helpers/claudeModels';
+import { NOOP_CHAT_HISTORY_FILES } from '@test/helpers/features/chat/noopChatHistoryFiles';
 import { FakeSideBackend } from '@test/helpers/features/chat/SideChatSessionHarness';
 import { fireEvent, waitFor, within } from '@testing-library/dom';
 import { App, Component } from 'obsidian';
@@ -89,6 +90,7 @@ async function createView(fakeBackend?: FakeSideBackend) {
     updateConversation: async (_id: string, patch: unknown) => { saved.push(structuredClone(patch)); },
     mutateSettings: async (mutate: (settings: ClaudianSettings) => void) => mutate(settings),
     chatModelSelection: { beginIntent: () => 1, commitIntent: async () => true },
+    chatHistoryFiles: NOOP_CHAT_HISTORY_FILES,
   } as unknown as ChatFeatureHost;
   const tab = await createTabRuntime({
     plugin, conversation, component: new Component(),

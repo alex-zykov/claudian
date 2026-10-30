@@ -96,6 +96,12 @@ function normalizeRestoreTabsOnStartup(value: unknown): boolean {
     : DEFAULT_CLAUDIAN_SETTINGS.restoreTabsOnStartup;
 }
 
+function normalizeWriteHistoryFile(value: unknown): boolean {
+  return typeof value === 'boolean'
+    ? value
+    : DEFAULT_CLAUDIAN_SETTINGS.writeHistoryFile;
+}
+
 function normalizeWriteHistoryFileText(value: unknown): boolean {
   return typeof value === 'boolean'
     ? value
@@ -480,6 +486,7 @@ export class ClaudianSettingsStorage {
     const restoreTabsOnStartup = normalizeRestoreTabsOnStartup(
       stored.restoreTabsOnStartup,
     );
+    const writeHistoryFile = normalizeWriteHistoryFile(stored.writeHistoryFile);
     const writeHistoryFileText = normalizeWriteHistoryFileText(stored.writeHistoryFileText);
     const chatFileCustomFields = decodeChatFileCustomFields(stored.chatFileCustomFields);
     const hasCanonicalPinnedPaths = Object.prototype.hasOwnProperty.call(
@@ -515,6 +522,7 @@ export class ClaudianSettingsStorage {
       enableDualPane,
       dualPaneSide,
       restoreTabsOnStartup,
+      writeHistoryFile,
       writeHistoryFileText,
       chatFileCustomFields,
       skillsSynced,

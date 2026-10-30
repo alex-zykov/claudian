@@ -2,6 +2,7 @@
 import '@/providers';
 
 import { holdResponse } from '@test/helpers/ConversationPorts';
+import { NOOP_CHAT_HISTORY_FILES } from '@test/helpers/features/chat/noopChatHistoryFiles';
 import { createHarness, releaseSideChatHarnesses } from '@test/helpers/features/chat/SideChatDOMHarness';
 import { fireEvent, within } from '@testing-library/dom';
 import { axe } from 'jest-axe';
@@ -56,6 +57,7 @@ async function createTab(linkedContentPath?: string): Promise<AssembledTabRuntim
     getConversationSummary: () => conversation,
     getConversationSync: () => conversation,
     getConversationList: () => [conversation],
+    chatHistoryFiles: NOOP_CHAT_HISTORY_FILES,
   } as unknown as ChatFeatureHost;
   const tab = await createTabRuntime({
     plugin,

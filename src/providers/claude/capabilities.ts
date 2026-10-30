@@ -4,6 +4,7 @@ export const CLAUDE_PROVIDER_CAPABILITIES: Readonly<ProviderCapabilities> = Obje
   providerId: 'claude',
   supportsResponseThroughput: true,
   supportsNativeHistory: true,
+  supportsChatHistoryFile: true,
   supportsEphemeralSessions: true,
   supportsRewind: true,
   supportsFork: true,

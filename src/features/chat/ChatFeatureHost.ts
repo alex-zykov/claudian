@@ -63,10 +63,24 @@ export interface ChatViewHost extends ChatViewRefreshHost, TabManagerViewHost {
   focusActiveInput(): void;
 }
 
+
+/** Projects capable conversations into vault `.chat.md` history files. */
+export interface ChatHistoryFilePort {
+  scheduleWrite(conversationId: string): void;
+  /** Whether a chat file exists for the conversation. */
+  hasFile(conversationId: string): boolean;
+  /** Opens the conversation's chat file as a note in a new tab; false when there is no file. */
+  openFileAsMarkdown(conversationId: string): Promise<boolean>;
+  trashForConversation(conversationId: string): Promise<void>;
+  startBackfill(): void;
+  cancelBackfill(): void;
+}
+
 /** Application capabilities chat needs on top of the feature-neutral `FeatureHost`. */
 export interface ChatFeatureHost extends FeatureHost {
   writeSessionSnapshot(conversationId: string, markdown: string): Promise<string>;
   getSessionSnapshotDirectory(): string;
+  readonly chatHistoryFiles: ChatHistoryFilePort;
   readonly chatModelSelection: ChatModelSelectionPort;
   createConversation(options?: {
     providerId?: ProviderId;

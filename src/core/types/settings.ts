@@ -172,6 +172,11 @@ export interface ClaudianSettings {
   deferMathRenderingDuringStreaming: boolean;
   expandFileEditsByDefault: boolean;
   /**
+   * When true, write/update a generated `.chat.md` history file in the linked
+   * folder after each turn (providers with `supportsChatHistoryFile` only).
+   */
+  writeHistoryFile: boolean;
+  /**
    * When true (default), the generated `.chat.md` body holds the conversation transcript.
    * When false, only the frontmatter is written and an existing body is left alone.
    */

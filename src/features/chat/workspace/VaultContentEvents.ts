@@ -13,6 +13,11 @@ export interface VaultContentEventsDeps {
     applyVaultRename(oldPath: string, newPath: string, includeDescendants: boolean): Promise<void>;
     applyVaultDeletion(path: string, includeDescendants: boolean): Promise<void>;
   };
+  readonly historyFiles?: {
+    handleVaultRename(file: TAbstractFile, oldPath: string): void;
+    handleVaultDelete(file: TAbstractFile): void;
+    handleVaultCreate(file: TAbstractFile): void;
+  };
   notifyConversationListChanged(): void;
 }
 
@@ -52,6 +57,7 @@ export class VaultContentEvents {
     for (const view of this.deps.views.getAllViews()) {
       view.handleLinkedContentRenamed(oldPath, file.path, includeDescendants);
     }
+    this.deps.historyFiles?.handleVaultRename(file, oldPath);
     try {
       await this.deps.conversations.applyVaultRename(oldPath, file.path, includeDescendants);
     } finally {
@@ -64,6 +70,7 @@ export class VaultContentEvents {
     for (const view of this.deps.views.getAllViews()) {
       view.handleLinkedContentDeleted(file.path, includeDescendants);
     }
+    this.deps.historyFiles?.handleVaultDelete(file);
     try {
       await this.deps.conversations.applyVaultDeletion(file.path, includeDescendants);
     } finally {
@@ -75,6 +82,7 @@ export class VaultContentEvents {
     for (const view of this.deps.views.getAllViews()) {
       view.handleLinkedContentCreated(file.path);
     }
+    this.deps.historyFiles?.handleVaultCreate(file);
     this.scheduleRefresh();
   }
 

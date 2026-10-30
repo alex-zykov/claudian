@@ -1,4 +1,5 @@
 import { holdResponse } from '@test/helpers/ConversationPorts';
+import { NOOP_CHAT_HISTORY_FILES } from '@test/helpers/features/chat/noopChatHistoryFiles';
 import { createMockEl } from '@test/helpers/MockElement';
 import { within } from '@testing-library/dom';
 import { JSDOM } from 'jsdom';
@@ -190,6 +191,7 @@ function createPlugin(overrides: Record<string, unknown> = {}) {
         return true;
       }),
     },
+    chatHistoryFiles: NOOP_CHAT_HISTORY_FILES,
     settings,
     getCommittedSettings: () => settings,
     getActiveEnvironmentVariables: jest.fn().mockReturnValue({}),

@@ -1,5 +1,7 @@
 import '@/providers';
 
+import { NOOP_CHAT_HISTORY_FILES } from '@test/helpers/features/chat/noopChatHistoryFiles';
+
 import type { ClaudianSettings, UsageInfo } from '@/core/types';
 import type { ChatFeatureHost } from '@/features/chat/ChatFeatureHost';
 import { refreshTabContextUsage } from '@/features/chat/tabs/tabProviderUI';
@@ -31,6 +33,7 @@ function createTab(model: string, customContextLimits: Record<string, number>, u
       customContextLimits,
       providerConfigs: { claude: { enabled: true, discoveredModels: [], visibleModels: [] } },
     } as unknown as ClaudianSettings,
+    chatHistoryFiles: NOOP_CHAT_HISTORY_FILES,
   } as ChatFeatureHost;
   return { tab, plugin, update };
 }

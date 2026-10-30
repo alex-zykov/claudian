@@ -43,6 +43,11 @@ export interface ProviderCapabilities {
   supportsFastMode?: boolean;
   /** Can report authoritative main-agent output tokens and elapsed turn time. */
   supportsResponseThroughput?: boolean;
+  /**
+   * May project a vault chat history `.md` file for the conversation.
+   * Omitted/false means the provider keeps history only in its native store.
+   */
+  supportsChatHistoryFile?: boolean;
   reasoningControl: 'effort' | 'none';
 }
 

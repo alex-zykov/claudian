@@ -53,6 +53,7 @@ export const DEFAULT_CLAUDIAN_SETTINGS: ClaudianSettings = {
   showMessageTimestamps: false,
   deferMathRenderingDuringStreaming: true,
   expandFileEditsByDefault: false,
+  writeHistoryFile: false,
   writeHistoryFileText: true,
   chatFileCustomFields: [],
   chatViewPlacement: 'right-sidebar',

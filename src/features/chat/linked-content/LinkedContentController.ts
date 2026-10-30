@@ -329,11 +329,17 @@ export class LinkedContentController {
     if (
       !file
       || file.extension.toLocaleLowerCase() !== 'md'
+      || this.#isChatHistoryFile(file)
       || this.#getExcludedTagState(file) !== 'not-excluded'
     ) {
       return null;
     }
     return normalizeLinkedContentPath(file.path);
+  }
+
+  #isChatHistoryFile(file: TFile): boolean {
+    const cache = this.app.metadataCache.getFileCache(file);
+    return cache?.frontmatter?.['claudian-chat'] === true;
   }
 
   #getExcludedTagState(file: TFile): ExcludedTagState {

@@ -523,6 +523,10 @@
         "summary": "Movidos {moved}, convertidos {converted}, a la papelera {trashed}, {unlinked} enlace(s) eliminado(s)."
       }
     },
+    "writeHistoryFile": {
+      "name": "Write history file into linked folder",
+      "desc": "After each turn, create or update a generated .chat.md file in the conversation's linked folder. Turning this on backfills existing chats."
+    },
     "writeHistoryFileText": {
       "name": "Escribir el texto de la conversación en el archivo de chat",
       "desc": "El cuerpo del archivo de chat contiene la transcripción de preguntas y respuestas, para que otros chats y apps sin Claudian puedan leerla y buscarla. Si se desactiva, solo se escribe el frontmatter y el cuerpo existente no cambia."

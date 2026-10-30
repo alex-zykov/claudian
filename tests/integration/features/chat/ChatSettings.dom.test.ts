@@ -3,6 +3,7 @@ import '@/providers';
 
 import { deserialize, serialize } from 'node:v8';
 
+import { NOOP_CHAT_HISTORY_FILES } from '@test/helpers/features/chat/noopChatHistoryFiles';
 import { createHarness, releaseSideChatHarnesses } from '@test/helpers/features/chat/SideChatDOMHarness';
 import { FakeSideSession } from '@test/helpers/features/chat/SideChatSessionHarness';
 import { modelCatalogCases } from '@test/helpers/providerModelCatalogs';
@@ -91,6 +92,7 @@ function createChatHarness(settings: ClaudianSettings, id: ProviderId, selected:
   const plugin = {
     ...(harness.plugin as ChatFeatureHost), app, settings,
     chatModelSelection: new ChatModelSelectionCoordinator(settingsCoordinator),
+    chatHistoryFiles: NOOP_CHAT_HISTORY_FILES,
     executionPersistence: {
       registerExecutionBinding: () => undefined,
       releaseExecutionBinding: () => undefined,

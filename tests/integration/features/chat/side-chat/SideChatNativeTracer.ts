@@ -1,3 +1,4 @@
+import { NOOP_CHAT_HISTORY_FILES } from '@test/helpers/features/chat/noopChatHistoryFiles';
 import type { ForkTestEnvironment } from '@test/helpers/features/chat/ProviderForkTestHarness';
 
 import type {
@@ -140,6 +141,7 @@ export async function captureSideSource(
     settings: (env.host as unknown as { settings: unknown }).settings,
     getConversationSummary(id: string) { return (this as unknown as { getConversationSync: (id: string) => any }).getConversationSync(id); },
     getConversationSync: (id: string) => env.repository.getSync(id),
+    chatHistoryFiles: NOOP_CHAT_HISTORY_FILES,
   } as unknown as ChatFeatureHost;
   const tab = {
     conversationId: chat.conversation.id,
