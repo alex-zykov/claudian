@@ -469,6 +469,12 @@
         "desc": "Переменные окружения, передаваемые только в Grok Build. Секреты пользовательских моделей остаются в области этого провайдера, а нативная конфигурация ссылается на них через env_key."
       }
     },
+    "cursor": {
+      "environment": {
+        "name": "Cursor environment variables",
+        "desc": "Environment variables passed only to Cursor. Auth secrets such as CURSOR_API_KEY stay in this provider scope or the process environment; Claudian never stores a Cursor token in plugin settings."
+      }
+    },
     "skills": {
       "subTabs": {
         "claude": "Claude Code",
