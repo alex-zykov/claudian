@@ -1,5 +1,6 @@
-import { TFile, TFolder } from 'obsidian';
+import { FileView, ItemView, TFile, TFolder, type WorkspaceLeaf } from 'obsidian';
 
+import { VIEW_TYPE_CLAUDIAN } from '@/core/types';
 import {
   LinkedContentController,
   type LinkedContentControllerOptions,
@@ -22,9 +23,26 @@ function createFolder(path: string): TFolder {
   return folder;
 }
 
+function createLeaf(viewType: string, file?: TFile): WorkspaceLeaf {
+  const view = Object.create(file ? FileView.prototype : ItemView.prototype) as FileView;
+  Object.assign(view, { file: file ?? null, getViewType: () => viewType });
+  return { view } as unknown as WorkspaceLeaf;
+}
+
+function createNoteLeaf(file: TFile): WorkspaceLeaf {
+  return createLeaf('markdown', file);
+}
+
+function createChatLeaf(): WorkspaceLeaf {
+  return createLeaf(VIEW_TYPE_CLAUDIAN);
+}
+
 function createHarness(initialFiles: Array<TFile | TFolder> = []) {
   const entries = new Map(initialFiles.map(entry => [entry.path || '.', entry]));
   let activeFile: TFile | null = null;
+  let mostRecentLeaf: WorkspaceLeaf | null = null;
+  let noteLeaves: WorkspaceLeaf[] = [];
+  let lastOpenFiles: string[] = [];
   const app = {
     vault: {
       getRoot: jest.fn(() => createFolder('')),
@@ -32,8 +50,10 @@ function createHarness(initialFiles: Array<TFile | TFolder> = []) {
     },
     workspace: {
       getActiveFile: jest.fn(() => activeFile),
+      getMostRecentLeaf: jest.fn(() => mostRecentLeaf),
+      getLastOpenFiles: jest.fn(() => lastOpenFiles),
       getLeaf: jest.fn(() => ({ openFile: jest.fn().mockResolvedValue(undefined) })),
-      getLeavesOfType: jest.fn(() => []),
+      getLeavesOfType: jest.fn((type: string) => (type === 'markdown' ? noteLeaves : [])),
       getLeftLeaf: jest.fn(() => null),
       revealLeaf: jest.fn().mockResolvedValue(undefined),
     },
@@ -58,6 +78,9 @@ function createHarness(initialFiles: Array<TFile | TFolder> = []) {
     entries,
     setActiveFile(file: TFile | null) {
       activeFile = file;
+    },
+    setWorkspace(state: { mostRecentLeaf: WorkspaceLeaf | null; noteLeaves: WorkspaceLeaf[]; lastOpenFiles: string[] }) {
+      ({ mostRecentLeaf, noteLeaves, lastOpenFiles } = state);
     },
   };
 }
@@ -93,6 +116,37 @@ describe('LinkedContentController', () => {
     harness.controller.resetAutoDraft();
     harness.controller.handleActiveFileChanged(second, false);
     expect(harness.controller.getSnapshot().path).toBe('Notes/First.md');
+  });
+
+  it('keeps the open Note while a chat in a main-area tab is the active leaf', () => {
+    const older = createFile('Notes/Older.md');
+    const note = createFile('Projects/A/Plan.md');
+    const closed = createFile('Notes/Closed.md');
+    const harness = createHarness([older, note, closed]);
+    const chatLeaf = createChatLeaf();
+    // Obsidian reports no active file while the chat tab itself is active.
+    harness.setActiveFile(null);
+    harness.setWorkspace({
+      mostRecentLeaf: chatLeaf,
+      noteLeaves: [createNoteLeaf(older), createNoteLeaf(note)],
+      lastOpenFiles: [closed.path, note.path, older.path],
+    });
+
+    harness.controller.resetAutoDraft();
+    expect(harness.controller.getSnapshot()).toMatchObject({ mode: 'auto-draft', path: note.path });
+
+    harness.controller.handleActiveFileMetadataChanged(null);
+    harness.controller.handleActiveFileChanged(null, true);
+    expect(harness.controller.getSnapshot().path).toBe(note.path);
+
+    // Any other view without a file still unlinks, as before.
+    harness.setWorkspace({
+      mostRecentLeaf: createLeaf('graph'),
+      noteLeaves: [createNoteLeaf(note)],
+      lastOpenFiles: [note.path],
+    });
+    harness.controller.handleActiveFileMetadataChanged(null);
+    expect(harness.controller.getSnapshot().path).toBeNull();
   });
 
   it('normalizes every explicit selection through the core Linked content codec', () => {

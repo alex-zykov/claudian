@@ -5,6 +5,7 @@ import {
   assertLinkedContentPath,
   normalizeLinkedContentPath,
 } from '@/core/path/LinkedContentPath';
+import { VIEW_TYPE_CLAUDIAN } from '@/core/types';
 import type { ComposerInfoRow } from '@/features/chat/composer/ComposerInfoRow';
 import { LinkedContentChip } from '@/features/chat/linked-content/LinkedContentChip';
 import { LinkedContentPickerSource } from '@/features/chat/linked-content/LinkedContentPickerSource';
@@ -113,7 +114,7 @@ export class LinkedContentController {
     this.#assertLive();
     this.activeSubmission = null;
     this.mode = 'auto-draft';
-    this.path = this.#eligibleActiveFilePath(this.app.workspace.getActiveFile());
+    this.path = this.#eligibleActiveFilePath(this.#readingNote());
     this.publish();
   }
 
@@ -132,12 +133,12 @@ export class LinkedContentController {
 
   handleActiveFileChanged(file: TFile | null, isActiveOwner: boolean): void {
     if (this.destroyed || !isActiveOwner || this.mode !== 'auto-draft') return;
-    this.#reconcileAutoDraftPath(file);
+    this.#reconcileAutoDraftPath(file ?? this.#readingNote());
   }
 
   handleActiveFileMetadataChanged(file: TFile | null): void {
     if (this.destroyed || this.mode !== 'auto-draft') return;
-    const activeFile = this.app.workspace.getActiveFile();
+    const activeFile = this.#readingNote();
     if (file !== null && activeFile?.path !== file.path) return;
     this.#reconcileAutoDraftPath(activeFile);
   }
@@ -323,6 +324,26 @@ export class LinkedContentController {
     if (nextPath === this.path) return;
     this.path = nextPath;
     this.publish();
+  }
+
+  /**
+   * The Note being read. A chat in a main-area tab is itself the active leaf, so Obsidian then
+   * reports no active file; the Note is the most recently opened one still open in a tab.
+   */
+  #readingNote(): TFile | null {
+    const { workspace } = this.app;
+    const activeFile = workspace.getActiveFile();
+    if (activeFile) return activeFile;
+    if (workspace.getMostRecentLeaf?.()?.view.getViewType() !== VIEW_TYPE_CLAUDIAN) return null;
+    const openNotes = new Map<string, TFile>();
+    for (const leaf of workspace.getLeavesOfType('markdown')) {
+      if (leaf.view instanceof FileView && leaf.view.file) openNotes.set(leaf.view.file.path, leaf.view.file);
+    }
+    for (const path of workspace.getLastOpenFiles()) {
+      const note = openNotes.get(path);
+      if (note && this.#eligibleActiveFilePath(note)) return note;
+    }
+    return null;
   }
 
   #eligibleActiveFilePath(file: TFile | null): string | null {
