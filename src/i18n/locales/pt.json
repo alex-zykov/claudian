@@ -132,17 +132,12 @@
       "name": "Write history file into linked folder",
       "desc": "After each turn, create or update a generated .chat.md file in the conversation's linked folder. Turning this on backfills existing chats."
     },
-    "autoSwitchContext": {
-      "name": "Auto-switch context",
-      "desc": "When the active note changes, open the most recent chat for that note's folder or nearest ancestor. Never creates a chat. Funciona quando o Claudian está em uma barra lateral."
-    },
     "chatFileOpenMode": {
       "name": "Abertura de arquivos de chat",
       "desc": "Onde a conversa aparece ao abrir um arquivo .chat.md.",
       "options": {
-        "inClaudian": "Dentro do Claudian",
-        "separateTab": "Em uma aba separada",
-        "note": "Como nota"
+        "claudian": "Dentro do Claudian",
+        "markdown": "Como nota"
       }
     },
     "titleLanguage": {

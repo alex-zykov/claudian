@@ -276,8 +276,6 @@ export class ClaudianSettingTab extends PluginSettingTab {
             await this.host.mutateSettings((settings) => {
               settings.chatViewPlacement = value as ChatViewPlacement;
             });
-            // Auto-switch context depends on the placement.
-            this.update();
           });
       });
 
@@ -423,32 +421,16 @@ export class ClaudianSettingTab extends PluginSettingTab {
       );
 
     new Setting(container)
-      .setName(t('settings.autoSwitchContext.name'))
-      .setDesc(t('settings.autoSwitchContext.desc'))
-      .addToggle((toggle) =>
-        toggle
-          .setValue(this.host.settings.autoSwitchContext ?? false)
-          // A chat in a main-area tab is a document of its own; only sidebar chats follow notes.
-          .setDisabled(this.host.settings.chatViewPlacement === 'main-tab')
-          .onChange(async (value) => {
-            await this.host.mutateSettings((settings) => {
-              settings.autoSwitchContext = value;
-            });
-          })
-      );
-
-    new Setting(container)
       .setName(t('settings.chatFileOpenMode.name'))
       .setDesc(t('settings.chatFileOpenMode.desc'))
       .addDropdown((dropdown) => {
-        dropdown.addOption('in-claudian', t('settings.chatFileOpenMode.options.inClaudian'));
-        dropdown.addOption('separate-tab', t('settings.chatFileOpenMode.options.separateTab'));
-        dropdown.addOption('note', t('settings.chatFileOpenMode.options.note'));
-        dropdown.setValue(this.host.settings.chatFileOpenMode ?? 'in-claudian');
+        dropdown.addOption('claudian', t('settings.chatFileOpenMode.options.claudian'));
+        dropdown.addOption('markdown', t('settings.chatFileOpenMode.options.markdown'));
+        dropdown.setValue(this.host.settings.chatFileOpenMode ?? 'claudian');
         dropdown.onChange(async (value) => {
           await this.host.mutateSettings((settings) => {
             settings.chatFileOpenMode = CHAT_FILE_OPEN_MODES.find(mode => mode === value)
-              ?? 'in-claudian';
+              ?? 'claudian';
           });
         });
       });

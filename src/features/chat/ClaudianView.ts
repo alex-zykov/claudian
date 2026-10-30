@@ -6,7 +6,6 @@ import { getHiddenCommandSet } from '@/core/providers/commands/hiddenCommands';
 import { DEFAULT_CHAT_PROVIDER_ID, type ProviderId } from '@/core/providers/types';
 import { VIEW_TYPE_CLAUDIAN } from '@/core/types';
 import type { ChatFeatureHost } from '@/features/chat/ChatFeatureHost';
-import { ChatContextAutoSwitch } from '@/features/chat/history-file/ChatContextAutoSwitch';
 import { SessionManagerSurface, setControlAvailability } from '@/features/chat/session-manager/SessionManagerSurface';
 import { SessionNavigation } from '@/features/chat/session-manager/SessionNavigation';
 import type { ChatTab, TabId } from '@/features/chat/tabs/ChatTab';
@@ -40,7 +39,6 @@ export class ClaudianView extends ItemView implements ZenModeSource {
 
   // Tab management
   private tabManager: TabManager | null = null;
-  private contextAutoSwitch: ChatContextAutoSwitch | null = null;
   private tabBar: TabBar | null = null;
   private tabBarContainerEl: HTMLElement | null = null;
   private tabContentEl: HTMLElement | null = null;
@@ -122,15 +120,6 @@ export class ClaudianView extends ItemView implements ZenModeSource {
       writable: false,
       configurable: false,
     });
-
-    // Obsidian opens the next file in place of a leaf whose view is navigable, and in a new tab
-    // beside any other view. A chat that lives in its own tab behaves like a file in that tab;
-    // other placements stay static views. Read per click so the setting applies immediately.
-    Object.defineProperty(this, 'navigation', {
-      get: () => this.plugin.settings.chatFileOpenMode === 'separate-tab',
-      set: () => undefined,
-      configurable: true,
-    });
   }
 
   getViewType(): string {
@@ -142,16 +131,6 @@ export class ClaudianView extends ItemView implements ZenModeSource {
     const conversationId = this.tabManager?.getActiveTab()?.conversationId;
     const title = conversationId ? this.plugin.getConversationSummary(conversationId)?.title : undefined;
     return title || 'Claudian';
-  }
-
-  /**
-   * Folder-based chat switching belongs to the sidebar chat, which follows the note being read.
-   * A chat in a main-area tab is a document of its own and must not change under the user.
-   */
-  private isInSidebar(): boolean {
-    const root = this.leaf.getRoot();
-    const { workspace } = this.plugin.app;
-    return root === workspace.leftSplit || root === workspace.rightSplit;
   }
 
   /** Obsidian reads the display text only when the header is told to redraw. */
@@ -344,20 +323,9 @@ export class ClaudianView extends ItemView implements ZenModeSource {
             this.syncProviderBrandColor();
           }
         },
-        onManualConversationOpen: () => {
-          this.contextAutoSwitch?.noteManualConversationSwitch();
-        },
       },
       this.mentionDataProvider,
     );
-    this.contextAutoSwitch = new ChatContextAutoSwitch({
-      app: this.plugin.app,
-      isEnabled: () => this.plugin.settings.autoSwitchContext === true && this.isInSidebar(),
-      isActiveTabStreaming: () => tabManager.getActiveTab()?.state.isStreaming === true,
-      getConversationList: () => this.plugin.getConversationList(),
-      getActiveConversationId: () => tabManager.getActiveTab()?.conversationId ?? null,
-      openConversation: id => tabManager.openConversation(id, { automatic: true }),
-    });
     this.tabManager = tabManager;
     this.releaseMentionCacheEvents?.();
     this.releaseMentionCacheEvents = this.mentionDataProvider.register(this.plugin.app.vault);
@@ -401,15 +369,13 @@ export class ClaudianView extends ItemView implements ZenModeSource {
       this.tabWorkspace.releaseClosedPersistence(lifecycleRevision, tabStatePersistence);
       if (this.tabManager === tabManager) {
         this.tabManager = null;
-        this.contextAutoSwitch = null;
       }
       try {
         await tabManager?.destroy();
       } finally {
         if (this.tabManager === tabManager) {
           this.tabManager = null;
-          this.contextAutoSwitch = null;
-        }
+          }
         tabBar?.destroy();
         if (this.tabBar === tabBar) this.tabBar = null;
         if (this.scope === scope) this.scope = null;
@@ -485,7 +451,6 @@ export class ClaudianView extends ItemView implements ZenModeSource {
 
   private requestNewTab(): void {
     void (async () => {
-      if (await this.plugin.chatHistoryFiles.openNewChatInSeparateTab()) return;
       await this.createNewTab();
     })().catch(() => new Notice('Failed to create tab'));
   }
@@ -499,7 +464,6 @@ export class ClaudianView extends ItemView implements ZenModeSource {
 
   private requestDualNew(): void {
     void (async () => {
-      if (await this.plugin.chatHistoryFiles.openNewChatInSeparateTab()) return;
       await this.sessionNavigation.activateOrCreateDraftTab();
     })()
       .catch(() => new Notice('Failed to start a new conversation'));
@@ -618,7 +582,6 @@ export class ClaudianView extends ItemView implements ZenModeSource {
 
   private handleWorkspaceFileOpen(file: TFile | null): void {
     this.tabManager?.getActiveTab()?.linkedContent.handleActiveFileChanged(file, true);
-    this.contextAutoSwitch?.handleActiveFileChanged(file);
   }
 
   private handleLinkedContentMetadataChanged(file: TFile | null): void {

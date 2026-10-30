@@ -103,14 +103,16 @@ function normalizeWriteHistoryFile(value: unknown): boolean {
     : DEFAULT_CLAUDIAN_SETTINGS.writeHistoryFile;
 }
 
-function normalizeAutoSwitchContext(value: unknown): boolean {
-  return typeof value === 'boolean'
-    ? value
-    : DEFAULT_CLAUDIAN_SETTINGS.autoSwitchContext;
-}
+/** Values stored by earlier fork builds, mapped onto the current modes. */
+const LEGACY_CHAT_FILE_OPEN_MODES: Readonly<Record<string, ChatFileOpenMode>> = {
+  'in-claudian': 'claudian',
+  'separate-tab': 'claudian',
+  note: 'markdown',
+};
 
 function normalizeChatFileOpenMode(value: unknown): ChatFileOpenMode {
   return CHAT_FILE_OPEN_MODES.find(mode => mode === value)
+    ?? (typeof value === 'string' ? LEGACY_CHAT_FILE_OPEN_MODES[value] : undefined)
     ?? DEFAULT_CLAUDIAN_SETTINGS.chatFileOpenMode;
 }
 
@@ -493,7 +495,6 @@ export class ClaudianSettingsStorage {
       stored.restoreTabsOnStartup,
     );
     const writeHistoryFile = normalizeWriteHistoryFile(stored.writeHistoryFile);
-    const autoSwitchContext = normalizeAutoSwitchContext(stored.autoSwitchContext);
     const chatFileOpenMode = normalizeChatFileOpenMode(stored.chatFileOpenMode);
     const hasCanonicalPinnedPaths = Object.prototype.hasOwnProperty.call(
       stored,
@@ -529,7 +530,6 @@ export class ClaudianSettingsStorage {
       dualPaneSide,
       restoreTabsOnStartup,
       writeHistoryFile,
-      autoSwitchContext,
       chatFileOpenMode,
       skillsSynced,
       sessionManagerOrganization,

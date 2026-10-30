@@ -1,5 +1,4 @@
 import { createClaudianView } from '@test/helpers/features/chat/ClaudianViewHarness';
-import { NOOP_CHAT_HISTORY_FILES } from '@test/helpers/features/chat/noopChatHistoryFiles';
 import { createMockEl } from '@test/helpers/MockElement';
 import { Platform, Scope } from 'obsidian';
 
@@ -175,56 +174,6 @@ describe('ClaudianView model refresh routing', () => {
   });
 });
 
-describe('ClaudianView context auto-switch', () => {
-  const note = { path: 'Projects/A/x.md', extension: 'md' };
-
-  async function fileChangeReachesChatList(placement: 'sidebar' | 'main') {
-    const sidebar = {};
-    const mainArea = {};
-    const getConversationList = jest.fn(() => []);
-    const { view } = await openView({
-      manager: createFakeTabManager({ getActiveTab: () => null }),
-      leaf: { getRoot: () => (placement === 'sidebar' ? sidebar : mainArea) },
-      plugin: {
-        getConversationList,
-        settings: { restoreTabsOnStartup: true, autoSwitchContext: true },
-      },
-    });
-    Object.assign(view.plugin.app.workspace, { leftSplit: {}, rightSplit: sidebar });
-
-    view.contextAutoSwitch.handleActiveFileChanged(note);
-
-    return getConversationList.mock.calls.length > 0;
-  }
-
-  it('switches chats on file changes only while Claudian lives in a sidebar', async () => {
-    await expect(fileChangeReachesChatList('sidebar')).resolves.toBe(true);
-    await expect(fileChangeReachesChatList('main')).resolves.toBe(false);
-  });
-});
-
-describe('ClaudianView navigation', () => {
-  it.each([
-    ['separate-tab', true],
-    ['in-claudian', false],
-    ['note', false],
-  ] as const)('is replaceable by the next opened file only for chat mode %s: %s', (mode, expected) => {
-    const view = createClaudianView({ plugin: { settings: { chatFileOpenMode: mode } } });
-
-    expect(view.navigation).toBe(expected);
-  });
-
-  it('follows the open-mode setting without reopening the view', () => {
-    const settings: { chatFileOpenMode: string } = { chatFileOpenMode: 'in-claudian' };
-    const view = createClaudianView({ plugin: { settings } });
-    expect(view.navigation).toBe(false);
-
-    settings.chatFileOpenMode = 'separate-tab';
-
-    expect(view.navigation).toBe(true);
-  });
-});
-
 describe('ClaudianView leaf title', () => {
   const summaries: Record<string, { title: string }> = { c1: { title: 'Plan review' } };
   const plugin = { getConversationSummary: (id: string) => summaries[id] ?? null };
@@ -288,21 +237,6 @@ describe('ClaudianView tab controls', () => {
     expect(manager.createTab).toHaveBeenCalledTimes(1);
     expect(manager.createNewConversation).toHaveBeenCalledTimes(1);
     expect(historyContainer.querySelector('.claudian-history-menu')?.hasClass('visible')).toBe(true);
-  });
-
-  it('opens a new chat in its own tab instead of a view tab when chat files use separate tabs', async () => {
-    const openNewChatInSeparateTab = jest.fn().mockResolvedValue(true);
-    const { contentEl, manager } = await openView({
-      plugin: {
-        chatHistoryFiles: { ...NOOP_CHAT_HISTORY_FILES, openNewChatInSeparateTab },
-      },
-    });
-
-    contentEl.querySelector('.claudian-new-tab-btn')!.click();
-    await new Promise(resolve => window.setTimeout(resolve, 0));
-
-    expect(openNewChatInSeparateTab).toHaveBeenCalledTimes(1);
-    expect(manager.createTab).not.toHaveBeenCalled();
   });
 
   it('keeps tab controls in the view-owned input row', async () => {

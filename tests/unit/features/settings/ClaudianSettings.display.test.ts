@@ -405,33 +405,6 @@ describe('ClaudianSettingTab display settings', () => {
     expect(mockRenderedSettingNames).toContain(t('settings.restoreTabsOnStartup.name'));
   });
 
-  it.each([
-    ['main-tab', true],
-    ['right-sidebar', false],
-    ['left-sidebar', false],
-  ] as const)('disables auto-switch context with Claudian placed in %s: %s', (placement, disabled) => {
-    const { tab, plugin } = createTab(true);
-    plugin.settings.chatViewPlacement = placement;
-    (tab as any).renderGeneralTab(createContainer());
-
-    const toggle = mockToggleComponents.get(t('settings.autoSwitchContext.name'))!;
-    expect(toggle.setDisabled).toHaveBeenCalledWith(disabled);
-  });
-
-  it('rerenders display settings after the Claudian placement changes', async () => {
-    const { tab, plugin } = createTab(true);
-    const update = jest.spyOn(tab, 'update').mockImplementation();
-    (tab as any).renderGeneralTab(createContainer());
-
-    fireEvent.change(
-      within(document.body).getByLabelText(t('settings.chatViewPlacement.name')),
-      { target: { value: 'main-tab' } },
-    );
-    await waitFor(() => expect(update).toHaveBeenCalledTimes(1));
-
-    expect(plugin.settings.chatViewPlacement).toBe('main-tab');
-  });
-
   it('rerenders display settings after dual-pane mode changes', async () => {
     const { tab, plugin } = createTab(true);
     const update = jest.spyOn(tab, 'update').mockImplementation();

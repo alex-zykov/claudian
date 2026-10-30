@@ -120,12 +120,12 @@ export interface StoredChatModelSelection {
  * narrower types.
  */
 /**
- * Where a `.chat.md` click shows its conversation: inside the chat view where it lives
- * (sidebar or tab), in a tab of its own, or not at all (the file opens as a note).
+ * What a `.chat.md` click opens: its conversation in Claudian, placed like any other chat
+ * by the view-placement setting, or the file itself as a Markdown note.
  */
-export type ChatFileOpenMode = 'in-claudian' | 'separate-tab' | 'note';
+export type ChatFileOpenMode = 'claudian' | 'markdown';
 
-export const CHAT_FILE_OPEN_MODES: readonly ChatFileOpenMode[] = ['in-claudian', 'separate-tab', 'note'];
+export const CHAT_FILE_OPEN_MODES: readonly ChatFileOpenMode[] = ['claudian', 'markdown'];
 
 export interface ClaudianSettings {
   // User preferences
@@ -183,11 +183,6 @@ export interface ClaudianSettings {
    * folder after each turn (providers with `supportsChatHistoryFile` only).
    */
   writeHistoryFile: boolean;
-  /**
-   * When true, switching the active note opens the most recent chat whose
-   * linked folder equals the note's folder or is its nearest ancestor.
-   */
-  autoSwitchContext: boolean;
   /** Where opening a `.chat.md` file shows its conversation. */
   chatFileOpenMode: ChatFileOpenMode;
   chatViewPlacement: ChatViewPlacement;

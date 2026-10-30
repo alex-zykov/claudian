@@ -8,8 +8,6 @@ export type OpenConversationOptions = {
   preferNewTab?: boolean;
   activate?: boolean;
   provisional?: boolean;
-  /** Folder auto-switch opens; does not count as a manual conversation switch. */
-  automatic?: boolean;
 };
 
 /** Manager-owned membership operations that navigation drives and revalidates after every await. */

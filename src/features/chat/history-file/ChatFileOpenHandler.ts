@@ -2,7 +2,6 @@ import type { App, TFile, WorkspaceLeaf } from 'obsidian';
 import { TFile as ObsidianTFile, WorkspaceLeaf as ObsidianWorkspaceLeaf } from 'obsidian';
 
 import type { ChatFileOpenMode } from '@/core/types';
-import { VIEW_TYPE_CLAUDIAN } from '@/core/types';
 import { readChatFileId } from '@/features/chat/history-file/HistoryFileWriter';
 
 export interface ChatFileOpenHandlerDeps {
@@ -13,8 +12,6 @@ export interface ChatFileOpenHandlerDeps {
   revealOpenConversation(id: string): Promise<boolean>;
   /** Opens a conversation in the chat view placed by the view-placement setting. */
   openConversationInClaudian(id: string): Promise<void>;
-  /** The tab manager of the chat view mounted in `leaf`, or null when it is not a ready chat view. */
-  getLeafTabManager(leaf: WorkspaceLeaf): { openConversation(id: string): Promise<void> } | null;
 }
 
 type SetViewState = WorkspaceLeaf['setViewState'];
@@ -24,10 +21,9 @@ interface PatchedLeafPrototype {
 }
 
 /**
- * Opens `claudian-chat` markdown as its conversation, following the chat-file open mode:
- * inside the chat view where it lives, in the clicked leaf turned into a chat of its own, or
- * as a plain note. A conversation that is already open in a chat view is revealed there
- * instead of being duplicated.
+ * Opens `claudian-chat` markdown as its conversation unless the chat-file open mode is
+ * `markdown`. The chat opens like any other, where the view-placement setting puts it; a
+ * conversation that is already open in a chat view is revealed there instead of duplicated.
  */
 export class ChatFileOpenHandler {
   readonly #deps: ChatFileOpenHandlerDeps;
@@ -85,7 +81,7 @@ export class ChatFileOpenHandler {
     if (!state || typeof state !== 'object') return 'passthrough';
     const mode = this.#deps.getMode();
     const record = state as { type?: string; state?: { file?: string } };
-    if (record.type !== 'markdown' || mode === 'note') return 'passthrough';
+    if (record.type !== 'markdown' || mode === 'markdown') return 'passthrough';
     const path = record.state?.file;
     if (typeof path !== 'string' || path.length === 0) return 'passthrough';
     const file = this.#deps.app.vault.getAbstractFileByPath(path);
@@ -98,18 +94,12 @@ export class ChatFileOpenHandler {
     if (!id || !this.#deps.hasConversation(id)) return 'passthrough';
 
     try {
-      if (await this.#deps.revealOpenConversation(id)) return 'close-file-leaf';
-      if (mode === 'in-claudian') {
+      if (!(await this.#deps.revealOpenConversation(id))) {
         await this.#deps.openConversationInClaudian(id);
-        return 'close-file-leaf';
       }
-      await setViewState.call(leaf, { type: VIEW_TYPE_CLAUDIAN, active: true });
-      const manager = this.#deps.getLeafTabManager(leaf);
-      if (!manager) throw new Error('Chat view is not ready');
-      await manager.openConversation(id);
-      return 'handled';
+      return 'close-file-leaf';
     } catch {
-      // The leaf may already be a chat view; put the file back so it stays reachable.
+      // The chat could not be opened; put the file back so it stays reachable.
       await setViewState.call(leaf, state);
       return 'handled';
     }

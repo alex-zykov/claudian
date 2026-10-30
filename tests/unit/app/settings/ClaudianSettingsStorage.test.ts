@@ -346,12 +346,15 @@ describe('ClaudianSettingsStorage', () => {
     });
 
     it.each([
-      [undefined, 'in-claudian'],
-      ['bogus', 'in-claudian'],
-      [true, 'in-claudian'],
-      ['in-claudian', 'in-claudian'],
-      ['separate-tab', 'separate-tab'],
-      ['note', 'note'],
+      [undefined, 'claudian'],
+      ['bogus', 'claudian'],
+      [true, 'claudian'],
+      ['claudian', 'claudian'],
+      ['markdown', 'markdown'],
+      // Values stored by earlier fork builds.
+      ['in-claudian', 'claudian'],
+      ['separate-tab', 'claudian'],
+      ['note', 'markdown'],
     ])('decodes chatFileOpenMode %j as %s', async (stored, expected) => {
       mockAdapter.exists.mockResolvedValue(true);
       mockAdapter.read.mockResolvedValue(JSON.stringify(
@@ -359,16 +362,6 @@ describe('ClaudianSettingsStorage', () => {
       ));
 
       expect((await storage.load()).chatFileOpenMode).toBe(expected);
-    });
-
-    it('fails closed for invalid autoSwitchContext values', async () => {
-      mockAdapter.exists.mockResolvedValue(true);
-      mockAdapter.read.mockResolvedValue(JSON.stringify({
-        autoSwitchContext: 'yes',
-      }));
-
-      const result = await storage.load();
-      expect(result.autoSwitchContext).toBe(false);
     });
 
     it.each([

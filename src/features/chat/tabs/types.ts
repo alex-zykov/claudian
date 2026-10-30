@@ -230,9 +230,6 @@ export interface TabManagerCallbacks {
   /** Called when a tab's conversation changes (loaded different conversation in same tab). */
   onTabConversationChanged?: (tabId: TabId, conversationId: string | null) => void;
 
-  /** Called when the user explicitly opens a conversation (not folder auto-switch). */
-  onManualConversationOpen?: () => void;
-
   /** Called when the selected model for a blank retained tab changes. */
   onTabDraftChanged?: (tabId: TabId, draftModel: string | null) => void;
 

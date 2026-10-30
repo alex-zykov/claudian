@@ -8,15 +8,13 @@ import {
 } from '@/app/storage/ChatHistoryFileAdmission';
 import type { SharedStorageService } from '@/app/storage/SharedStorageService';
 import type { ChatFileOpenMode, ClaudianSettings } from '@/core/types';
-import type { ChatViewPlacement } from '@/core/types/settings';
 import type { ChatHistoryFilePort } from '@/features/chat/ChatFeatureHost';
 import { ChatFileOpenHandler } from '@/features/chat/history-file/ChatFileOpenHandler';
 import { ChatHistoryFileImporter } from '@/features/chat/history-file/ChatHistoryFileImporter';
 import { HistoryFileWriter } from '@/features/chat/history-file/HistoryFileWriter';
 import { revealWorkspaceLeaf } from '@/utils/obsidianCompat';
 
-import { type ClaudianViews, isClaudianView } from './ClaudianViews';
-import { SeparateChatTabs } from './SeparateChatTabs';
+import type { ClaudianViews } from './ClaudianViews';
 
 export interface ChatHistoryFileSubsystemDeps {
   readonly app: App;
@@ -25,40 +23,35 @@ export interface ChatHistoryFileSubsystemDeps {
   readonly views: ClaudianViews;
   isWriteHistoryFileEnabled(): boolean;
   getChatFileOpenMode(): ChatFileOpenMode;
-  getChatViewPlacement(): ChatViewPlacement;
   reportError(error: unknown): void;
 }
 
 /**
- * Main-owned wiring for chat history files: writer projection, import admission,
- * open-on-click routing, and where new chats open. Keeps storage-layout policy and settings/delete
+ * Main-owned wiring for chat history files: writer projection, import admission and
+ * open-on-click routing. Keeps storage-layout policy and settings/delete
  * side effects out of feature modules and out of inline main lambdas.
  */
 export class ChatHistoryFileSubsystem {
   readonly writer: HistoryFileWriter;
   readonly importer: ChatHistoryFileImporter;
   readonly openHandler: ChatFileOpenHandler;
-  readonly separateTabs: SeparateChatTabs;
-  /** The surface chat features use: writer operations plus new-chat placement. */
+  /** The surface chat features use: writer operations. */
   readonly port: ChatHistoryFilePort;
 
   private constructor(
     writer: HistoryFileWriter,
     importer: ChatHistoryFileImporter,
     openHandler: ChatFileOpenHandler,
-    separateTabs: SeparateChatTabs,
     private readonly deps: ChatHistoryFileSubsystemDeps,
   ) {
     this.writer = writer;
     this.importer = importer;
     this.openHandler = openHandler;
-    this.separateTabs = separateTabs;
     this.port = {
       scheduleWrite: id => writer.scheduleWrite(id),
       trashForConversation: id => writer.trashForConversation(id),
       startBackfill: () => writer.startBackfill(),
       cancelBackfill: () => writer.cancelBackfill(),
-      openNewChatInSeparateTab: () => separateTabs.openNewChat(),
     };
   }
 
@@ -116,16 +109,9 @@ export class ChatHistoryFileSubsystem {
         if (!manager) throw new Error('Chat view is not ready');
         await manager.openConversation(id);
       },
-      getLeafTabManager: leaf => (isClaudianView(leaf.view) ? leaf.view.getTabManager() : null),
-    });
-    const separateTabs = new SeparateChatTabs({
-      workspace,
-      getMode: () => deps.getChatFileOpenMode(),
-      getPlacement: () => deps.getChatViewPlacement(),
-      getViews: () => deps.views.getAllViews(),
     });
 
-    return new ChatHistoryFileSubsystem(writer, importer, openHandler, separateTabs, deps);
+    return new ChatHistoryFileSubsystem(writer, importer, openHandler, deps);
   }
 
   register(registerEvent: (eventRef: EventRef) => void): void {
