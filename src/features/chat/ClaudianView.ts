@@ -26,6 +26,7 @@ import {
 } from '@/features/chat/utils/animationFrame';
 import { ChatPresentationPlacement } from '@/features/chat/view/ChatPresentationPlacement';
 import { DualPaneLayout, type DualPaneLayoutElements } from '@/features/chat/view/DualPaneLayout';
+import { applyLeafHeaderActivity, resolveLeafHeaderActivity } from '@/features/chat/workspace/LeafHeaderActivity';
 import type { ZenModeSlots, ZenModeSource, ZenPresentationPort } from '@/features/chat/zen/types';
 import { VaultMentionDataProvider } from '@/shared/mention/VaultMentionDataProvider';
 
@@ -369,6 +370,8 @@ export class ClaudianView extends ItemView implements ZenModeSource {
 
   async onClose() {
     const lifecycleRevision = this.tabWorkspace.beginClose();
+    // The leaf may host another view next; it must not keep this chat's activity.
+    applyLeafHeaderActivity(this.leaf, null);
     // Zen presentation returns synchronously before asynchronous shutdown proceeds.
     this.stopZenModeSource();
     const tabManager = this.tabManager;
@@ -576,6 +579,7 @@ export class ClaudianView extends ItemView implements ZenModeSource {
       this.tabBar.update(items);
       this.updateTabBarVisibility();
       this.refreshLeafHeader();
+      applyLeafHeaderActivity(this.leaf, resolveLeafHeaderActivity(items));
     }, this.containerEl.ownerDocument.defaultView ?? null);
   }
 
