@@ -77,16 +77,17 @@
     "@babel/core": "7.29.7",
     "@codemirror/state": "$@codemirror/state",
     "@codemirror/view": "$@codemirror/view",
-    "@hono/node-server": "2.0.11",
+    "@hono/node-server": "2.1.5",
     "@humanfs/node": "0.16.8",
     "baseline-browser-mapping": "2.11.13",
-    "body-parser": "2.3.0",
+    "body-parser": "2.4.0",
     "browserslist": "4.28.8",
-    "fast-uri": "3.1.8",
-    "hono": "4.13.7",
-    "ip-address": "10.7.2",
+    "fast-uri": "3.1.9",
+    "hono": "4.13.14",
+    "ip-address": "10.7.5",
     "js-yaml": "4.3.2",
     "moment": "2.31.0",
-    "qs": "6.16.0"
+    "qs": "6.17.1",
+    "zod": "4.6.7"
   }
 }
