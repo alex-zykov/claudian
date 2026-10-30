@@ -93,7 +93,10 @@
     "header": {
       "moveToLeftPanel": "移到左侧面板",
       "moveToRightPanel": "移到右侧面板",
-      "moveRefused": "请等回复结束后再移动聊天。"
+      "moveToMainArea": "移到主区域",
+      "moveRefused": "请等回复结束后再移动聊天。",
+      "editNote": "编辑笔记",
+      "editNoteRefused": "此聊天还没有文件。"
     }
   },
   "settings": {

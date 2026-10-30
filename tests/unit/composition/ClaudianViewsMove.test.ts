@@ -42,7 +42,8 @@ describe('ClaudianViews.moveView', () => {
   it.each([
     ['left', 'getLeftLeaf', false],
     ['right', 'getRightLeaf', false],
-  ] as const)('reopens the chat tabs in the %s sidebar and closes the old tab', async (side, getter, argument) => {
+    ['main', 'getLeaf', 'tab'],
+  ] as const)('reopens the chat tabs in the %s area and closes the old tab', async (side, getter, argument) => {
     const { views, view, workspace, newLeaf, state, calls } = setup();
 
     await expect(views.moveView(view, side)).resolves.toBe(true);
@@ -54,7 +55,15 @@ describe('ClaudianViews.moveView', () => {
       active: true,
     });
     expect(workspace.revealLeaf).toHaveBeenCalledWith(newLeaf);
-    expect(calls).toEqual(['detach', 'setViewState', 'reveal']);
+    expect(calls).toEqual(['capture', 'detach', 'setViewState', 'reveal', 'receiveHandoff']);
+  });
+
+  it('hands the unsent drafts and scroll positions of the old view to the new one', async () => {
+    const { views, view, newView, handoff } = setup();
+
+    await views.moveView(view, 'right');
+
+    expect(newView.receiveHandoff).toHaveBeenCalledWith(handoff);
   });
 
   it('keeps the chat where it is while an answer is streaming', async () => {
@@ -170,6 +179,7 @@ describe('ClaudianViews.moveView in place', () => {
     expect(leaf.detach).not.toHaveBeenCalled();
     expect(leaf.getViewState).not.toHaveBeenCalled();
     expect(placeholder.setViewState).not.toHaveBeenCalled();
+    expect(view.captureHandoff).not.toHaveBeenCalled();
   });
 
   it('moves a chat that is streaming an answer, because the view stays alive', async () => {

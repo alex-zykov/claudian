@@ -93,7 +93,10 @@
     "header": {
       "moveToLeftPanel": "Déplacer vers le panneau de gauche",
       "moveToRightPanel": "Déplacer vers le panneau de droite",
-      "moveRefused": "Attendez la fin de la réponse avant de déplacer le chat."
+      "moveToMainArea": "Déplacer vers la zone principale",
+      "moveRefused": "Attendez la fin de la réponse avant de déplacer le chat.",
+      "editNote": "Modifier la note",
+      "editNoteRefused": "Ce chat n'a pas encore de fichier."
     }
   },
   "settings": {

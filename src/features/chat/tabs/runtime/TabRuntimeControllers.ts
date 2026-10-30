@@ -441,6 +441,7 @@ export function buildTabRuntimeControllers(
       builtInCommandController,
       navigationController,
       sideChatController,
+      drafts,
     },
   };
 }

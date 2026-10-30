@@ -3,6 +3,7 @@ import type { ProviderCommandDiscoveryController } from '@/core/providers/comman
 import type { ProviderCommandEntry } from '@/core/providers/commands/ProviderCommandEntry';
 import type { ProviderId, TitleGenerationService } from '@/core/providers/types';
 import type { ComposerContextTray } from '@/features/chat/composer/ComposerContextTray';
+import type { ComposerDraftController } from '@/features/chat/composer/ComposerDraftController';
 import type { ComposerPromptSuggestion } from '@/features/chat/composer/ComposerPromptSuggestion';
 import type { FileContextManager } from '@/features/chat/composer/FileContextManager';
 import type { ImageContextManager } from '@/features/chat/composer/ImageContextManager';
@@ -75,6 +76,8 @@ export interface TabControllers {
   readonly navigationController: NavigationController;
   /** Owner of this tab's single temporary side chat and composer destination. */
   readonly sideChatController: SideChatController;
+  /** Owner of the unsent input: its text and attached images. */
+  readonly drafts: ComposerDraftController;
 }
 
 /**

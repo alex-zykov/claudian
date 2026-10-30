@@ -2,6 +2,7 @@ import type { Component, TFile, WorkspaceLeaf } from 'obsidian';
 
 import type { ProviderId, TitleGenerationService } from '@/core/providers/types';
 import type { ChatMessage } from '@/core/types';
+import type { ComposerDraft } from '@/features/chat/composer/ComposerDraftController';
 import type { TabAttention } from '@/features/chat/state/types';
 import type { ZenPresentationPort } from '@/features/chat/zen/types';
 
@@ -83,6 +84,10 @@ export interface TabComposerPort {
   setHiddenCommands(commands: ReadonlySet<string>): void;
   /** Invalidates session mentions after the conversation list changes. */
   invalidateSessionMentions(): void;
+  /** The unsent input of the tab: its text and attached images. */
+  captureDraft(): ComposerDraft;
+  /** Replaces the unsent input with a draft captured elsewhere, as if it had been typed. */
+  restoreDraft(draft: ComposerDraft): void;
 }
 
 /** Restores a transcript moved by `TabPlacementPort.placeTranscript`. */

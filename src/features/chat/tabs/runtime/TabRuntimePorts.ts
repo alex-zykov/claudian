@@ -1,4 +1,5 @@
 import type { ChatFeatureHost } from '@/features/chat/ChatFeatureHost';
+import type { ComposerDraftController } from '@/features/chat/composer/ComposerDraftController';
 import type { ChatState } from '@/features/chat/state/ChatState';
 import type { TabComposerPort, TabLinkedContentPort, TabPlacementPort, TabTranscriptPlacement } from '@/features/chat/tabs/ChatTab';
 import type { TabRuntimeControllerBundle } from '@/features/chat/tabs/runtime/TabRuntimeConstruction';
@@ -26,7 +27,7 @@ export function buildTabRuntimePorts(
   const { controllers, renderer } = controllerBundle;
   return {
     zenPresentation: createTabZenPresentation(() => getRuntime().state, dom.messagesEl),
-    composer: createTabComposerPort(dom.inputEl, ui),
+    composer: createTabComposerPort(dom.inputEl, ui, controllers.drafts),
     linkedContent: ui.linkedContentController,
     placement: createTabPlacementPort(
       dom,
@@ -53,6 +54,7 @@ export function buildTabRuntimePorts(
 export function createTabComposerPort(
   inputEl: TabDOMElements['inputEl'],
   ui: Pick<TabUIComponents, 'toolbarMenus' | 'composerDropdown' | 'fileContextManager'>,
+  drafts: Pick<ComposerDraftController, 'capture' | 'restore'>,
 ): TabComposerPort {
   let previousFocus: HTMLElement | null = null;
   const isFocused = () => inputEl.contains(inputEl.ownerDocument.activeElement);
@@ -92,6 +94,8 @@ export function createTabComposerPort(
     },
     setHiddenCommands: commands => ui.composerDropdown.setHiddenCommands(commands),
     invalidateSessionMentions: () => ui.fileContextManager.getMentionSource().invalidate(),
+    captureDraft: () => drafts.capture('main'),
+    restoreDraft: draft => drafts.restore('main', draft, { notify: true }),
   };
 }
 

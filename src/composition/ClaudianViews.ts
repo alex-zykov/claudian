@@ -182,11 +182,13 @@ export class ClaudianViews {
       target.detach();
       return false;
     }
-    // Fallback: reopen from the saved view state (unsent input and reading position are lost).
+    // The saved view state carries the tabs, not the unsent input or the reading position.
+    const handoff = view.captureHandoff();
     const { state } = view.leaf.getViewState();
     view.leaf.detach();
     await target.setViewState({ type: VIEW_TYPE_CLAUDIAN, state, active: true });
     await revealWorkspaceLeaf(workspace, target);
+    if (isClaudianView(target.view)) target.view.receiveHandoff(handoff);
     return true;
   }
 

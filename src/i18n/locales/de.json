@@ -93,7 +93,10 @@
     "header": {
       "moveToLeftPanel": "In linkes Seitenfenster verschieben",
       "moveToRightPanel": "In rechtes Seitenfenster verschieben",
-      "moveRefused": "Warte, bis die Antwort fertig ist, bevor du den Chat verschiebst."
+      "moveToMainArea": "In den Hauptbereich verschieben",
+      "moveRefused": "Warte, bis die Antwort fertig ist, bevor du den Chat verschiebst.",
+      "editNote": "Notiz bearbeiten",
+      "editNoteRefused": "Dieser Chat hat noch keine Datei."
     }
   },
   "settings": {
