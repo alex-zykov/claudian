@@ -60,6 +60,12 @@
     "quote": {
       "buttonLabel": "Zitieren"
     },
+    "quickAsk": {
+      "title": "Quick ask",
+      "label": "Question",
+      "placeholder": "Ask Claudian",
+      "notSent": "Claudian can't take a message right now. Your question is still here."
+    },
     "sideChat": {
       "title": "Nebenchat",
       "collapse": "Einklappen",
