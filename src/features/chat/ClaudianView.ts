@@ -862,6 +862,18 @@ export class ClaudianView extends ItemView implements ZenModeSource {
     return activeTab.composer.appendText(text);
   }
 
+  /**
+   * Sends text through the active composer's message path.
+   * False when nothing is sent, including when that path would drop the text.
+   */
+  async submitToActiveInput(text: string): Promise<boolean> {
+    const activeTab = this.tabManager?.getActiveTab();
+    const trimmed = text.trim();
+    if (!activeTab || !trimmed) return false;
+    this.tabManager?.retainTabs([activeTab.id]);
+    return activeTab.composer.submitText(trimmed);
+  }
+
   notifyConversationListChanged(): void {
     for (const tab of this.tabManager?.getAllTabs() ?? []) tab.composer.invalidateSessionMentions();
     this.sessions.invalidate();

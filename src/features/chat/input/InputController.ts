@@ -197,6 +197,11 @@ export class InputController {
   // Message Sending
   // ============================================
 
+  /** False while sendMessage returns before it can admit or queue the text. */
+  canSendMessage(): boolean {
+    return this.deps.canStartTurn();
+  }
+
   async sendMessage(options?: SendMessageOptions): Promise<void> {
     let queued = false;
     try {

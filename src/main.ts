@@ -39,6 +39,7 @@ import { createChatFocusCommand } from './features/chat/workspace/ChatFocusComma
 import { createChatTabCommands } from './features/chat/workspace/ChatTabCommands';
 import { ChatViewPublisher } from './features/chat/workspace/ChatViewPublisher';
 import { registerFileMenu } from './features/chat/workspace/fileMenu';
+import { createQuickAskCommand } from './features/chat/workspace/QuickAskCommand';
 import { VaultContentEvents } from './features/chat/workspace/VaultContentEvents';
 import { ZenModeController } from './features/chat/zen/ZenModeController';
 import { createInlineEditCommand } from './features/inline-edit/inlineEditCommand';
@@ -124,6 +125,12 @@ export default class ClaudianPlugin extends Plugin {
           void this.views.activateView();
         },
       });
+
+      this.addCommand(createQuickAskCommand({
+        app: this.app,
+        activateView: () => this.views.activateView(),
+        getView: () => this.views.getView(),
+      }));
 
       this.addCommand(createInlineEditCommand({
         host: this.featureHost,

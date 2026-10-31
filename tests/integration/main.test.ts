@@ -2661,6 +2661,16 @@ describe('ClaudianPlugin', () => {
     });
   });
 
+  it('registers Quick ask so it can be bound to a hotkey', async () => {
+    await plugin.onload();
+
+    expect(getRegisteredCommand('quick-ask')).toEqual({
+      id: 'quick-ask',
+      name: 'Quick ask',
+      callback: expect.any(Function),
+    });
+  });
+
   it.each([
     ['focus-zen-mode-input', 'Toggle chat input focus'],
     ['toggle-zen-mode-history', 'Toggle zen mode history'],
