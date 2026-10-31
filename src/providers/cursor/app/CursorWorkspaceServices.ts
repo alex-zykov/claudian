@@ -10,12 +10,15 @@ import { CursorCLIResolver } from '../runtime/CursorCLIResolver';
 import { CursorModelCatalogCoordinator } from '../runtime/CursorModelCatalogCoordinator';
 import { CursorModelDiscoveryService } from '../runtime/CursorModelDiscoveryService';
 import { createCursorModels } from '../runtime/CursorModels';
+import { CursorSubscriptionUsageService } from '../runtime/CursorSubscriptionUsageService';
+import { getCursorProviderSettings } from '../settings';
 import { cursorSettingsTabRenderer } from '../ui/CursorSettingsTab';
 
 export interface CursorWorkspaceServices extends ProviderWorkspaceServices {
   cliResolver: CursorCLIResolver;
   commandCatalog: ProviderCommandCatalog;
   modelCatalogCoordinator: CursorModelCatalogCoordinator;
+  subscriptionUsage: CursorSubscriptionUsageService;
   dispose(): Promise<void>;
 }
 
@@ -28,9 +31,11 @@ export async function createCursorWorkspaceServices(
     modelCatalogService,
   );
   const modelCatalog = createCursorModels(plugin, modelCatalogCoordinator);
+  const subscriptionUsage = new CursorSubscriptionUsageService(plugin);
   const unregisterTransitionHook =
     plugin.executionLifecycleRegistry.registerTransitionHook('cursor', {
       beforeTransition: async () => {
+        subscriptionUsage.abortInFlight();
         modelCatalog.beginTransition();
         modelCatalogCoordinator.beginEnvironmentTransition();
         await modelCatalogCoordinator.quiesceForEnvironmentChange();
@@ -50,6 +55,7 @@ export async function createCursorWorkspaceServices(
     commandCatalog: new CursorCommandCatalog(),
     commandLoader: null,
     modelCatalogCoordinator,
+    subscriptionUsage,
     settingsTabRenderer: cursorSettingsTabRenderer,
     modelCatalog,
     async dispose() {
@@ -57,6 +63,7 @@ export async function createCursorWorkspaceServices(
       await Promise.all([
         modelCatalog.dispose(),
         modelCatalogCoordinator.dispose(),
+        subscriptionUsage.dispose(),
       ]);
     },
   };
@@ -64,6 +71,7 @@ export async function createCursorWorkspaceServices(
 
 export const cursorWorkspaceRegistration: ProviderWorkspaceRegistration<CursorWorkspaceServices> = {
   consumesAgentSkills: true,
+  isSubscriptionUsageEnabled: settings => getCursorProviderSettings(settings).showUsageInStatusBar,
   initialize: async ({ plugin }) => createCursorWorkspaceServices(plugin),
 };
 

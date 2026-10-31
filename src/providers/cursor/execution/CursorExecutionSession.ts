@@ -51,6 +51,7 @@ import { isCursorReadOnlyPermissionMode, toCursorSessionModeId } from '../permis
 import { assertCursorModelAvailable } from '../runtime/CursorModelAvailability';
 import type { CursorModelCatalogCoordinator } from '../runtime/CursorModelCatalogCoordinator';
 import { buildCursorRuntimeEnv } from '../runtime/CursorRuntimeEnvironment';
+import type { CursorSubscriptionUsageService } from '../runtime/CursorSubscriptionUsageService';
 import { getCursorProviderSettings } from '../settings';
 import { parseCursorProviderState } from '../types';
 import {
@@ -72,6 +73,7 @@ import { resolveCursorACPModelID } from './resolveCursorACPModelID';
 interface CursorExecutionSessionOptions {
   readonly commandCatalog?: Pick<CursorCommandCatalog, 'setCommandSnapshot'>;
   readonly modelCatalogCoordinator?: Pick<CursorModelCatalogCoordinator, 'mergeLiveModels'>;
+  readonly subscriptionUsage?: Pick<CursorSubscriptionUsageService, 'refresh'>;
   readonly nativeFactory: CursorExecutionNativeFactory;
 }
 
@@ -574,6 +576,9 @@ export class CursorExecutionSession implements ProviderExecutionSession {
     });
     active.turn.dispose();
     this.active = null;
+    if (getCursorProviderSettings(this.plugin.settings).showUsageInStatusBar) {
+      void this.options.subscriptionUsage?.refresh().catch(() => undefined);
+    }
   }
 
   async #cancelRun(run: RequestedRunChannel, reason: string): Promise<void> {

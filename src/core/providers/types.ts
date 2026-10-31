@@ -360,6 +360,26 @@ export interface ProviderCommandLoader {
   ): Promise<ProviderCommandDiscoveryResult<SlashCommand>>;
 }
 
+export interface ProviderSubscriptionUsageWindow {
+  id: string;
+  labelKey: string;
+  percentUsed: number;
+  resetsAt?: string | null;
+}
+
+export interface ProviderSubscriptionUsageSnapshot {
+  status: 'idle' | 'loading' | 'ready' | 'unavailable';
+  windows: readonly [ProviderSubscriptionUsageWindow, ProviderSubscriptionUsageWindow] | readonly [];
+  error?: string;
+  updatedAt?: number;
+}
+
+export interface ProviderSubscriptionUsageService {
+  getSnapshot(): ProviderSubscriptionUsageSnapshot;
+  subscribe(listener: (snapshot: ProviderSubscriptionUsageSnapshot) => void): () => void;
+  refresh(): Promise<ProviderSubscriptionUsageSnapshot>;
+}
+
 export interface ProviderWorkspaceServices {
   startRuntime?(): Promise<void>;
   onAgentSkillsChanged?(): Promise<void> | void;
@@ -369,6 +389,7 @@ export interface ProviderWorkspaceServices {
   settingsTabRenderer?: ProviderSettingsTabRenderer | null;
   modelCatalog?: ProviderModelCatalog;
   sessionArchive?: ProviderSessionArchive | null;
+  subscriptionUsage?: ProviderSubscriptionUsageService | null;
   dispose?(): Promise<void> | void;
 }
 
@@ -422,6 +443,8 @@ export interface ProviderWorkspaceRegistration<
   consumesAgentSkills?: boolean;
   /** Initialized services provide `sessionArchive`; lets callers skip initializing other providers. */
   providesSessionArchive?: boolean;
+  /** Whether subscription usage is enabled in settings; lets status bar skip initializing disabled providers. */
+  isSubscriptionUsageEnabled?: (settings: Record<string, unknown>) => boolean;
   initialize(context: ProviderWorkspaceInitContext): Promise<TServices>;
 }
 

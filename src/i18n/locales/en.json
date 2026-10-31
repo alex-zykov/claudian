@@ -475,6 +475,13 @@
         "desc": "Environment variables passed only to Cursor. Auth secrets such as CURSOR_API_KEY stay in this provider scope or the process environment; Claudian never stores a Cursor token in plugin settings."
       }
     },
+    "usage": {
+      "heading": "Usage",
+      "showInStatusBar": {
+        "name": "Show usage in status bar",
+        "desc": "Display subscription usage limits in the Obsidian status bar."
+      }
+    },
     "skills": {
       "subTabs": {
         "claude": "Claude Code",
@@ -557,6 +564,22 @@
         "failed": "Sync failed: {message}",
         "summary": "Moved {moved}, converted {converted}, trashed {trashed}, removed {unlinked} link(s)."
       }
+    }
+  },
+  "statusBar": {
+    "usage": {
+      "claude": {
+        "fiveHour": "5h limit",
+        "weekly": "weekly limit"
+      },
+      "cursor": {
+        "autoModels": "Auto + Composer models",
+        "apiModels": "API / all models"
+      },
+      "loading": "Loading usage…",
+      "unavailable": "Usage unavailable",
+      "resetsAt": "Resets {time}",
+      "clickToRefresh": "Click to refresh"
     }
   }
 }

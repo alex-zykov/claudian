@@ -14,6 +14,7 @@ export function projectClaudeModelSettings(settings: Record<string, unknown>): R
   const aliasIds = new Set([...visibleModels, ...selectedModels.map(model => model.value)]);
   const config = {
     ...getProviderConfig(settings, 'claude'),
+    showUsageInStatusBar: current.showUsageInStatusBar,
     visibleModels,
     selectedModels,
     modelAliases: selectModelMetadata(current.modelAliases, aliasIds),

@@ -24,6 +24,7 @@ import type {
 } from '../../acp';
 import type { CursorCommandCatalog } from '../commands/CursorCommandCatalog';
 import type { CursorModelCatalogCoordinator } from '../runtime/CursorModelCatalogCoordinator';
+import type { CursorSubscriptionUsageService } from '../runtime/CursorSubscriptionUsageService';
 import { CursorExecutionNativeConnectionImpl } from './CursorExecutionNativeConnection';
 import { CursorExecutionSession } from './CursorExecutionSession';
 
@@ -78,6 +79,7 @@ export interface CursorExecutionNativeFactory {
 export interface CursorExecutionBackendOptions {
   readonly commandCatalog?: Pick<CursorCommandCatalog, 'setCommandSnapshot'>;
   readonly modelCatalogCoordinator?: Pick<CursorModelCatalogCoordinator, 'mergeLiveModels'>;
+  readonly subscriptionUsage?: Pick<CursorSubscriptionUsageService, 'refresh'>;
   readonly nativeFactory?: CursorExecutionNativeFactory;
 }
 
@@ -98,6 +100,7 @@ export class CursorExecutionBackend implements ProviderExecutionBackend {
     return new CursorExecutionSession(this.plugin, config, {
       commandCatalog: this.options.commandCatalog,
       modelCatalogCoordinator: this.options.modelCatalogCoordinator,
+      subscriptionUsage: this.options.subscriptionUsage,
       nativeFactory: this.nativeFactory,
     });
   }

@@ -475,6 +475,13 @@
         "desc": "Environment variables passed only to Cursor. Auth secrets such as CURSOR_API_KEY stay in this provider scope or the process environment; Claudian never stores a Cursor token in plugin settings."
       }
     },
+    "usage": {
+      "heading": "사용량",
+      "showInStatusBar": {
+        "name": "상태 표시줄에 사용량 표시",
+        "desc": "Obsidian 상태 표시줄에 구독 사용 한도를 표시합니다."
+      }
+    },
     "skills": {
       "subTabs": {
         "claude": "Claude Code",
@@ -557,6 +564,22 @@
         "failed": "동기화 실패: {message}",
         "summary": "이동 {moved}, 변환 {converted}, 휴지통 {trashed}, 링크 제거 {unlinked}."
       }
+    }
+  },
+  "statusBar": {
+    "usage": {
+      "claude": {
+        "fiveHour": "5시간 한도",
+        "weekly": "주간 한도"
+      },
+      "cursor": {
+        "autoModels": "Auto + Composer 모델",
+        "apiModels": "API / 전체 모델"
+      },
+      "loading": "사용량 불러오는 중…",
+      "unavailable": "사용량을 확인할 수 없음",
+      "resetsAt": "초기화: {time}",
+      "clickToRefresh": "클릭하여 새로고침"
     }
   }
 }

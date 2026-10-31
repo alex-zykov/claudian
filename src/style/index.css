@@ -27,6 +27,7 @@
 @import url("./components/composer-dropdown.css");
 @import url("./components/side-chat.css");
 @import url("./components/zen-mode.css");
+@import url("./components/status-bar-usage.css");
 
 /* Toolbar */
 @import url("./toolbar/model-selector.css");

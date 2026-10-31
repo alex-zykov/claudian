@@ -1,0 +1,67 @@
+/* Status bar subscription usage indicator */
+
+.status-bar-item.claudian-status-bar-usage,
+.claudian-status-bar-usage {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px;
+}
+
+.claudian-status-bar-usage-item,
+.claudian-status-bar-usage-item:hover,
+.claudian-status-bar-usage-item:focus,
+.claudian-status-bar-usage-item:active,
+.claudian-status-bar-usage-item:disabled {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 4px;
+  margin: 0;
+  border: none;
+  border-radius: var(--radius-s, 4px);
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.claudian-status-bar-usage-item:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.claudian-status-bar-usage-item:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 1px;
+}
+
+.claudian-status-bar-usage-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.claudian-status-bar-usage-icon .claudian-provider-icon {
+  width: 12px;
+  height: 12px;
+  display: block;
+}
+
+.claudian-status-bar-usage-dot {
+  opacity: 0.65;
+}
+
+.claudian-status-bar-usage-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.claudian-status-bar-usage-divider {
+  opacity: 0.4;
+  user-select: none;
+}

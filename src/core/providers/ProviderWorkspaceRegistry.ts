@@ -7,6 +7,7 @@ import type {
   ProviderCommandLoader,
   ProviderId,
   ProviderSettingsTabRenderer,
+  ProviderSubscriptionUsageService,
   ProviderWorkspaceRegistration,
   ProviderWorkspaceServices,
 } from './types';
@@ -39,6 +40,17 @@ export class ProviderWorkspaceRegistry {
 
   static getAgentSkillProviderIds(): ProviderId[] {
     return this.boundary.getAgentSkillProviderIds();
+  }
+
+  static getSubscriptionUsageProviderIds(): ProviderId[] {
+    return this.boundary.getSubscriptionUsageProviderIds();
+  }
+
+  static isSubscriptionUsageEnabled(
+    providerId: ProviderId,
+    settings: Record<string, unknown>,
+  ): boolean {
+    return this.boundary.isSubscriptionUsageEnabled(providerId, settings);
   }
 
   static async ensureInitialized(
@@ -108,5 +120,9 @@ export class ProviderWorkspaceRegistry {
 
   static getSettingsTabRenderer(providerId: ProviderId): ProviderSettingsTabRenderer | null {
     return this.getServices(providerId)?.settingsTabRenderer ?? null;
+  }
+
+  static getSubscriptionUsage(providerId: ProviderId): ProviderSubscriptionUsageService | null {
+    return this.getServices(providerId)?.subscriptionUsage ?? null;
   }
 }

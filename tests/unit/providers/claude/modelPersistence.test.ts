@@ -9,11 +9,13 @@ describe('projectClaudeModelSettings', () => {
         { value: 'haiku', label: 'Haiku', description: '', supportedEffortLevels: ['low', 'high'] },
       ],
       visibleModels: ['opus'],
+      showUsageInStatusBar: true,
     } } };
 
     const persisted = projectClaudeModelSettings(settings);
 
     expect(persisted.discoveredModels).toBeUndefined();
+    expect(persisted.showUsageInStatusBar).toBe(true);
     expect(persisted.selectedModels).toEqual([
       { value: 'opus', label: 'Opus', description: '', supportedEffortLevels: ['low', 'high', 'xhigh'] },
     ]);

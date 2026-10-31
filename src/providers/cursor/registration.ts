@@ -26,6 +26,7 @@ export const cursorProviderRegistration: ProviderModule = {
     return new CursorExecutionBackend(plugin, {
       commandCatalog: workspace.commandCatalog,
       modelCatalogCoordinator: workspace.modelCatalogCoordinator,
+      subscriptionUsage: workspace.subscriptionUsage,
     });
   },
 

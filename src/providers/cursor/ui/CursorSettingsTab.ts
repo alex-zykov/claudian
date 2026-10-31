@@ -134,6 +134,21 @@ export const cursorSettingsTabRenderer: ProviderSettingsTabRenderer = {
     new Setting(container).setName('Models').setHeading();
     const modelPicker = renderProviderModelsSection(container, 'cursor', 'Cursor', workspace.modelCatalog!, () => modelWarning.refresh());
 
+    new Setting(container).setName(t('settings.usage.heading')).setHeading();
+    new Setting(container)
+      .setName(t('settings.usage.showInStatusBar.name'))
+      .setDesc(t('settings.usage.showInStatusBar.desc'))
+      .addToggle(toggle => toggle
+        .setValue(getCursorProviderSettings(settingsBag).showUsageInStatusBar)
+        .onChange(async value => {
+          await context.plugin.mutateSettings(settings => {
+            updateCursorProviderSettings(settings, { showUsageInStatusBar: value });
+          });
+          if (value) {
+            void workspace.subscriptionUsage?.refresh();
+          }
+        }));
+
     renderEnvironmentSettingsSection({
       container,
       desc: t('settings.cursor.environment.desc'),

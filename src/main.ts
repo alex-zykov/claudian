@@ -23,6 +23,7 @@ import { AgentSkillResources } from './composition/AgentSkillResources';
 import { ChatHistoryFileSubsystem } from './composition/ChatHistoryFileSubsystem';
 import { ClaudianChatFeatureHost, ClaudianFeatureHost } from './composition/ClaudianFeatureHosts';
 import { ClaudianProviderHost } from './composition/ClaudianProviderHost';
+import { ClaudianStatusBarUsage } from './composition/ClaudianStatusBarUsage';
 import { ClaudianViews, isClaudianView } from './composition/ClaudianViews';
 import { ProviderExecutionLifecycleRegistry } from './core/execution';
 import { ProviderRegistry } from './core/providers/ProviderRegistry';
@@ -62,6 +63,7 @@ export default class ClaudianPlugin extends Plugin {
   private vaultContentEvents!: VaultContentEvents;
   private chatHistoryFiles!: ChatHistoryFileSubsystem;
   private settingsTab: ClaudianSettingTab | null = null;
+  private statusBarUsage: ClaudianStatusBarUsage | null = null;
   private readonly views = new ClaudianViews(
     this.app.workspace,
     () => this.settings.chatViewPlacement,
@@ -162,6 +164,12 @@ export default class ClaudianPlugin extends Plugin {
 
       this.settingsTab = new ClaudianSettingTab(this.app, this, this.featureHost);
       this.addSettingTab(this.settingsTab);
+      this.statusBarUsage = new ClaudianStatusBarUsage({
+        addStatusBarItem: () => this.addStatusBarItem(),
+        providerHost: this.providerHost,
+        getSettings: () => this.settings,
+      });
+      this.statusBarUsage.syncWithSettings();
       this.sessionMetadata.scheduleRemainingLoad();
       this.app.workspace.onLayoutReady(() => {
         if (this.isUnloading || this.sessionInputCleanup || this.sessionInputCleanupTimer !== null) return;
@@ -187,6 +195,8 @@ export default class ClaudianPlugin extends Plugin {
     this.isUnloading = true;
     // Return any zen presentation to its view before asynchronous shutdown.
     this.zenMode.dispose();
+    this.statusBarUsage?.dispose();
+    this.statusBarUsage = null;
     this.vaultContentEvents?.dispose();
     this.chatHistoryFiles?.dispose();
     this.inactiveSessionArchiver?.dispose();
@@ -214,6 +224,7 @@ export default class ClaudianPlugin extends Plugin {
       publishCommittedSettings: async (settings, previous) => {
         this.chatViews.publishSettings(settings, previous);
         this.chatHistoryFiles?.onSettingsCommitted(settings, previous);
+        this.statusBarUsage?.syncWithSettings();
       },
       // No chat view can hold tabs before loading completes and assigns the lifecycle.
       onConversationDeleted: async (conversationId) => {
@@ -260,6 +271,7 @@ export default class ClaudianPlugin extends Plugin {
       providerSettings: ProviderSettingsCoordinator,
       onEnvironmentApplied: async (providerIds) => {
         this.chatViews.invalidateProviderCommandCaches(providerIds);
+        this.statusBarUsage?.refreshEnabled();
         await Promise.all(providerIds.map(notifyProviderChatOptionsChanged));
       },
     });
