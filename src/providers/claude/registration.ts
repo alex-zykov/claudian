@@ -59,6 +59,7 @@ export const claudeProviderRegistration: ProviderModule = {
   },
   createExecutionBackend: plugin => new ClaudeExecutionBackend(plugin, {
     publishSessionCatalog: catalog => getClaudeWorkspaceServices()?.publishSessionCatalog(catalog),
+    publishSessionUsage: usage => getClaudeWorkspaceServices()?.publishSessionUsage(usage),
   }),
   createSubagentHistoryService: plugin => new ClaudeSubagentHistoryService(plugin),
 

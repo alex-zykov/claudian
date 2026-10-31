@@ -1,5 +1,5 @@
 /** @jest-environment jsdom */
-import { within } from '@testing-library/dom';
+import { fireEvent, waitFor, within } from '@testing-library/dom';
 import { axe } from 'jest-axe';
 import { setImmediate } from 'timers';
 
@@ -11,9 +11,11 @@ const mockGetHostnameKey = jest.fn(() => 'device:current');
 const mockRenderEnvironmentSettingsSection = jest.fn();
 const mockCLIResolverReset = jest.fn();
 const mockRefreshModelCatalog = jest.fn().mockResolvedValue({ changed: false });
+const mockRefreshSubscriptionUsage = jest.fn().mockResolvedValue(undefined);
 const mockGetServices = jest.fn(() => ({
   cliResolver: { reset: mockCLIResolverReset },
   modelCatalog: { refresh: mockRefreshModelCatalog, markStale: jest.fn() },
+  subscriptionUsage: { refresh: mockRefreshSubscriptionUsage },
 }));
 
 jest.mock('node:fs');
@@ -47,7 +49,29 @@ jest.mock('obsidian', () => {
       return this;
     }
 
-    addToggle() {
+    addToggle(callback?: (toggle: {
+      setValue: (value: boolean) => unknown;
+      onChange: (handler: (value: boolean) => Promise<void> | void) => unknown;
+    }) => void) {
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      if (this.name) {
+        input.setAttribute('aria-label', this.name);
+      }
+      this.container.appendChild(input);
+      const toggleComponent = {
+        setValue: (value: boolean) => {
+          input.checked = value;
+          return toggleComponent;
+        },
+        onChange: (handler: (value: boolean) => Promise<void> | void) => {
+          input.addEventListener('change', () => {
+            void handler(input.checked);
+          });
+          return toggleComponent;
+        },
+      };
+      callback?.(toggleComponent);
       return this;
     }
   }
@@ -174,6 +198,14 @@ describe('CursorSettingsTab', () => {
     const view = within(container);
     expect(view.getByRole('checkbox', { name: /enable.*cursor/i })).toBeTruthy();
     expect(view.getByRole('textbox', { name: /cli path|path/i })).toBeTruthy();
+    expect(view.getByRole('heading', { name: /usage/i })).toBeTruthy();
+    const usageToggle = view.getByRole('checkbox', { name: /show usage in status bar/i }) as HTMLInputElement;
+    expect(usageToggle.checked).toBe(false);
+    fireEvent.click(usageToggle);
+    await waitFor(() => {
+      expect((settings.providerConfigs.cursor as Record<string, unknown>).showUsageInStatusBar).toBe(true);
+    });
+    expect(mockRefreshSubscriptionUsage).toHaveBeenCalledTimes(1);
     expect(mockRenderEnvironmentSettingsSection).toHaveBeenCalled();
 
     const results = await axe(container);

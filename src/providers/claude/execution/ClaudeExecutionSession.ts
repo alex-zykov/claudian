@@ -1,5 +1,6 @@
 import type {
   Query,
+  SDKControlGetUsageResponse,
   SDKMessage,
 } from '@anthropic-ai/claude-agent-sdk';
 import { randomUUID } from 'crypto';
@@ -60,6 +61,8 @@ import { type ClaudeTurnInputs, getReplayedUserMessageId } from './ClaudeTurnInp
 export interface ClaudeExecutionSessionOptions {
   /** Receives the catalog each native query reports at init; persistence stays with the catalog owner. */
   readonly publishSessionCatalog?: (catalog: ClaudeRuntimeCatalog) => Promise<void> | void;
+  /** Receives the subscription usage each native query reports at init and turn completion. */
+  readonly publishSessionUsage?: (usage: SDKControlGetUsageResponse) => void;
 }
 
 interface ActiveRequestedRun {
@@ -753,6 +756,22 @@ ClaudeExecutionStrategySink {
         return publish(toClaudeRuntimeCatalog(initialization));
       })
       // Catalog write-back is best-effort and cannot disrupt execution.
+      .catch(() => undefined);
+  }
+
+  publishUsage(query: Query): void {
+    const publish = this.options.publishSessionUsage;
+    if (
+      !publish
+      || typeof query.usage_EXPERIMENTAL_MAY_CHANGE_DO_NOT_RELY_ON_THIS_API_YET !== 'function'
+      || this.disposed
+      || this.nativeQuery !== query
+    ) return;
+    void query.usage_EXPERIMENTAL_MAY_CHANGE_DO_NOT_RELY_ON_THIS_API_YET({ skipBehaviors: true })
+      .then((usage) => {
+        if (this.disposed || this.nativeQuery !== query) return;
+        publish(usage);
+      })
       .catch(() => undefined);
   }
 

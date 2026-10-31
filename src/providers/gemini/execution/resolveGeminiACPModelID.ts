@@ -4,7 +4,7 @@
 export function resolveGeminiACPModelID(
   selectedModelId: string,
   availableAcpModelIds: readonly string[],
-  reasoningEffort?: string,
+  reasoningEffort?: string | null,
 ): string | null {
   const selected = selectedModelId.trim();
   if (!selected) return null;

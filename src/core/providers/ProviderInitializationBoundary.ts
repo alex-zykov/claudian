@@ -54,6 +54,19 @@ export class ProviderInitializationBoundary {
       .map(([providerId]) => providerId);
   }
 
+  getSubscriptionUsageProviderIds(): ProviderId[] {
+    return Object.entries(this.registrations)
+      .filter(([, registration]) => typeof registration?.isSubscriptionUsageEnabled === 'function')
+      .map(([providerId]) => providerId);
+  }
+
+  isSubscriptionUsageEnabled(
+    providerId: ProviderId,
+    settings: Record<string, unknown>,
+  ): boolean {
+    return this.registrations[providerId]?.isSubscriptionUsageEnabled?.(settings) === true;
+  }
+
   async ensureInitialized(
     plugin: ProviderHost,
     providerId: ProviderId,

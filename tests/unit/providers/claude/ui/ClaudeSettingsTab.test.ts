@@ -17,6 +17,8 @@ const mockSaveSettings = jest.fn().mockResolvedValue(undefined);
 const mockCLIResolverReset = jest.fn();
 const mockModelCatalogRefresh = jest.fn().mockResolvedValue({ changed: true });
 const mockModelCatalog = { refresh: mockModelCatalogRefresh, markStale: jest.fn() };
+const mockSubscriptionUsageRefresh = jest.fn().mockResolvedValue(undefined);
+const mockSubscriptionUsage = { refresh: mockSubscriptionUsageRefresh };
 const mockRenderModelPicker = jest.fn((..._args: unknown[]) => ({ refresh: jest.fn(), dispose: jest.fn() }));
 
 jest.mock('fs');
@@ -104,6 +106,7 @@ function createSettingsRenderer() {
       reset: mockCLIResolverReset,
     },
     modelCatalog: mockModelCatalog,
+    subscriptionUsage: mockSubscriptionUsage,
   } as unknown as Parameters<typeof createClaudeSettingsTabRenderer>[0]);
 }
 
@@ -388,6 +391,20 @@ describe('ClaudeSettingsTab', () => {
     await toggle.onChangeCallback?.(true);
     expect(plugin.settings.providerConfigs.claude.promptSuggestions).toBe(true);
     expect(mockSaveSettings).toHaveBeenCalled();
+  });
+
+  it('offers a default-off status bar usage toggle in Usage and refreshes usage when enabled', async () => {
+    const plugin = createPlugin();
+    createSettingsRenderer().render(createContainer(), createContext(plugin));
+    const setting = findSetting('settings.usage.showInStatusBar.name');
+    const toggle = setting.toggleComponents[0];
+    expect(toggle.value).toBe(false);
+    const index = createdSettings.indexOf(setting);
+    expect(createdSettings.slice(0, index).filter(item => item.heading).at(-1)?.name).toBe('settings.usage.heading');
+    await toggle.onChangeCallback?.(true);
+    expect(plugin.settings.providerConfigs.claude.showUsageInStatusBar).toBe(true);
+    expect(mockSaveSettings).toHaveBeenCalled();
+    expect(mockSubscriptionUsageRefresh).toHaveBeenCalledTimes(1);
   });
 
   const mockedExistsSync = fs.existsSync as jest.MockedFunction<typeof fs.existsSync>;

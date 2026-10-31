@@ -78,7 +78,7 @@ export function normalizeGeminiSessionModelMetadata(response: {
       const resolvedEfforts = variantEfforts && variantEfforts.size > 0
         ? sortGeminiReasoningEfforts(Array.from(variantEfforts.values()))
         : thoughtLevelEfforts;
-      const defaultEffort = thoughtState.currentLevelId
+      const defaultEffort = thoughtState.currentLevel
         ?? (resolvedEfforts.some(e => e.value === 'high') ? 'high' : resolvedEfforts[0]?.value);
       const metadata: Record<string, unknown> = {
         ...(model.id === state.currentModelId && isRecord(response._meta)

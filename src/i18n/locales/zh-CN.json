@@ -481,6 +481,13 @@
         "desc": "Environment variables passed only to Gemini (agy). Auth secrets such as GEMINI_API_KEY or GOOGLE_API_KEY stay in this provider scope or the process environment; Claudian never stores a Gemini token in plugin settings."
       }
     },
+    "usage": {
+      "heading": "用量",
+      "showInStatusBar": {
+        "name": "在状态栏中显示用量",
+        "desc": "在 Obsidian 状态栏中显示订阅用量限额。"
+      }
+    },
     "skills": {
       "subTabs": {
         "claude": "Claude Code",
@@ -563,6 +570,22 @@
         "failed": "同步失败:{message}",
         "summary": "已移动 {moved},已转换 {converted},已移到回收站 {trashed},已移除 {unlinked} 个链接。"
       }
+    }
+  },
+  "statusBar": {
+    "usage": {
+      "claude": {
+        "fiveHour": "5 小时限额",
+        "weekly": "每周限额"
+      },
+      "cursor": {
+        "autoModels": "Auto + Composer 模型",
+        "apiModels": "API / 全部模型"
+      },
+      "loading": "正在加载用量…",
+      "unavailable": "用量不可用",
+      "resetsAt": "重置时间:{time}",
+      "clickToRefresh": "点击刷新"
     }
   }
 }

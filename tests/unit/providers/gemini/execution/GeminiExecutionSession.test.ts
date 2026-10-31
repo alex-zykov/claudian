@@ -1,10 +1,14 @@
-import type { ProviderExecutionRequest, ProviderInteractionPort } from '@/core/execution';
+import type {
+  ProviderExecutionEvent,
+  ProviderExecutionRequest,
+  ProviderInteractionPort,
+} from '@/core/execution';
 import type { ProviderHost } from '@/core/providers/ProviderHost';
 import type { ACPRequestPermissionRequest } from '@/providers/acp';
 import type {
   GeminiExecutionNativeConnection,
+  GeminiExecutionNativeCreateOptions,
   GeminiExecutionNativeFactory,
-  GeminiExecutionNativeOptions,
 } from '@/providers/gemini/execution/GeminiExecutionBackend';
 import { GeminiExecutionSession } from '@/providers/gemini/execution/GeminiExecutionSession';
 import {
@@ -67,16 +71,23 @@ function createExecutionRequest(
       model: 'gemini/gemini-4-argon',
       permissionMode,
       reasoning,
+      systemInstructions: { kind: 'provider-default' },
     },
     input: [{ text: 'Hello', type: 'text' }],
     signal: new AbortController().signal,
-    toolPolicy: { kind: 'full' },
+    toolPolicy: { kind: 'unrestricted' },
   };
+}
+
+async function collect(events: AsyncIterable<ProviderExecutionEvent>): Promise<ProviderExecutionEvent[]> {
+  const collected: ProviderExecutionEvent[] = [];
+  for await (const event of events) collected.push(event);
+  return collected;
 }
 
 describe('GeminiExecutionSession', () => {
   it('resolves model effort variant and skips session/set_mode when modes are not advertised', async () => {
-    let capturedOptions: GeminiExecutionNativeOptions | null = null;
+    let capturedOptions: GeminiExecutionNativeCreateOptions | null = null;
     const setModel = jest.fn().mockResolvedValue({});
     const setMode = jest.fn().mockResolvedValue({});
     const requestApproval = jest.fn(async (request: { interactionId: string }) => ({
@@ -86,6 +97,7 @@ describe('GeminiExecutionSession', () => {
 
     const native: GeminiExecutionNativeConnection = {
       cancel: jest.fn(),
+      flush: jest.fn().mockResolvedValue(undefined),
       initialize: jest.fn().mockResolvedValue({ protocolVersion: 1 }),
       isAlive: () => true,
       loadSession: jest.fn(),
@@ -146,13 +158,14 @@ describe('GeminiExecutionSession', () => {
       host,
       {
         interactionPort,
+        lifecycle: 'persistent',
+        nativePersistence: 'enabled',
         vaultWorkingDirectory: '/vault',
       },
       { nativeFactory },
     );
 
-    const run = session.execute(createExecutionRequest('autoEdit', 'medium'));
-    await run.terminated;
+    await collect(session.execute(createExecutionRequest('autoEdit', 'medium')).events);
 
     expect(session.getSnapshot().invalidation).toBeUndefined();
     expect(setModel).toHaveBeenCalledWith({
@@ -167,12 +180,13 @@ describe('GeminiExecutionSession', () => {
   });
 
   it('auto-allows all tools in yolo mode and auto-denies all tools in plan mode', async () => {
-    let capturedOptions: GeminiExecutionNativeOptions | null = null;
+    let capturedOptions: GeminiExecutionNativeCreateOptions | null = null;
     const requestApproval = jest.fn();
     let currentDecision: unknown = null;
 
     const native: GeminiExecutionNativeConnection = {
       cancel: jest.fn(),
+      flush: jest.fn().mockResolvedValue(undefined),
       initialize: jest.fn().mockResolvedValue({ protocolVersion: 1 }),
       isAlive: () => true,
       loadSession: jest.fn(),
@@ -208,6 +222,8 @@ describe('GeminiExecutionSession', () => {
           dismissInteraction: jest.fn(),
           requestApproval,
         },
+        lifecycle: 'persistent',
+        nativePersistence: 'enabled',
         vaultWorkingDirectory: '/vault',
       },
       {
@@ -220,14 +236,12 @@ describe('GeminiExecutionSession', () => {
       },
     );
 
-    const yoloRun = session.execute(createExecutionRequest('yolo'));
-    await yoloRun.terminated;
+    await collect(session.execute(createExecutionRequest('yolo')).events);
     expect(currentDecision).toEqual({
       outcome: { optionId: 'allow-1', outcome: 'selected' },
     });
 
-    const planRun = session.execute(createExecutionRequest('plan'));
-    await planRun.terminated;
+    await collect(session.execute(createExecutionRequest('plan')).events);
     expect(currentDecision).toEqual({
       outcome: { optionId: 'reject-1', outcome: 'selected' },
     });

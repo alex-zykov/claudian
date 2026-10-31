@@ -21,6 +21,7 @@ export interface CursorCatalogSnapshot {
 
 export interface PersistedCursorProviderSettings {
   enabled: boolean;
+  showUsageInStatusBar: boolean;
   cliPath: string;
   cliPathsByHost: HostnameCLIPaths;
   catalogsByHost: Record<string, CursorCatalogSnapshot>;
@@ -44,6 +45,7 @@ export const DEFAULT_CURSOR_PROVIDER_SETTINGS: Readonly<PersistedCursorProviderS
   environmentVariables: '',
   modelAliases: {},
   preferredReasoningByModel: {},
+  showUsageInStatusBar: false,
   visibleModels: [],
 });
 
@@ -137,6 +139,7 @@ export function getCursorProviderSettings(
       catalogModels,
       true,
     ),
+    showUsageInStatusBar: config.showUsageInStatusBar === true,
     visibleModels,
   };
 }
@@ -204,6 +207,7 @@ export function updateCursorProviderSettings(
       catalogModels,
       true,
     ),
+    showUsageInStatusBar: updates.showUsageInStatusBar ?? current.showUsageInStatusBar,
     visibleModels,
   };
 
@@ -390,6 +394,7 @@ export function projectCursorModelSettings(settings: Record<string, unknown>): R
   }]));
   const config: Record<string, unknown> = {
     ...getProviderConfig(settings, 'cursor'),
+    showUsageInStatusBar: current.showUsageInStatusBar,
     visibleModels,
     selectedModelsByHost,
     modelAliases: selectModelMetadata(current.modelAliases, selected),

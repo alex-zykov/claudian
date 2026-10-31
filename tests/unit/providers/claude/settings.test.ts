@@ -14,6 +14,12 @@ describe('Claude settings normalization', () => {
     expect(getClaudeProviderSettings(settings).promptSuggestions).toBe(value === true);
   });
 
+  it.each([undefined, null, 'true', 1, false, true])('decodes opt-in status bar usage display from %p', value => {
+    const settings = { providerConfigs: { claude: { showUsageInStatusBar: value } } };
+    expect(getClaudeProviderSettings(settings).showUsageInStatusBar).toBe(value === true);
+    expect(claudeProviderRegistration.workspace.isSubscriptionUsageEnabled?.(settings)).toBe(value === true);
+  });
+
   it.each(['default', 'My Style', null] as const)('persists the %p output style while preserving other settings', (outputStyle) => {
     const settings = { providerConfigs: { claude: { customModels: 'custom' } } };
     updateClaudeProviderSettings(settings, { outputStyle });

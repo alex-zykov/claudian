@@ -10,7 +10,10 @@ import { renderCLIInstallationSetting } from '@/shared/settings/CLIInstallationS
 
 import type { ProviderModelCatalog } from '../../../core/providers/models/ProviderModelCatalog';
 import { ProviderSettingsCoordinator } from '../../../core/providers/ProviderSettingsCoordinator';
-import type { ProviderSettingsTabRenderer } from '../../../core/providers/types';
+import type {
+  ProviderSettingsTabRenderer,
+  ProviderSubscriptionUsageService,
+} from '../../../core/providers/types';
 import { t } from '../../../i18n/i18n';
 import { renderEnvironmentSettingsSection } from '../../../shared/settings/EnvironmentSettingsSection';
 import type { ProviderEnablementSettingOptions } from '../../../shared/settings/ProviderEnablementSetting';
@@ -27,7 +30,11 @@ import {
 const INHERITED_OUTPUT_STYLE = '';
 
 export function createClaudeSettingsTabRenderer(
-  claudeWorkspace: { cliResolver: Pick<ProviderCLIResolver, 'reset'>; modelCatalog: ProviderModelCatalog; },
+  claudeWorkspace: {
+    cliResolver: Pick<ProviderCLIResolver, 'reset'>;
+    modelCatalog: ProviderModelCatalog;
+    subscriptionUsage?: Pick<ProviderSubscriptionUsageService, 'refresh'> | null;
+  },
 ): ProviderSettingsTabRenderer {
   return {
     render(container, context) {
@@ -209,6 +216,24 @@ export function createClaudeSettingsTabRenderer(
               });
             })
         );
+
+      // --- Usage ---
+
+      new Setting(container).setName(t('settings.usage.heading')).setHeading();
+
+      new Setting(container)
+        .setName(t('settings.usage.showInStatusBar.name'))
+        .setDesc(t('settings.usage.showInStatusBar.desc'))
+        .addToggle(toggle => toggle
+          .setValue(claudeSettings.showUsageInStatusBar)
+          .onChange(async value => {
+            await context.plugin.mutateSettings(settings => {
+              updateClaudeProviderSettings(settings, { showUsageInStatusBar: value });
+            });
+            if (value) {
+              void claudeWorkspace.subscriptionUsage?.refresh();
+            }
+          }));
 
       // --- Environment ---
 

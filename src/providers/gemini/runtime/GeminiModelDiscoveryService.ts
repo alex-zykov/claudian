@@ -306,7 +306,7 @@ async function runGeminiCatalogCommand(
     const finish = (result: GeminiCatalogCommandResult): void => {
       if (settled) return;
       settled = true;
-      clearTimeout(timer);
+      window.clearTimeout(timer);
       request.signal?.removeEventListener('abort', onAbort);
       resolve(result);
     };
@@ -320,7 +320,7 @@ async function runGeminiCatalogCommand(
       finish({ exitCode: null, stdout, termination: 'abort' });
     };
 
-    const timer = setTimeout(() => {
+    const timer = window.setTimeout(() => {
       terminate();
       finish({ exitCode: null, stdout, termination: 'timeout' });
     }, request.timeoutMs);

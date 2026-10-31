@@ -1,7 +1,9 @@
 const mockGetHostnameKey = jest.fn(() => 'device:current');
 
+import { cursorProviderRegistration } from '@/providers/cursor/registration';
 import {
   getCursorProviderSettings,
+  projectCursorModelSettings,
   updateCursorProviderSettings,
 } from '@/providers/cursor/settings';
 
@@ -43,5 +45,12 @@ describe('Cursor settings', () => {
     const settings = getCursorProviderSettings(target);
     expect(settings.enabled).toBe(true);
     expect(settings.cliPathsByHost['device:current']).toBe('/home/user/.local/bin/agent');
+  });
+
+  it.each([undefined, null, 'true', 1, false, true])('decodes and persists opt-in status bar usage display from %p', value => {
+    const settings = { providerConfigs: { cursor: { showUsageInStatusBar: value } } };
+    expect(getCursorProviderSettings(settings).showUsageInStatusBar).toBe(value === true);
+    expect(cursorProviderRegistration.workspace.isSubscriptionUsageEnabled?.(settings)).toBe(value === true);
+    expect(projectCursorModelSettings(settings).showUsageInStatusBar).toBe(value === true);
   });
 });

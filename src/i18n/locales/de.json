@@ -481,6 +481,13 @@
         "desc": "Environment variables passed only to Gemini (agy). Auth secrets such as GEMINI_API_KEY or GOOGLE_API_KEY stay in this provider scope or the process environment; Claudian never stores a Gemini token in plugin settings."
       }
     },
+    "usage": {
+      "heading": "Nutzung",
+      "showInStatusBar": {
+        "name": "Nutzung in der Statusleiste anzeigen",
+        "desc": "Abonnement-Nutzungslimits in der Obsidian-Statusleiste anzeigen."
+      }
+    },
     "skills": {
       "subTabs": {
         "claude": "Claude Code",
@@ -563,6 +570,22 @@
         "failed": "Synchronisierung fehlgeschlagen: {message}",
         "summary": "Verschoben {moved}, umgewandelt {converted}, im Papierkorb {trashed}, {unlinked} Link(s) entfernt."
       }
+    }
+  },
+  "statusBar": {
+    "usage": {
+      "claude": {
+        "fiveHour": "5h-Limit",
+        "weekly": "Wochenlimit"
+      },
+      "cursor": {
+        "autoModels": "Auto- + Composer-Modelle",
+        "apiModels": "API / alle Modelle"
+      },
+      "loading": "Nutzung wird geladen…",
+      "unavailable": "Nutzung nicht verfügbar",
+      "resetsAt": "Zurücksetzung: {time}",
+      "clickToRefresh": "Zum Aktualisieren klicken"
     }
   }
 }

@@ -35,6 +35,7 @@ export interface ClaudeExecutionStrategySink {
   /** Init supplies skill names; `commands_changed` supplies commands. */
   publishCommands(query: Query, update: ClaudeCommandUpdate): void;
   publishCatalog(query: Query): void;
+  publishUsage?(query: Query): void;
 }
 
 export interface ClaudeExecutionStrategy {
@@ -309,6 +310,7 @@ implements ClaudeExecutionStrategy {
         if (message.type === 'system' && message.subtype === 'init') {
           this.sink.publishCommands(query, { skills: message.skills });
           this.sink.publishCatalog(query);
+          this.sink.publishUsage?.(query);
         }
         if (message.type === 'system' && message.subtype === 'commands_changed') {
           this.sink.publishCommands(query, { commands: message.commands });
@@ -319,6 +321,9 @@ implements ClaudeExecutionStrategy {
           message,
           nativeTurn?.queryToken ?? queryToken,
         );
+        if (message.type === 'result') {
+          this.sink.publishUsage?.(query);
+        }
         if (message.type === 'result' && nativeTurn?.inputs.settled) {
           this.#finishNativeTurn(query, { type: 'completed' });
         }
@@ -440,13 +445,17 @@ implements ClaudeExecutionStrategy {
         if (message.type === 'system' && message.subtype === 'init') {
           this.sink.publishCommands(query, { skills: message.skills });
           this.sink.publishCatalog(query);
+          this.sink.publishUsage?.(query);
         }
         if (message.type === 'system' && message.subtype === 'commands_changed') {
           this.sink.publishCommands(query, { commands: message.commands });
         }
         inputs.observe(message);
         await this.sink.handleNativeMessage(message, queryToken);
-        if (message.type === 'result') break;
+        if (message.type === 'result') {
+          this.sink.publishUsage?.(query);
+          break;
+        }
       }
     } catch (error) {
       if (
