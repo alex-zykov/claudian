@@ -992,14 +992,19 @@ describe('ClaudianView runtime tab initialization', () => {
 });
 
 describe('ClaudianView composer input', () => {
-  function createComposerHarness(existingContent: string): {
+  function createComposerHarness(
+    existingContent: string,
+    submission?: { canSendMessage: () => boolean; sendMessage: jest.Mock },
+  ): {
     inputEl: HTMLTextAreaElement;
     inputHandler: jest.Mock;
+    sendMessage: jest.Mock;
     tabManager: { retainTabs: jest.Mock };
     view: any;
   } {
     const inputEl = createMockEl('textarea') as unknown as HTMLTextAreaElement;
     const inputHandler = jest.fn();
+    const sendMessage = submission?.sendMessage ?? jest.fn().mockResolvedValue(undefined);
     inputEl.value = existingContent;
     inputEl.selectionStart = 0;
     inputEl.selectionEnd = 0;
@@ -1009,13 +1014,16 @@ describe('ClaudianView composer input', () => {
     const tabManager = {
       getActiveTab: jest.fn().mockReturnValue({
         id: 'active-tab',
-        composer: createTabComposerPort(inputEl as never, {} as never, {} as never),
+        composer: createTabComposerPort(inputEl as never, {} as never, {} as never, submission ?? {
+          canSendMessage: () => true,
+          sendMessage,
+        }),
       }),
       retainTabs: jest.fn(),
     };
     const view = createClaudianView({ tabManager });
 
-    return { inputEl, inputHandler, tabManager, view };
+    return { inputEl, inputHandler, sendMessage, tabManager, view };
   }
 
   it('focuses the active composer', () => {
@@ -1055,6 +1063,54 @@ describe('ClaudianView composer input', () => {
     });
 
     expect(view.appendToActiveInput('@projects/plan.md ')).toBe(false);
+  });
+
+  it('sends text through the active composer without replacing its draft', async () => {
+    const sendMessage = jest.fn().mockResolvedValue(undefined);
+    const { inputEl, inputHandler, tabManager, view } = createComposerHarness('Review this note', {
+      canSendMessage: () => true,
+      sendMessage,
+    });
+
+    await expect(view.submitToActiveInput('  What changed?  ')).resolves.toBe(true);
+
+    expect(sendMessage).toHaveBeenCalledWith({ content: 'What changed?', images: [] });
+    expect(inputEl.value).toBe('Review this note');
+    expect(inputHandler).not.toHaveBeenCalled();
+    expect(tabManager.retainTabs).toHaveBeenCalledWith(['active-tab']);
+  });
+
+  it('does not send empty text', async () => {
+    const sendMessage = jest.fn();
+    const { tabManager, view } = createComposerHarness('Review this note', {
+      canSendMessage: () => true,
+      sendMessage,
+    });
+
+    await expect(view.submitToActiveInput('   ')).resolves.toBe(false);
+
+    expect(sendMessage).not.toHaveBeenCalled();
+    expect(tabManager.retainTabs).not.toHaveBeenCalled();
+  });
+
+  it('does not send when the tab would drop the message', async () => {
+    const sendMessage = jest.fn();
+    const { view } = createComposerHarness('Review this note', {
+      canSendMessage: () => false,
+      sendMessage,
+    });
+
+    await expect(view.submitToActiveInput('Ask later')).resolves.toBe(false);
+
+    expect(sendMessage).not.toHaveBeenCalled();
+  });
+
+  it('does not send when there is no active tab', async () => {
+    const view = createClaudianView({
+      tabManager: { getActiveTab: jest.fn().mockReturnValue(null), retainTabs: jest.fn() },
+    });
+
+    await expect(view.submitToActiveInput('Ask later')).resolves.toBe(false);
   });
 });
 

@@ -27,7 +27,10 @@ export function buildTabRuntimePorts(
   const { controllers, renderer } = controllerBundle;
   return {
     zenPresentation: createTabZenPresentation(() => getRuntime().state, dom.messagesEl),
-    composer: createTabComposerPort(dom.inputEl, ui, controllers.drafts),
+    composer: createTabComposerPort(dom.inputEl, ui, controllers.drafts, {
+      canSendMessage: () => controllers.inputController.canSendMessage(),
+      sendMessage: (options) => controllers.inputController.sendMessage(options),
+    }),
     linkedContent: ui.linkedContentController,
     placement: createTabPlacementPort(
       dom,
@@ -50,11 +53,18 @@ export function buildTabRuntimePorts(
   };
 }
 
+/** The tab's message path, narrowed to what a composer submission needs from it. */
+export interface TabComposerSubmission {
+  canSendMessage(): boolean;
+  sendMessage(options: { content: string; images: [] }): Promise<void>;
+}
+
 /** Composer operations over a tab's own input and toolbar controls. */
 export function createTabComposerPort(
   inputEl: TabDOMElements['inputEl'],
   ui: Pick<TabUIComponents, 'toolbarMenus' | 'composerDropdown' | 'fileContextManager'>,
   drafts: Pick<ComposerDraftController, 'capture' | 'restore'>,
+  submission: TabComposerSubmission | null = null,
 ): TabComposerPort {
   let previousFocus: HTMLElement | null = null;
   const isFocused = () => inputEl.contains(inputEl.ownerDocument.activeElement);
@@ -85,6 +95,14 @@ export function createTabComposerPort(
       const EventConstructor = inputEl.ownerDocument.defaultView?.Event ?? Event;
       inputEl.dispatchEvent(new EventConstructor('input', { bubbles: true }));
       inputEl.focus();
+      return true;
+    },
+    submitText: async (text) => {
+      const trimmed = text.trim();
+      // Closed admission makes sendMessage return without queueing, which would drop this text.
+      if (!trimmed || !submission?.canSendMessage()) return false;
+      // A content override sends only this text. An empty image list leaves the composer's draft alone.
+      await submission.sendMessage({ content: trimmed, images: [] });
       return true;
     },
     closeOpenMenu: () => ui.toolbarMenus.closeOpenMenu(),

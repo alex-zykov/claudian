@@ -77,6 +77,11 @@ export interface TabComposerPort {
   toggleFocus(): void;
   /** Appends text without sending it, as if typed at the end; false when there is nothing to add. */
   appendText(text: string): boolean;
+  /**
+   * Sends text through this tab's message path.
+   * False when there is nothing to send, or when that path would drop the text instead of queueing it.
+   */
+  submitText(text: string): Promise<boolean>;
   /** Closes an open toolbar menu; true when one was open. */
   closeOpenMenu(): boolean;
   /** Hides the composer dropdown unless `target` is inside it or is the input. */

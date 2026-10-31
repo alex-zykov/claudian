@@ -85,9 +85,10 @@ describe('InputController admission', () => {
     const fixture = createFixture({ canStartTurn });
     fixture.input.value = 'do not send';
 
+    expect(fixture.controller.canSendMessage()).toBe(false);
     await fixture.controller.sendMessage();
 
-    expect(canStartTurn).toHaveBeenCalledTimes(1);
+    expect(canStartTurn).toHaveBeenCalledTimes(2);
     expect(fixture.coordinator.execute).not.toHaveBeenCalled();
     expect(fixture.state.messages).toEqual([]);
     expect(fixture.input.value).toBe('do not send');
