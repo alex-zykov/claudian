@@ -33,14 +33,20 @@ export function isCursorSessionMissingError(
   error: unknown,
   expectedSessionId?: string,
 ): boolean {
+  if (error instanceof JSONRPCErrorResponse && error.code === -32601) {
+    return false;
+  }
   const detail = getCursorACPErrorDetailMessage(error) ?? '';
   const message = error instanceof Error ? error.message : String(error);
   const haystack = `${message}\n${detail}`;
+  if (/method\s+not\s+found/i.test(haystack)) {
+    return false;
+  }
   const match = haystack.match(/session\s+"([^"]+)"\s+not found/i)
     ?? haystack.match(/session\s+([0-9a-f-]{8,})\s+not found/i);
   if (!match) {
-    return /session/i.test(haystack)
-      && (/not found/i.test(haystack) || /missing/i.test(haystack));
+    return /\bsession\b[^\n]*\b(?:not found|is missing|does not exist)\b/i.test(haystack)
+      || /\b(?:no such|unknown|missing)\s+session\b/i.test(haystack);
   }
   const missingId = match[1];
   return !expectedSessionId || missingId === expectedSessionId;

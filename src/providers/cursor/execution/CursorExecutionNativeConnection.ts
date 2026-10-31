@@ -8,10 +8,6 @@ import type {
   CursorExecutionNativeCreateOptions,
 } from './CursorExecutionBackend';
 
-const CURSOR_AUTH_METHOD_ID = 'cursor_login';
-/** Unauthenticated authenticate() can hang waiting for login; fail closed with guidance. */
-const CURSOR_AUTHENTICATE_TIMEOUT_MS = 15_000;
-
 const CURSOR_BLOCKING_EXTENSION_METHODS = [
   'cursor/ask_question',
   'cursor/create_plan',
@@ -22,12 +18,6 @@ const CURSOR_EXTENSION_NOTIFICATION_METHODS = [
   'cursor/task',
   'cursor/generate_image',
 ] as const;
-
-const CURSOR_AUTH_GUIDANCE = [
-  'Cursor authentication failed or timed out.',
-  'Run `agent login`, or set CURSOR_API_KEY / CURSOR_AUTH_TOKEN in the process or provider environment, then retry.',
-  'Claudian never stores a Cursor token in plugin settings.',
-].join(' ');
 
 export class CursorExecutionNativeConnectionImpl
 implements CursorExecutionNativeConnection {
@@ -86,15 +76,6 @@ implements CursorExecutionNativeConnection {
 
   async initialize(): Promise<void> {
     await this.connection.initialize();
-    try {
-      await this.transport.request(
-        'authenticate',
-        { methodId: CURSOR_AUTH_METHOD_ID },
-        { timeoutMs: CURSOR_AUTHENTICATE_TIMEOUT_MS },
-      );
-    } catch (error) {
-      throw new Error(CURSOR_AUTH_GUIDANCE, { cause: error });
-    }
   }
 
   isAlive(): boolean {

@@ -68,7 +68,7 @@ describe('CursorExecutionNativeConnection', () => {
     mockTransport.dispose();
   });
 
-  it('initializes then authenticates with cursor_login', async () => {
+  it('initializes without sending ACP authenticate requests', async () => {
     const authCalls: unknown[] = [];
     mockTransport.onRequest('authenticate', params => {
       authCalls.push(params);
@@ -77,17 +77,7 @@ describe('CursorExecutionNativeConnection', () => {
 
     await connection.initialize();
 
-    expect(authCalls).toEqual([{ methodId: 'cursor_login' }]);
-  });
-
-  it('surfaces actionable guidance when authenticate fails', async () => {
-    mockTransport.onRequest('authenticate', () => {
-      throw Object.assign(new Error('Authentication required'), {
-        code: -32000,
-      });
-    });
-
-    await expect(connection.initialize()).rejects.toThrow(/agent login|CURSOR_API_KEY/);
+    expect(authCalls).toEqual([]);
   });
 
   it('routes blocking cursor extension requests from the agent', async () => {

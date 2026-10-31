@@ -1,5 +1,6 @@
 /** @jest-environment jsdom */
 
+import { GEMINI_PROVIDER_ICON } from '@/providers/gemini/ui/GeminiProviderIcon';
 import {
   createProviderIconSvg,
   OPENAI_PROVIDER_ICON,
@@ -52,5 +53,16 @@ describe('createProviderIconSvg', () => {
     expect(paths).toHaveLength(2);
     expect(paths[0].getAttribute('fill-rule')).toBe('evenodd');
     expect(paths.every(path => path.getAttribute('fill') === 'currentColor')).toBe(true);
+  });
+
+  it('renders the Gemini provider icon with light and dark theme variants', () => {
+    const svg = createProviderIconSvg(GEMINI_PROVIDER_ICON, {
+      dataProvider: 'gemini',
+      parent: document.body,
+    });
+
+    expect(svg.getAttribute('viewBox')).toBe('0 0 24 24');
+    expect(svg.querySelector('.claudian-provider-icon-variant--light path')?.getAttribute('fill')).toBe('#000000');
+    expect(svg.querySelector('.claudian-provider-icon-variant--dark path')?.getAttribute('fill')).toBe('#FFFFFF');
   });
 });

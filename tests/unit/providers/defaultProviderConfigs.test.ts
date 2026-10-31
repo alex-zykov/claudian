@@ -11,6 +11,7 @@ describe('getBuiltInProviderDefaultConfigs', () => {
     expect(first).toHaveProperty('opencode');
     expect(first).toHaveProperty('pi');
     expect(first).toHaveProperty('cursor');
+    expect(first).toHaveProperty('gemini');
     expect(first).not.toBe(second);
     expect(first.claude).not.toBe(second.claude);
     expect(first.codex).not.toBe(second.codex);
@@ -18,5 +19,6 @@ describe('getBuiltInProviderDefaultConfigs', () => {
     expect(first.opencode).not.toBe(second.opencode);
     expect(first.pi).not.toBe(second.pi);
     expect(first.cursor).not.toBe(second.cursor);
+    expect(first.gemini).not.toBe(second.gemini);
   });
 });

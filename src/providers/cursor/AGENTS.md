@@ -1,7 +1,7 @@
 # Cursor constraints
 
 - Spawn Cursor ACP as `agent acp` (binary `agent` preferred, then `cursor-agent`). Settings path overrides PATH discovery.
-- After `initialize`, authenticate with `methodId: cursor_login`. Time out hung login waits and surface `agent login` / `CURSOR_API_KEY` / `CURSOR_AUTH_TOKEN` guidance. Never store Cursor tokens in plugin settings.
+- Rely on external CLI login (`agent login`) or `CURSOR_API_KEY` / `CURSOR_AUTH_TOKEN` in the process or provider environment; do not send automatic ACP `authenticate` requests or store Cursor tokens in plugin settings.
 - Capability flags: `supportsFork` / `supportsRewind` / `supportsTurnSteer` are false; restore history via `session/load` replaying `session/update`. Do not invent an on-disk Cursor history store. A missing/stale ACP session id falls back to `session/new` and prompt-side history replay.
 - CLI `--list-models` ids (`auto`, `composer-2.5`) are not ACP `session/set_model` ids (`default[]`, `composer-2.5[fast=true]`); resolve against the live session catalog before set_model.
 - Permission modes are Cursor ACP modes `agent` (default full tools), `plan` (read-only planning), and `ask` (read-only Q&A). Map Claudian `permissionMode` to those ACP session mode ids. Permission answers use `allow-once` / `allow-always` / `reject-once` through shared `mapACPApprovalDecision`.

@@ -3,6 +3,7 @@ import { ProviderWorkspaceRegistry } from '../core/providers/ProviderWorkspaceRe
 import { claudeProviderRegistration } from './claude/registration';
 import { codexProviderRegistration } from './codex/registration';
 import { cursorProviderRegistration } from './cursor/registration';
+import { geminiProviderRegistration } from './gemini/registration';
 import { grokProviderRegistration } from './grok/registration';
 import { opencodeProviderRegistration } from './opencode/registration';
 import { piProviderRegistration } from './pi/registration';
@@ -16,6 +17,7 @@ export const BUILT_IN_PROVIDER_MODULES = [
   opencodeProviderRegistration,
   piProviderRegistration,
   cursorProviderRegistration,
+  geminiProviderRegistration,
 ] as const;
 
 export function registerBuiltInProviders(): void {
